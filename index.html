@@ -1,0 +1,493 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#090909">
+<title>SAKTHI CABS | Book Your Ride</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#090909;color:white;
+ font-family:Arial,sans-serif;
+}
+header{
+ background:#151515;padding:20px;
+ border-bottom:2px solid #d6a83b;
+ display:flex;justify-content:space-between;
+ align-items:center;
+}
+.logo{color:#e7bb51;font-size:23px;font-weight:bold}
+.container{max-width:600px;margin:25px auto;padding:15px}
+.card{
+ background:#171717;padding:22px;
+ border:1px solid #393939;border-radius:15px;
+ margin-bottom:18px;
+}
+h2{color:#e7bb51;margin-top:0}
+input,select{
+ width:100%;padding:14px;margin:8px 0 15px;
+ border:1px solid #444;border-radius:8px;
+ background:#222;color:white;font-size:15px;
+}
+button{
+ width:100%;padding:14px;border:0;
+ border-radius:9px;background:#e7bb51;
+ color:#111;font-weight:bold;font-size:16px;
+ cursor:pointer;margin-top:8px;
+}
+button.secondary{background:#333;color:white}
+button:disabled{opacity:.5}
+small{color:#aaa}
+.hidden{display:none}
+#message{padding:10px;color:#e7bb51}
+.price{font-size:28px;color:#e7bb51;font-weight:bold}
+.booking{
+ background:#252525;padding:14px;
+ border-radius:9px;margin-top:12px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+ <div class="logo">SAKTHI CABS</div>
+ <small>CHENNAI</small>
+</header>
+
+<div class="container">
+
+<div id="auth">
+
+ <div class="card">
+  <h2>Welcome to SAKTHI CABS</h2>
+  <p>Book your ride anytime, anywhere.</p>
+
+  <label>Full Name (Registration)</label>
+  <input id="name" placeholder="Enter your name">
+
+  <label>Email</label>
+  <input id="email" type="email" placeholder="Enter email">
+
+  <label>Password</label>
+  <input id="password" type="password"
+   placeholder="Minimum 8 characters">
+
+  <button onclick="register()">Create Account</button>
+  <button class="secondary" onclick="login()">Login</button>
+  <div id="authMessage"></div>
+ </div>
+
+</div>
+
+<div id="app" class="hidden">
+
+ <div class="card">
+  <h2>Book Your Cab</h2>
+  <p id="welcome">Welcome!</p>
+
+  <button class="secondary" onclick="logout()">Logout</button>
+ </div>
+
+ <div class="card">
+  <h2>1. Pickup Location</h2>
+
+  <input id="pickup"
+   placeholder="Enter pickup address">
+
+  <button onclick="getLocation()">
+   Use My Current GPS Location
+  </button>
+
+  <small id="gpsStatus">GPS not selected</small>
+
+  <h2>2. Drop Location</h2>
+
+  <input id="drop"
+   placeholder="Enter destination address">
+
+  <h2>3. Select Vehicle</h2>
+
+  <select id="vehicle">
+   <option value="">Loading vehicles...</option>
+  </select>
+
+  <h2>4. Estimated Distance</h2>
+  <input id="distance" type="number"
+   min="0.1" step="0.1"
+   placeholder="Distance in KM">
+
+  <small>Enter estimated distance in kilometres.
+  Map-based distance will be added in the next step.</small>
+
+  <h2>5. Payment Method</h2>
+
+  <select id="payment">
+   <option value="cash">Cash</option>
+   <option value="upi">UPI</option>
+   <option value="online">Online Payment</option>
+  </select>
+
+  <h2>Estimated Fare</h2>
+  <div class="price" id="fare">₹0.00</div>
+
+  <button onclick="calculateFare()">
+   Calculate Fare
+  </button>
+
+  <button onclick="bookCab()">
+   CONFIRM CAB BOOKING
+  </button>
+
+  <div id="bookingMessage"></div>
+ </div>
+
+ <div class="card">
+  <h2>My Bookings</h2>
+  <div id="bookings">No bookings yet.</div>
+ </div>
+
+</div>
+
+<div id="message"></div>
+
+</div>
+
+<script>
+
+// =================================
+// 1. SUPABASE CONFIGURATION
+// =================================
+
+const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL";
+const SUPABASE_KEY = "YOUR_SUPABASE_PUBLISHABLE_KEY";
+
+const db = window.supabase.createClient(
+ SUPABASE_URL,
+ SUPABASE_KEY
+);
+
+let currentUser = null;
+let vehicleData = [];
+let pickupLat = null;
+let pickupLng = null;
+let currentFare = 0;
+
+// =================================
+// 2. REGISTER
+// =================================
+
+async function register(){
+
+ const name = document.getElementById("name").value.trim();
+ const email = document.getElementById("email").value.trim();
+ const password = document.getElementById("password").value;
+
+ if(!name || !email || password.length < 8){
+  alert("Enter name, valid email and password (8+ characters).");
+  return;
+ }
+
+ const {data,error} = await db.auth.signUp({
+  email,
+  password,
+  options:{
+   data:{full_name:name}
+  }
+ });
+
+ if(error){
+  alert(error.message);
+  return;
+ }
+
+ if(data.session){
+  alert("Account created successfully!");
+ }else{
+  alert("Registration successful. Verify your email, then login.");
+ }
+}
+
+// =================================
+// 3. LOGIN
+// =================================
+
+async function login(){
+
+ const email = document.getElementById("email").value.trim();
+ const password = document.getElementById("password").value;
+
+ const {data,error} = await db.auth.signInWithPassword({
+  email,password
+ });
+
+ if(error){
+  alert(error.message);
+  return;
+ }
+
+ await startApp(data.user);
+}
+
+// =================================
+// 4. LOGOUT
+// =================================
+
+async function logout(){
+ await db.auth.signOut();
+ location.reload();
+}
+
+// =================================
+// 5. APP START
+// =================================
+
+async function startApp(user){
+
+ currentUser = user;
+
+ document.getElementById("auth").classList.add("hidden");
+ document.getElementById("app").classList.remove("hidden");
+
+ document.getElementById("welcome").textContent =
+  "Welcome, " + (user.user_metadata.full_name || user.email);
+
+ await loadVehicles();
+ await loadBookings();
+ subscribeBookings();
+}
+
+// =================================
+// 6. LOAD VEHICLES
+// =================================
+
+async function loadVehicles(){
+
+ const {data,error} = await db
+  .from("vehicles")
+  .select("id,name,base_fare,per_km")
+  .eq("is_active",true);
+
+ if(error){
+  alert(error.message);
+  return;
+ }
+
+ vehicleData = data || [];
+
+ const select = document.getElementById("vehicle");
+ select.innerHTML = "";
+
+ vehicleData.forEach(v=>{
+  const option = document.createElement("option");
+  option.value = v.id;
+  option.textContent =
+   v.name + " | Base ₹" + v.base_fare +
+   " + ₹" + v.per_km + "/KM";
+  select.appendChild(option);
+ });
+
+}
+
+// =================================
+// 7. CURRENT GPS LOCATION
+// =================================
+
+function getLocation(){
+
+ if(!navigator.geolocation){
+  alert("GPS not supported");
+  return;
+ }
+
+ document.getElementById("gpsStatus").textContent =
+  "Getting GPS location...";
+
+ navigator.geolocation.getCurrentPosition(
+  position=>{
+
+   pickupLat = position.coords.latitude;
+   pickupLng = position.coords.longitude;
+
+   document.getElementById("gpsStatus").textContent =
+    "GPS location captured successfully";
+
+   if(!document.getElementById("pickup").value){
+    document.getElementById("pickup").value =
+     pickupLat.toFixed(6)+", "+pickupLng.toFixed(6);
+   }
+
+  },
+  error=>{
+   document.getElementById("gpsStatus").textContent =
+    "GPS error: "+error.message;
+  },
+  {enableHighAccuracy:true,timeout:15000}
+ );
+}
+
+// =================================
+// 8. FARE CALCULATION
+// =================================
+
+function calculateFare(){
+
+ const vehicleId = document.getElementById("vehicle").value;
+ const km = Number(document.getElementById("distance").value);
+
+ const v = vehicleData.find(x=>x.id===vehicleId);
+
+ if(!v || !Number.isFinite(km) || km<=0){
+  alert("Select vehicle and enter valid distance");
+  return;
+ }
+
+ currentFare = Number(v.base_fare) +
+               (km * Number(v.per_km));
+
+ currentFare = Math.round(currentFare*100)/100;
+
+ document.getElementById("fare").textContent =
+  "₹"+currentFare.toFixed(2);
+}
+
+// =================================
+// 9. CAB BOOKING
+// =================================
+
+async function bookCab(){
+
+ const pickup = document.getElementById("pickup").value.trim();
+ const drop = document.getElementById("drop").value.trim();
+ const vehicleId = document.getElementById("vehicle").value;
+ const km = Number(document.getElementById("distance").value);
+ const payment = document.getElementById("payment").value;
+
+ if(!pickup || !drop || !vehicleId || !pickupLat ||
+    !pickupLng || !Number.isFinite(km) || km<=0){
+  alert("Complete pickup GPS, pickup address, drop address, vehicle and distance.");
+  return;
+ }
+
+ calculateFare();
+
+ if(currentFare<=0) return;
+
+ const {data,error} = await db
+  .from("bookings")
+  .insert({
+   customer_id:currentUser.id,
+   vehicle_id:vehicleId,
+   pickup_address:pickup,
+   drop_address:drop,
+   pickup_lat:pickupLat,
+   pickup_lng:pickupLng,
+   estimated_fare:currentFare,
+   payment_method:payment,
+   status:"pending"
+  })
+  .select()
+  .single();
+
+ if(error){
+  document.getElementById("bookingMessage").textContent =
+   "Booking Error: "+error.message;
+  return;
+ }
+
+ document.getElementById("bookingMessage").textContent =
+  "Booking created! Booking ID: "+data.id;
+
+ await loadBookings();
+}
+
+// =================================
+// 10. BOOKING HISTORY
+// =================================
+
+async function loadBookings(){
+
+ const {data,error} = await db
+  .from("bookings")
+  .select("id,pickup_address,drop_address,status,estimated_fare,created_at")
+  .order("created_at",{ascending:false});
+
+ const area = document.getElementById("bookings");
+
+ if(error){
+  area.textContent = error.message;
+  return;
+ }
+
+ area.innerHTML = "";
+
+ if(!data || !data.length){
+  area.textContent = "No bookings yet.";
+  return;
+ }
+
+ data.forEach(b=>{
+
+  const item = document.createElement("div");
+  item.className = "booking";
+
+  const title = document.createElement("b");
+  title.textContent = "Booking: "+b.id.slice(0,8);
+
+  const route = document.createElement("p");
+  route.textContent = b.pickup_address+" → "+b.drop_address;
+
+  const status = document.createElement("p");
+  status.textContent = "Status: "+b.status.toUpperCase();
+
+  const fare = document.createElement("p");
+  fare.textContent = "Fare: ₹"+Number(b.estimated_fare).toFixed(2);
+
+  item.append(title,route,status,fare);
+  area.appendChild(item);
+ });
+
+}
+
+// =================================
+// 11. REALTIME BOOKING STATUS
+// =================================
+
+function subscribeBookings(){
+
+ db.channel("customer-bookings")
+  .on(
+   "postgres_changes",
+   {
+    event:"UPDATE",
+    schema:"public",
+    table:"bookings",
+    filter:"customer_id=eq."+currentUser.id
+   },
+   payload=>{
+    alert("Your ride status: "+payload.new.status);
+    loadBookings();
+   }
+  )
+  .subscribe();
+
+}
+
+// =================================
+// 12. AUTH SESSION
+// =================================
+
+db.auth.getSession().then(({data})=>{
+ if(data.session){
+  startApp(data.session.user);
+ }
+});
+
+</script>
+</body>
+</html>
