@@ -128,8 +128,45 @@ button:disabled{opacity:.5;cursor:not-allowed}
 </p>
 
 <div id="mapSection" style="display:none;margin-top:15px;">
+
  <h3 style="color:#e8b94f;">Your Pickup Location</h3>
 
+ <iframe
+  id="pickupMap"
+  width="100%"
+  height="300"
+  style="border:0;border-radius:12px;"
+  loading="lazy"
+  allowfullscreen>
+ </iframe>
+
+ <button type="button" onclick="openGoogleMaps()">
+  OPEN PICKUP IN GOOGLE MAPS
+ </button>
+
+ <hr style="border-color:#444;margin:20px 0;">
+
+ <h3 style="color:#e8b94f;">Your Drop Location</h3>
+
+ <button type="button" onclick="showDropMap()">
+  SHOW DROP LOCATION
+ </button>
+
+ <iframe
+  id="dropMap"
+  width="100%"
+  height="300"
+  style="border:0;border-radius:12px;margin-top:10px;"
+  loading="lazy"
+  allowfullscreen>
+ </iframe>
+
+ <button type="button" onclick="openDropGoogleMaps()">
+  OPEN DROP IN GOOGLE MAPS
+ </button>
+
+</div>
+ 
  <iframe
   id="pickupMap"
   width="100%"
@@ -436,7 +473,50 @@ function getGPS(){
  );
 }
 
+function getGPS(){
+
+ if(!navigator.geolocation){
+  alert("GPS not supported");
+  return;
+ }
+
+ document.getElementById("gpsStatus").textContent =
+  "Getting GPS location...";
+
+ navigator.geolocation.getCurrentPosition(
+
+  function(position){
+
+   pickupLat = position.coords.latitude;
+   pickupLng = position.coords.longitude;
+
+   document.getElementById("gpsStatus").textContent =
+    "GPS Location Captured Successfully";
+
+   const mapUrl =
+    `https://maps.google.com/maps?q=${pickupLat},${pickupLng}&z=16&output=embed`;
+
+   document.getElementById("pickupMap").src = mapUrl;
+
+   document.getElementById("mapSection").style.display = "block";
+
+  },
+
+  function(error){
+   alert("GPS Error: "+error.message);
+  },
+
+  {
+   enableHighAccuracy:true,
+   timeout:20000,
+   maximumAge:0
+  }
+
+ );
+}
+
 function openGoogleMaps(){
+
  if(pickupLat === null || pickupLng === null){
   alert("First capture GPS location");
   return;
@@ -447,15 +527,40 @@ function openGoogleMaps(){
 
  window.open(url,"_blank");
 }
- 
-  function(error){
-   alert("GPS Error: "+error.message);
-  },
-  {
-   enableHighAccuracy:true,
-   timeout:20000,
-   maximumAge:0
-  }
+
+function showDropMap(){
+
+ const address = document.getElementById("drop").value.trim();
+ const district = document.getElementById("dropDistrict").value;
+
+ if(!address || !district){
+  alert("Enter Drop Address and District");
+  return;
+ }
+
+ const destination = address + ", " + district + ", Tamil Nadu, India";
+
+ document.getElementById("dropMap").src =
+  "https://maps.google.com/maps?q=" +
+  encodeURIComponent(destination) + "&z=14&output=embed";
+}
+
+function openDropGoogleMaps(){
+
+ const address = document.getElementById("drop").value.trim();
+ const district = document.getElementById("dropDistrict").value;
+
+ if(!address || !district){
+  alert("Enter Drop Address and District");
+  return;
+ }
+
+ const destination = address + ", " + district + ", Tamil Nadu, India";
+
+ window.open(
+  "https://www.google.com/maps/search/?api=1&query=" +
+  encodeURIComponent(destination),
+  "_blank"
  );
 }
  
