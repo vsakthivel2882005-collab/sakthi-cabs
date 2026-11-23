@@ -164,12 +164,15 @@ small{color:#aaa}
 // 1. SUPABASE CONFIGURATION
 // =================================
 
-const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL";
-const SUPABASE_KEY = "YOUR_SUPABASE_PUBLISHABLE_KEY";
+const SUPABASE_URL =
+"https://kzcczciqaxawbesgtgcf.supabase.co";
+
+const SUPABASE_KEY =
+"sb_publishable_bKS7yIQ01_cOi972JQ7jQw_WjxhbKKb";
 
 const db = window.supabase.createClient(
- SUPABASE_URL,
- SUPABASE_KEY
+  SUPABASE_URL,
+  SUPABASE_KEY
 );
 
 let currentUser = null;
@@ -177,6 +180,7 @@ let vehicleData = [];
 let pickupLat = null;
 let pickupLng = null;
 let currentFare = 0;
+ 
 
 // =================================
 // 2. REGISTER
