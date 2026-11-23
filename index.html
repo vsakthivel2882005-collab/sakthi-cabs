@@ -375,28 +375,42 @@ function calculateFare(){
 
 function getGPS(){
  if(!navigator.geolocation){
-  alert("GPS not supported on this device");
+  alert("GPS is not supported");
   return;
  }
 
  document.getElementById("gpsStatus").textContent =
-  "Getting GPS location...";
+  "Getting your location...";
 
  navigator.geolocation.getCurrentPosition(
-  position=>{
+  function(position){
    pickupLat = position.coords.latitude;
    pickupLng = position.coords.longitude;
 
    document.getElementById("gpsStatus").textContent =
-    "GPS captured successfully";
+    "GPS Location Captured Successfully";
+
+   const mapUrl =
+    "https://www.google.com/maps/search/?api=1&query="
+    + pickupLat + "," + pickupLng;
+
+   if(confirm("GPS captured! Open location in Google Maps?")){
+    window.open(mapUrl,"_blank");
+   }
   },
-  error=>{
+  function(error){
+   alert("GPS Error: "+error.message);
    document.getElementById("gpsStatus").textContent =
-    "GPS error: "+error.message;
+    "GPS permission failed";
   },
-  {enableHighAccuracy:true,timeout:15000}
+  {
+   enableHighAccuracy:true,
+   timeout:20000,
+   maximumAge:0
+  }
  );
 }
+ 
 
 async function bookCab(){
  if(!currentUser){
