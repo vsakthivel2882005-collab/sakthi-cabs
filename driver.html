@@ -4,307 +4,296 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#080808">
-<title>SAKTHI CABS | Driver App</title>
+<meta name="theme-color" content="#090909">
+<title>SAKTHI CABS - Driver</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 *{box-sizing:border-box}
 body{
- margin:0;background:#080808;color:white;
- font-family:Arial,sans-serif
+ margin:0;background:#090909;color:#fff;
+ font-family:Arial,sans-serif;padding:16px
 }
-.hidden{display:none!important}
+.container{max-width:650px;margin:auto}
 header{
- background:#151515;padding:18px;
- border-bottom:1px solid #333;
- display:flex;justify-content:space-between;align-items:center
+ display:flex;justify-content:space-between;
+ align-items:center;padding:12px 0
 }
-.logo{color:#f5bd36;font-size:22px;font-weight:900}
-main{max-width:650px;margin:auto;padding:18px}
+.logo{font-size:23px;font-weight:bold;color:#f5c542}
 .card{
- background:#171717;border:1px solid #333;
- border-radius:15px;padding:17px;margin-bottom:15px
+ background:#171717;border:1px solid #303030;
+ border-radius:15px;padding:17px;margin:14px 0
 }
-h2{margin:5px 0 15px}
-h3{color:#f5bd36;margin-top:0}
-label{display:block;color:#aaa;font-size:13px;margin:12px 0 6px}
-input{
- width:100%;padding:14px;border-radius:9px;
- border:1px solid #444;background:#222;color:white
+h2{font-size:19px;margin:5px 0 14px}
+h3{margin:5px 0 12px}
+small,.muted{color:#aaa}
+input,select{
+ width:100%;padding:13px;margin:7px 0;
+ border-radius:9px;border:1px solid #444;
+ background:#222;color:white;font-size:15px
 }
 button{
- border:0;border-radius:10px;padding:14px;
- font-weight:bold;cursor:pointer
+ border:0;border-radius:9px;padding:13px 16px;
+ font-weight:bold;cursor:pointer;font-size:14px;
+ margin:5px 3px 5px 0
 }
-.primary{width:100%;background:#f5bd36;color:#111;margin-top:12px}
-.secondary{width:100%;background:#303030;color:white;margin-top:10px}
-.danger{width:100%;background:#8d2525;color:white;margin-top:10px}
-.online{color:#6ee7a0;font-weight:bold}
-.offline{color:#ff7777;font-weight:bold}
-.small{font-size:13px;color:#aaa}
-.ride{border:1px solid #444;padding:13px;border-radius:12px;margin-top:10px}
-.status{color:#f5bd36;font-weight:bold}
-#message{color:#f5bd36;white-space:pre-wrap;margin-top:12px}
+.primary{background:#f5c542;color:#111}
+.secondary{background:#333;color:#fff}
+.danger{background:#c83c3c;color:white}
+.success{background:#168b55;color:white}
+button:disabled{opacity:.4}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row button{flex:1}
+.stat{font-size:24px;color:#f5c542;font-weight:bold}
+.status{padding:7px 11px;border-radius:20px;background:#333;display:inline-block}
+.hidden{display:none!important}
+hr{border:0;border-top:1px solid #333;margin:15px 0}
+#message{padding:12px;border-radius:9px;background:#242424;margin:12px 0;display:none;white-space:pre-wrap}
+.booking{border:1px solid #444;padding:14px;border-radius:12px;margin:12px 0}
 </style>
 </head>
+
 <body>
+<div class="container">
 
 <header>
  <div class="logo">SAKTHI CABS</div>
- <button class="secondary" style="width:auto;margin:0" onclick="logout()">Logout</button>
+ <button class="secondary" onclick="logout()">Logout</button>
 </header>
 
-<main>
+<div id="message"></div>
 
-<!-- LOGIN -->
 <section id="loginSection" class="card">
  <h2>Driver Login</h2>
- <p class="small">Login using your registered driver account.</p>
-
- <label>Email</label>
- <input id="email" type="email" autocomplete="username">
-
- <label>Password</label>
- <input id="password" type="password" autocomplete="current-password">
-
- <button class="primary" id="loginButton" onclick="login()">LOGIN</button>
- <div id="message"></div>
+ <input id="email" type="email" placeholder="Gmail address">
+ <input id="password" type="password" placeholder="Password">
+ <button class="primary" style="width:100%" onclick="login()">LOGIN</button>
+ <p class="muted">Use your registered driver account.</p>
 </section>
 
-<!-- DRIVER DASHBOARD -->
 <section id="dashboard" class="hidden">
 
- <div class="card">
-  <h2 id="driverName">Driver Dashboard</h2>
-  <p id="approvalStatus" class="status">Checking approval...</p>
-  <p id="onlineStatus" class="offline">OFFLINE</p>
-
-  <button class="primary" id="onlineButton" onclick="toggleOnline()">
-   GO ONLINE
-  </button>
-
-  <button class="secondary" onclick="shareLocation()">
-   UPDATE GPS LOCATION
-  </button>
-
-  <p class="small" id="gpsStatus">GPS not started.</p>
+<div class="card">
+ <h2>Driver Dashboard</h2>
+ <h3 id="driverName">Driver</h3>
+ <p id="vehicleInfo" class="muted">Vehicle loading...</p>
+ <p id="districtInfo" class="muted">Tamil Nadu</p>
+ <p>Approval: <span id="approval" class="status">Checking</span></p>
+ <p>Availability: <span id="onlineStatus" class="status">Offline</span></p>
+ <div class="row">
+  <button class="success" id="onlineBtn" onclick="toggleOnline()">GO ONLINE</button>
+  <button class="secondary" onclick="refreshAll()">REFRESH</button>
  </div>
+ <p class="muted" id="gpsStatus">GPS: Waiting</p>
+</div>
 
- <div class="card">
-  <h3>My Vehicle</h3>
-  <p id="vehicleInfo">Loading...</p>
-  <p id="districtInfo" class="small"></p>
+<div class="card">
+ <h2>My Earnings</h2>
+ <div class="row">
+  <div style="flex:1">
+   <small>Today's Earnings</small>
+   <div class="stat" id="todayEarnings">₹0</div>
+  </div>
+  <div style="flex:1">
+   <small>Total Earnings</small>
+   <div class="stat" id="totalEarnings">₹0</div>
+  </div>
  </div>
+ <p class="muted">Based on completed bookings and recorded final fares.</p>
+</div>
 
- <div class="card">
-  <h3>Assigned Ride</h3>
-  <button class="secondary" onclick="loadRide()">REFRESH RIDES</button>
-  <div id="rideList">Loading rides...</div>
- </div>
+<div class="card">
+ <h2>Active Ride</h2>
+ <div id="activeBooking">No active ride.</div>
+</div>
 
- <div class="card">
-  <h3>Driver Instructions</h3>
-  <p class="small">
-   Keep GPS enabled while online. Accept only rides assigned to your account.
-   Contact support if your vehicle or approval details are incorrect.
-  </p>
- </div>
+<div class="card">
+ <h2>Ride History</h2>
+ <div id="history">Loading...</div>
+</div>
 
 </section>
-</main>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</div>
 
 <script>
-const SUPABASE_URL =
- "https://kzcczciqaxawbesgtgcf.supabase.co";
+const SUPABASE_URL = "https://kzcczciqaxawbesgtgcf.supabase.co";
+const SUPABASE_KEY = "sb_publishable_bKS7yIQ01_cOi972JQ7jQw_WjxhbKKb";
 
-const SUPABASE_KEY =
- "sb_publishable_bKS7yIQ01_cOi972JQ7jQw_WjxhbKKb";
+const db = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-let db;
-let user=null;
-let driver=null;
-let gpsWatch=null;
+let currentUser = null;
+let driver = null;
+let currentBooking = null;
+let gpsWatch = null;
+let refreshTimer = null;
 
-function message(text){
- document.getElementById("message").textContent=text;
+function msg(text){
+ const el=document.getElementById("message");
+ el.style.display="block";
+ el.textContent=text;
+}
+function clearMsg(){
+ document.getElementById("message").style.display="none";
+}
+function money(v){
+ return "₹"+Number(v||0).toFixed(2);
+}
+function escapeHTML(v){
+ return String(v??"").replace(/[&<>"']/g,c=>({
+ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+ }[c]));
 }
 
 async function login(){
+ clearMsg();
  const email=document.getElementById("email").value.trim();
  const password=document.getElementById("password").value;
- const button=document.getElementById("loginButton");
+ if(!email||!password){msg("Enter Gmail and password.");return;}
 
- if(!email||!password){
-  message("Enter email and password.");
-  return;
+ const {data,error}=await db.auth.signInWithPassword({email,password});
+ if(error){msg(error.message);return;}
+ currentUser=data.user;
+ await loadDashboard();
+}
+
+async function init(){
+ const {data}=await db.auth.getSession();
+ if(data.session){
+  currentUser=data.session.user;
+  await loadDashboard();
  }
+}
 
- button.disabled=true;
- button.textContent="PLEASE WAIT...";
-
+async function loadDashboard(){
  try{
-  const {data,error}=await db.auth.signInWithPassword({
-   email,password
-  });
+  document.getElementById("loginSection").classList.add("hidden");
+  document.getElementById("dashboard").classList.remove("hidden");
+
+  const {data,error}=await db.from("drivers")
+   .select("id,user_id,vehicle_id,vehicle_number,license_number,approved,is_online,is_available,state,district,city,service_type")
+   .eq("user_id",currentUser.id)
+   .maybeSingle();
 
   if(error)throw error;
+  if(!data){
+   msg("Driver registration not found. Please register as a driver.");
+   return;
+  }
 
-  user=data.user;
-  await startDriverApp();
+  driver=data;
+
+  if(!driver.approved){
+   document.getElementById("approval").textContent="Pending Admin Approval";
+   document.getElementById("onlineBtn").disabled=true;
+   msg("Your driver account is waiting for admin approval.");
+  }else{
+   document.getElementById("approval").textContent="Approved";
+   document.getElementById("onlineBtn").disabled=false;
+  }
+
+  document.getElementById("driverName").textContent=
+   currentUser.email||"Driver";
+
+  document.getElementById("districtInfo").textContent=
+   [driver.city,driver.district,driver.state].filter(Boolean).join(", ")||"Tamil Nadu";
+
+  if(driver.vehicle_id){
+   const {data:v}=await db.from("vehicles")
+    .select("name,base_fare,per_km")
+    .eq("id",driver.vehicle_id).maybeSingle();
+
+   document.getElementById("vehicleInfo").textContent=
+    v ? `${v.name} | Base ${money(v.base_fare)} | ${money(v.per_km)}/km`
+      : "Vehicle details unavailable";
+  }else{
+   document.getElementById("vehicleInfo").textContent="Vehicle not assigned";
+  }
+
+  updateOnlineUI();
+  await refreshAll();
+
+  if(refreshTimer)clearInterval(refreshTimer);
+  refreshTimer=setInterval(refreshAll,10000);
+
+  if(driver.approved && driver.is_online)startGPS();
 
  }catch(e){
-  message("Login error: "+e.message);
- }finally{
-  button.disabled=false;
-  button.textContent="LOGIN";
+  msg("Dashboard error: "+e.message);
  }
 }
 
-async function startDriverApp(){
- document.getElementById("loginSection").classList.add("hidden");
- document.getElementById("dashboard").classList.remove("hidden");
-
- const {data,error}=await db
-  .from("drivers")
-  .select(`
-   id,user_id,vehicle_id,vehicle_number,license_number,
-   approved,is_online,is_available,city,district,service_type
-  `)
-  .eq("user_id",user.id)
-  .maybeSingle();
-
- if(error)throw error;
-
- if(!data){
-  document.getElementById("approvalStatus").textContent=
-   "Driver registration not found. Contact admin.";
-  document.getElementById("onlineButton").disabled=true;
-  document.getElementById("rideList").textContent=
-   "No driver profile is linked to this account.";
-  return;
- }
-
- driver=data;
-
- if(!driver.approved){
-  document.getElementById("approvalStatus").textContent=
-   "PENDING ADMIN APPROVAL";
-  document.getElementById("onlineButton").disabled=true;
- }else{
-  document.getElementById("approvalStatus").textContent=
-   "DRIVER APPROVED";
-  document.getElementById("onlineButton").disabled=false;
- }
-
- updateOnlineDisplay();
-
- document.getElementById("districtInfo").textContent=
-  (driver.city||"")+
-  (driver.district?" | "+driver.district:"")+
-  " | Service: "+(driver.service_type||"not set");
-
- await loadVehicle();
- await loadRide();
-}
-
-async function loadVehicle(){
- const {data,error}=await db
-  .from("vehicles")
-  .select("name")
-  .eq("id",driver.vehicle_id)
-  .maybeSingle();
-
- if(error){
-  document.getElementById("vehicleInfo").textContent=error.message;
-  return;
- }
-
- document.getElementById("vehicleInfo").textContent=
-  (data?.name||"Vehicle")+
-  " | "+(driver.vehicle_number||"Number not added");
-}
-
-function updateOnlineDisplay(){
- const status=document.getElementById("onlineStatus");
- const button=document.getElementById("onlineButton");
-
- if(driver.is_online){
-  status.textContent="ONLINE";
-  status.className="online";
-  button.textContent="GO OFFLINE";
- }else{
-  status.textContent="OFFLINE";
-  status.className="offline";
-  button.textContent="GO ONLINE";
- }
+function updateOnlineUI(){
+ if(!driver)return;
+ document.getElementById("onlineStatus").textContent=
+  driver.is_online?"ONLINE":"OFFLINE";
+ document.getElementById("onlineBtn").textContent=
+  driver.is_online?"GO OFFLINE":"GO ONLINE";
 }
 
 async function toggleOnline(){
  if(!driver||!driver.approved){
-  alert("Admin approval required.");
+  msg("Admin approval is required.");
   return;
  }
+ clearMsg();
 
  const next=!driver.is_online;
 
- try{
-  const {error}=await db
-   .from("drivers")
-   .update({
-    is_online:next,
-    is_available:next
-   })
-   .eq("id",driver.id)
-   .eq("user_id",user.id);
+ const {data,error}=await db.from("drivers")
+  .update({is_online:next,is_available:next})
+  .eq("id",driver.id)
+  .select()
+  .maybeSingle();
 
-  if(error)throw error;
+ if(error){msg("Online update error: "+error.message);return;}
+ if(!data){msg("Driver status was not updated. Check RLS permissions.");return;}
 
-  driver.is_online=next;
-  driver.is_available=next;
+ driver=data;
+ updateOnlineUI();
 
-  updateOnlineDisplay();
-
-  if(next){
-   startGPS();
-   alert("You are ONLINE.");
-  }else{
-   stopGPS();
-   alert("You are OFFLINE.");
-  }
-
- }catch(e){
-  alert("Status update failed: "+e.message);
+ if(next){
+  startGPS();
+  msg("You are online. Waiting for ride requests.");
+ }else{
+  stopGPS();
+  msg("You are offline.");
  }
 }
 
 function startGPS(){
  if(!navigator.geolocation){
-  document.getElementById("gpsStatus").textContent=
-   "GPS not supported.";
+  msg("GPS is not supported by this browser.");
   return;
  }
+ if(gpsWatch!==null)return;
 
- stopGPS();
+ gpsWatch=navigator.geolocation.watchPosition(async position=>{
+  try{
+   const payload={
+    driver_id:driver.id,
+    latitude:position.coords.latitude,
+    longitude:position.coords.longitude,
+    updated_at:new Date().toISOString()
+   };
 
- gpsWatch=navigator.geolocation.watchPosition(
-  position=>{
-   saveLocation(
-    position.coords.latitude,
-    position.coords.longitude
-   );
-  },
-  error=>{
-   document.getElementById("gpsStatus").textContent=
-    "GPS error: "+error.message;
-  },
-  {
-   enableHighAccuracy:true,
-   maximumAge:5000,
-   timeout:20000
+   const {error}=await db.from("driver_locations")
+    .upsert(payload,{onConflict:"driver_id"});
+
+   if(error){
+    document.getElementById("gpsStatus").textContent=
+     "GPS save error: "+error.message;
+   }else{
+    document.getElementById("gpsStatus").textContent=
+     "GPS: Location updated";
+   }
+  }catch(e){
+   document.getElementById("gpsStatus").textContent=e.message;
   }
- );
+ },error=>{
+  document.getElementById("gpsStatus").textContent=
+   "GPS error: "+error.message;
+ },{enableHighAccuracy:true,maximumAge:5000,timeout:15000});
 }
 
 function stopGPS(){
@@ -312,215 +301,190 @@ function stopGPS(){
   navigator.geolocation.clearWatch(gpsWatch);
   gpsWatch=null;
  }
+ document.getElementById("gpsStatus").textContent="GPS: Offline";
 }
 
-async function shareLocation(){
- if(!navigator.geolocation){
-  alert("GPS not supported.");
-  return;
- }
-
- navigator.geolocation.getCurrentPosition(
-  async p=>{
-   await saveLocation(
-    p.coords.latitude,
-    p.coords.longitude
-   );
-  },
-  e=>alert("GPS error: "+e.message),
-  {enableHighAccuracy:true,timeout:15000}
- );
-}
-
-async function saveLocation(lat,lng){
+async function refreshAll(){
  if(!driver)return;
-
- try{
-  const {error}=await db
-   .from("driver_locations")
-   .upsert({
-    driver_id:driver.id,
-    latitude:lat,
-    longitude:lng,
-    updated_at:new Date().toISOString()
-   },{onConflict:"driver_id"});
-
-  if(error)throw error;
-
-  document.getElementById("gpsStatus").textContent=
-   "GPS updated: "+lat.toFixed(5)+", "+lng.toFixed(5);
-
- }catch(e){
-  document.getElementById("gpsStatus").textContent=
-   "Location update failed: "+e.message;
- }
+ await loadActiveBooking();
+ await loadEarnings();
+ await loadHistory();
 }
 
-async function loadRide(){
- const section=document.getElementById("rideList");
+async function loadActiveBooking(){
+ const el=document.getElementById("activeBooking");
 
- if(!driver){
-  section.textContent="Driver profile unavailable.";
-  return;
- }
-
- section.textContent="Loading assigned rides...";
-
- const {data,error}=await db
-  .from("bookings")
-  .select(`
-   id,pickup_address,drop_address,
-   estimated_fare,final_fare,status,
-   payment_method,trip_type,created_at
-  `)
+ const {data,error}=await db.from("bookings")
+  .select("*")
   .eq("driver_id",driver.id)
   .in("status",["pending","accepted","arrived","started"])
-  .order("created_at",{ascending:false});
+  .order("created_at",{ascending:false})
+  .limit(1);
 
  if(error){
-  section.textContent="Ride loading error: "+error.message;
+  el.textContent="Booking error: "+error.message;
   return;
  }
 
- section.innerHTML="";
+ currentBooking=data?.[0]||null;
 
- if(!data||!data.length){
-  section.textContent="No assigned active rides.";
+ if(!currentBooking){
+  el.innerHTML="<p>No active ride. Waiting for requests.</p>";
   return;
  }
 
- data.forEach(ride=>{
-  const card=document.createElement("div");
-  card.className="ride";
-
-  const title=document.createElement("b");
-  title.textContent="Ride: "+ride.id;
-
-  const status=document.createElement("p");
-  status.className="status";
-  status.textContent="Status: "+ride.status;
-
-  const route=document.createElement("p");
-  route.textContent=
-   "Pickup: "+ride.pickup_address+
-   "\nDrop: "+ride.drop_address;
-  route.style.whiteSpace="pre-line";
-
-  const fare=document.createElement("p");
-  fare.textContent="Estimated Fare: ₹"+ride.estimated_fare;
-
-  const payment=document.createElement("p");
-  payment.textContent=
-   "Payment: "+ride.payment_method+
-   " | "+ride.trip_type;
-
-  card.append(title,status,route,fare,payment);
-
-  if(ride.status==="pending"){
-   const accept=document.createElement("button");
-   accept.className="primary";
-   accept.textContent="ACCEPT RIDE";
-   accept.onclick=()=>acceptRide(ride.id);
-
-   const reject=document.createElement("button");
-   reject.className="danger";
-   reject.textContent="REJECT RIDE";
-   reject.onclick=()=>rejectRide(ride.id);
-
-   card.append(accept,reject);
-  }
-
-  if(ride.status==="accepted"){
-   const info=document.createElement("p");
-   info.className="small";
-   info.textContent="Contact customer through the approved contact process.";
-   card.append(info);
-  }
-
-  if(ride.status==="arrived"||ride.status==="started"){
-   const info=document.createElement("p");
-   info.className="small";
-   info.textContent=
-    "Ride is in progress. Further status controls will be enabled after secure OTP and trip functions are configured.";
-   card.append(info);
-  }
-
-  section.append(card);
- });
+ renderBooking(currentBooking);
 }
 
-async function acceptRide(bookingId){
+function renderBooking(b){
+ const el=document.getElementById("activeBooking");
+
+ let actions="";
+
+ if(b.status==="pending"){
+  actions=`
+   <button class="success" onclick="acceptRide('${b.id}')">ACCEPT RIDE</button>
+   <button class="danger" onclick="rejectRide('${b.id}')">REJECT</button>`;
+ }else if(b.status==="accepted"){
+  actions=`<button class="primary" onclick="arriveRide('${b.id}')">ARRIVED AT PICKUP</button>`;
+ }else if(b.status==="arrived"){
+  actions=`
+   <input id="rideOtp" inputmode="numeric" maxlength="4" placeholder="Enter customer OTP">
+   <button class="success" onclick="startRide('${b.id}')">VERIFY OTP & START</button>`;
+ }else if(b.status==="started"){
+  actions=`<button class="success" onclick="completeRide('${b.id}')">COMPLETE RIDE</button>`;
+ }
+
+ el.innerHTML=`
+  <div class="booking">
+   <p><b>Booking ID:</b> ${escapeHTML(b.id)}</p>
+   <p><b>Status:</b> <span class="status">${escapeHTML(b.status)}</span></p>
+   <hr>
+   <p><b>Pickup:</b><br>${escapeHTML(b.pickup_address)}</p>
+   <p><b>Drop:</b><br>${escapeHTML(b.drop_address)}</p>
+   <p><b>Trip:</b> ${escapeHTML(b.trip_type||"local")}</p>
+   <p><b>Estimated Fare:</b> ${money(b.estimated_fare)}</p>
+   <p><b>Payment:</b> ${escapeHTML(b.payment_method||"")}</p>
+   <div class="row">${actions}</div>
+  </div>`;
+}
+
+async function acceptRide(id){
  if(!confirm("Accept this ride?"))return;
-
- const {error}=await db.rpc(
-  "sakthi_accept_booking",
-  {p_booking_id:bookingId}
- );
-
- if(error){
-  alert("Accept failed: "+error.message);
-  return;
- }
-
- alert("Ride accepted!");
- await loadRide();
+ const {data,error}=await db.rpc("sakthi_accept_booking",{p_booking_id:id});
+ if(error){msg("Accept error: "+error.message);return;}
+ msg("Ride accepted: "+data);
+ await refreshAll();
 }
 
-async function rejectRide(bookingId){
- if(!confirm("Reject this ride? It may be offered to another driver."))return;
+async function rejectRide(id){
+ if(!confirm("Reject this ride?"))return;
+ const {data,error}=await db.rpc("sakthi_reject_booking",{p_booking_id:id});
+ if(error){msg("Reject error: "+error.message);return;}
+ msg("Reject result: "+JSON.stringify(data));
+ await refreshAll();
+}
 
- const {error}=await db.rpc(
-  "sakthi_reject_booking",
-  {p_booking_id:bookingId}
- );
+async function arriveRide(id){
+ if(!confirm("Confirm that you have reached pickup location?"))return;
+ const {data,error}=await db.rpc("sakthi_mark_arrived",{p_booking_id:id});
+ if(error){msg("Arrived error: "+error.message);return;}
+ msg("Pickup arrival recorded. Ask the customer for their OTP.");
+ await refreshAll();
+}
+
+async function startRide(id){
+ const otp=document.getElementById("rideOtp")?.value.trim();
+ if(!/^[0-9]{4}$/.test(otp||"")){
+  msg("Enter the customer's 4-digit OTP.");
+  return;
+ }
+ const {data,error}=await db.rpc("sakthi_start_ride",{
+  p_booking_id:id,
+  p_otp:otp
+ });
+ if(error){msg("OTP verification failed: "+error.message);return;}
+ msg("Ride started successfully.");
+ await refreshAll();
+}
+
+async function completeRide(id){
+ if(!confirm("Are you sure the ride is completed?"))return;
+ const {data,error}=await db.rpc("sakthi_complete_ride",{p_booking_id:id});
+ if(error){msg("Complete error: "+error.message);return;}
+ msg("Ride completed successfully.");
+ await refreshAll();
+}
+
+async function loadEarnings(){
+ const start=new Date();
+ start.setHours(0,0,0,0);
+
+ const {data,error}=await db.from("bookings")
+  .select("final_fare,estimated_fare,completed_at")
+  .eq("driver_id",driver.id)
+  .eq("status","completed");
 
  if(error){
-  alert("Reject failed: "+error.message);
+  document.getElementById("todayEarnings").textContent="Unavailable";
+  document.getElementById("totalEarnings").textContent="Unavailable";
   return;
  }
 
- alert("Ride rejected. Reassignment requested.");
- await loadRide();
+ let total=0,today=0;
+
+ (data||[]).forEach(b=>{
+  const amount=Number(b.final_fare??b.estimated_fare??0);
+  total+=amount;
+  if(b.completed_at&&new Date(b.completed_at)>=start)today+=amount;
+ });
+
+ document.getElementById("todayEarnings").textContent=money(today);
+ document.getElementById("totalEarnings").textContent=money(total);
+}
+
+async function loadHistory(){
+ const el=document.getElementById("history");
+
+ const {data,error}=await db.from("bookings")
+  .select("id,status,estimated_fare,final_fare,completed_at,created_at")
+  .eq("driver_id",driver.id)
+  .eq("status","completed")
+  .order("created_at",{ascending:false})
+  .limit(10);
+
+ if(error){el.textContent="History error: "+error.message;return;}
+
+ if(!data?.length){el.textContent="No completed rides yet.";return;}
+
+ el.innerHTML=data.map(b=>`
+  <div class="booking">
+   <small>${escapeHTML(b.id)}</small>
+   <p>Completed</p>
+   <b>${money(b.final_fare??b.estimated_fare)}</b>
+   <p class="muted">${b.completed_at?new Date(b.completed_at).toLocaleString():""}</p>
+  </div>
+ `).join("");
 }
 
 async function logout(){
- stopGPS();
-
- if(driver?.is_online){
+ if(driver&&driver.is_online){
   await db.from("drivers")
    .update({is_online:false,is_available:false})
-   .eq("id",driver.id)
-   .eq("user_id",user.id);
+   .eq("id",driver.id);
  }
-
+ stopGPS();
+ if(refreshTimer)clearInterval(refreshTimer);
  await db.auth.signOut();
- location.reload();
+ currentUser=null;
+ driver=null;
+ currentBooking=null;
+ document.getElementById("dashboard").classList.add("hidden");
+ document.getElementById("loginSection").classList.remove("hidden");
+ msg("Logged out.");
 }
 
-async function initialize(){
- try{
-  if(!window.supabase){
-   throw new Error("Supabase library failed to load.");
-  }
-
-  db=window.supabase.createClient(
-   SUPABASE_URL,SUPABASE_KEY
-  );
-
-  const {data,error}=await db.auth.getSession();
-  if(error)throw error;
-
-  if(data.session){
-   user=data.session.user;
-   await startDriverApp();
-  }
-
- }catch(e){
-  message("Initialization error: "+e.message);
- }
-}
-
-document.addEventListener("DOMContentLoaded",initialize);
+init();
 </script>
 </body>
 </html>
