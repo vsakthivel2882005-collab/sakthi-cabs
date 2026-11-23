@@ -31,7 +31,6 @@ button:disabled{opacity:.45}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
 .vehicle{background:#222;border:1px solid #444;border-radius:12px;padding:14px;text-align:center;cursor:pointer}
 .vehicle.active{border:2px solid #f5c542;background:#302a16}
-.vehicle strong{display:block;margin-bottom:5px}
 .row{display:flex;gap:8px;flex-wrap:wrap}
 .row button{flex:1}
 .muted{color:#aaa;font-size:13px}
@@ -41,6 +40,9 @@ button:disabled{opacity:.45}
 .result,.booking{padding:13px;background:#222;border:1px solid #444;border-radius:11px;margin:8px 0}
 .result button{float:right}
 .badge{background:#333;padding:6px 10px;border-radius:20px}
+.live-status{padding:12px;background:#222;border:1px solid #444;border-radius:10px;margin:10px 0}
+.live-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#777;margin-right:7px}
+.live-dot.on{background:#21c879}
 </style>
 </head>
 
@@ -127,6 +129,10 @@ button:disabled{opacity:.45}
  <div id="currentRide">No active booking.</div>
  <div id="driverOptions"></div>
  <div id="customerOTP"></div>
+
+ <div id="customerLiveControls" class="live-status">
+  <p class="muted">Live location sharing will be available after a driver accepts your booking.</p>
+ </div>
 </div>
 
 <div class="card">
@@ -152,15 +158,27 @@ let map,pickupMarker,dropMarker,routeLine;
 let activeBooking=null;
 let refreshInterval=null;
 
+/* CUSTOMER LIVE LOCATION VARIABLES */
+let customerGpsWatch=null;
+let sharingBookingId=null;
+let customerLocationSending=false;
+
 function message(t){
  const el=document.getElementById("message");
- el.style.display="block";el.textContent=t;
+ el.style.display="block";
+ el.textContent=t;
 }
-function clearMessage(){document.getElementById("message").style.display="none"}
+function clearMessage(){
+ document.getElementById("message").style.display="none";
+}
 function safe(v){
  return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
-function money(v){return "₹"+Number(v||0).toFixed(2)}
+function money(v){
+ return "₹"+Number(v||0).toFixed(2);
+}
+
+/* AUTH */
 
 async function login(){
  clearMessage();
@@ -169,7 +187,8 @@ async function login(){
   password:document.getElementById("password").value
  });
  if(error){message(error.message);return}
- user=data.user;await startApp();
+ user=data.user;
+ await startApp();
 }
 
 async function register(){
@@ -178,32 +197,55 @@ async function register(){
  const password=document.getElementById("password").value;
  const name=document.getElementById("fullname").value.trim();
  const phone=document.getElementById("phone").value.trim();
- if(!email||!password||!name||!phone){message("Fill all registration fields.");return}
- if(password.length<6){message("Password must contain at least 6 characters.");return}
+
+ if(!email||!password||!name||!phone){
+  message("Fill all registration fields.");
+  return;
+ }
+ if(password.length<6){
+  message("Password must contain at least 6 characters.");
+  return;
+ }
 
  const {data,error}=await db.auth.signUp({email,password});
  if(error){message(error.message);return}
- if(!data.user){message("Registration submitted. Check your email for confirmation.");return}
+ if(!data.user){
+  message("Registration submitted. Check your email for confirmation.");
+  return;
+ }
 
  const {error:profileError}=await db.from("profiles").upsert({
-  id:data.user.id,full_name:name,phone:phone
+  id:data.user.id,
+  full_name:name,
+  phone:phone
  });
- if(profileError){message("Account created. Profile error: "+profileError.message);return}
- if(!data.session){message("Registration successful. Confirm your email and then login.");return}
- user=data.user;await startApp();
+ if(profileError){
+  message("Account created. Profile error: "+profileError.message);
+  return;
+ }
+ if(!data.session){
+  message("Registration successful. Confirm your email and then login.");
+  return;
+ }
+ user=data.user;
+ await startApp();
 }
 
 async function startApp(){
  document.getElementById("auth").classList.add("hidden");
  document.getElementById("app").classList.remove("hidden");
  document.getElementById("logoutBtn").style.display="block";
+
  initializeMap();
  await loadVehicles();
  await loadActiveBooking();
  await loadHistory();
+
  if(refreshInterval)clearInterval(refreshInterval);
  refreshInterval=setInterval(loadActiveBooking,8000);
 }
+
+/* MAP */
 
 function initializeMap(){
  if(map)return;
@@ -214,11 +256,17 @@ function initializeMap(){
  setTimeout(()=>map.invalidateSize(),300);
 }
 
+/* VEHICLES */
+
 async function loadVehicles(){
  const {data,error}=await db.from("vehicles")
   .select("id,name,base_fare,per_km,is_active")
   .eq("is_active",true);
- if(error){message("Vehicle loading error: "+error.message);return}
+
+ if(error){
+  message("Vehicle loading error: "+error.message);
+  return;
+ }
  vehicleList=data||[];
  updateFare();
 }
@@ -230,32 +278,43 @@ function chooseVehicle(el){
  updateFare();
 }
 
+/* LOCATION SEARCH */
+
 async function searchLocation(type){
  const input=document.getElementById(type);
  const q=input.value.trim();
  if(q.length<3)return;
+
  const results=document.getElementById(type+"Results");
  results.textContent="Searching...";
+
  try{
   const url="https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&countrycodes=in&q="+encodeURIComponent(q+", Tamil Nadu, India");
   const response=await fetch(url);
   const data=await response.json();
+
   results.innerHTML="";
-  if(!data.length){results.textContent="Location not found. Try another spelling or PIN code.";return}
+  if(!data.length){
+   results.textContent="Location not found. Try another spelling or PIN code.";
+   return;
+  }
+
   data.forEach(place=>{
    const div=document.createElement("div");
    div.className="result";
-   const label=place.display_name;
    const button=document.createElement("button");
    button.className="primary";
    button.textContent="Select";
    button.onclick=()=>selectLocation(type,place);
+
    const span=document.createElement("span");
-   span.textContent=label;
+   span.textContent=place.display_name;
    div.append(span,button);
    results.appendChild(div);
   });
- }catch(e){results.textContent="Location search failed: "+e.message}
+ }catch(e){
+  results.textContent="Location search failed: "+e.message;
+ }
 }
 
 document.getElementById("pickup").addEventListener("input",()=>searchLocation("pickup"));
@@ -263,86 +322,162 @@ document.getElementById("drop").addEventListener("input",()=>searchLocation("dro
 
 function selectLocation(type,p){
  const point={
-  lat:Number(p.lat),lng:Number(p.lon),address:p.display_name
+  lat:Number(p.lat),
+  lng:Number(p.lon),
+  address:p.display_name
  };
+
  if(type==="pickup"){
   pickupPoint=point;
   document.getElementById("pickup").value=point.address;
   document.getElementById("pickupResults").innerHTML="";
+
   if(pickupMarker)map.removeLayer(pickupMarker);
-  pickupMarker=L.marker([point.lat,point.lng]).addTo(map).bindPopup("Pickup").openPopup();
+  pickupMarker=L.marker([point.lat,point.lng])
+   .addTo(map).bindPopup("Pickup").openPopup();
  }else{
   dropPoint=point;
   document.getElementById("drop").value=point.address;
   document.getElementById("dropResults").innerHTML="";
+
   if(dropMarker)map.removeLayer(dropMarker);
-  dropMarker=L.marker([point.lat,point.lng]).addTo(map).bindPopup("Drop");
+  dropMarker=L.marker([point.lat,point.lng])
+   .addTo(map).bindPopup("Drop");
  }
+
  if(pickupPoint&&dropPoint){
-  map.fitBounds([[pickupPoint.lat,pickupPoint.lng],[dropPoint.lat,dropPoint.lng]],{padding:[30,30]});
+  map.fitBounds(
+   [[pickupPoint.lat,pickupPoint.lng],[dropPoint.lat,dropPoint.lng]],
+   {padding:[30,30]}
+  );
   calculateRoute();
  }
 }
 
 function useGPS(){
- if(!navigator.geolocation){message("GPS not supported.");return}
+ if(!navigator.geolocation){
+  message("GPS not supported.");
+  return;
+ }
+
  navigator.geolocation.getCurrentPosition(async pos=>{
-  const lat=pos.coords.latitude,lng=pos.coords.longitude;
+  const lat=pos.coords.latitude;
+  const lng=pos.coords.longitude;
+
   try{
-   const res=await fetch("https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat="+lat+"&lon="+lng);
+   const res=await fetch(
+    "https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat="+lat+"&lon="+lng
+   );
    const p=await res.json();
-   selectLocation("pickup",{lat:String(lat),lon:String(lng),display_name:p.display_name||"Current GPS location"});
+   selectLocation("pickup",{
+    lat:String(lat),
+    lon:String(lng),
+    display_name:p.display_name||"Current GPS location"
+   });
   }catch(e){
-   selectLocation("pickup",{lat:String(lat),lon:String(lng),display_name:"Current GPS location"});
+   selectLocation("pickup",{
+    lat:String(lat),
+    lon:String(lng),
+    display_name:"Current GPS location"
+   });
   }
- },e=>message("GPS error: "+e.message),{enableHighAccuracy:true,timeout:15000});
+ },e=>message("GPS error: "+e.message),{
+  enableHighAccuracy:true,
+  timeout:15000
+ });
 }
+
+/* ROUTE AND FARE */
 
 async function calculateRoute(){
  try{
   const url=`https://router.project-osrm.org/route/v1/driving/${pickupPoint.lng},${pickupPoint.lat};${dropPoint.lng},${dropPoint.lat}?overview=full&geometries=geojson`;
   const response=await fetch(url);
   const result=await response.json();
-  if(result.code!=="Ok"||!result.routes?.length){message("Route not found.");return}
+
+  if(result.code!=="Ok"||!result.routes?.length){
+   message("Route not found.");
+   return;
+  }
+
   const route=result.routes[0];
   distanceKm=route.distance/1000;
+
   if(routeLine)map.removeLayer(routeLine);
-  routeLine=L.geoJSON(route.geometry,{style:{color:"#f5c542",weight:5}}).addTo(map);
+  routeLine=L.geoJSON(route.geometry,{
+   style:{color:"#f5c542",weight:5}
+  }).addTo(map);
+
   document.getElementById("routeInfo").textContent=
-   "Distance: "+distanceKm.toFixed(2)+" km | Approx. route duration: "+Math.ceil(route.duration/60)+" min";
+   "Distance: "+distanceKm.toFixed(2)+" km | Approx. route duration: "+
+   Math.ceil(route.duration/60)+" min";
+
   updateFare();
- }catch(e){message("Route error: "+e.message)}
+ }catch(e){
+  message("Route error: "+e.message);
+ }
 }
 
 function updateFare(){
  const v=vehicleList.find(x=>x.name===selectedVehicle);
+
  if(!v||!distanceKm){
   document.getElementById("fare").textContent="₹0.00";
+  document.getElementById("fareBreakdown").textContent=
+   "Fare will be calculated after route selection.";
+  estimatedFare=0;
   return;
  }
+
  estimatedFare=Number(v.base_fare)+distanceKm*Number(v.per_km);
+
  if(document.getElementById("tripType").value==="outstation"){
   estimatedFare*=1.15;
  }
+
  document.getElementById("fare").textContent=money(estimatedFare);
  document.getElementById("fareBreakdown").textContent=
   `${v.name}: Base ${money(v.base_fare)} + ${distanceKm.toFixed(2)} km × ${money(v.per_km)}/km. Outstation estimate includes a 15% provisional multiplier.`;
 }
 
+/* DISTRICT */
+
 function getDistrict(address){
  const parts=address.split(",").map(x=>x.trim());
- const districtHints=["Salem","Namakkal","Erode","Chennai","Coimbatore","Madurai","Trichy","Thanjavur","Tirunelveli","Vellore","Dharmapuri","Karur","Dindigul","Kanchipuram","Tiruppur","Villupuram","Cuddalore","Krishnagiri","Theni","Tenkasi","Sivaganga","Virudhunagar","Ramanathapuram","Pudukkottai","Nagapattinam","Mayiladuthurai","Tiruvannamalai","Ranipet","Tirupattur","Kallakurichi","Perambalur","Ariyalur","Nilgiris","Kanniyakumari","Thoothukudi","Tiruvallur","Chengalpattu"];
- return districtHints.find(d=>parts.some(p=>p.toLowerCase().includes(d.toLowerCase())))||null;
+ const districtHints=[
+  "Salem","Namakkal","Erode","Chennai","Coimbatore","Madurai","Trichy",
+  "Thanjavur","Tirunelveli","Vellore","Dharmapuri","Karur","Dindigul",
+  "Kanchipuram","Tiruppur","Villupuram","Cuddalore","Krishnagiri","Theni",
+  "Tenkasi","Sivaganga","Virudhunagar","Ramanathapuram","Pudukkottai",
+  "Nagapattinam","Mayiladuthurai","Tiruvannamalai","Ranipet","Tirupattur",
+  "Kallakurichi","Perambalur","Ariyalur","Nilgiris","Kanniyakumari",
+  "Thoothukudi","Tiruvallur","Chengalpattu"
+ ];
+ return districtHints.find(d=>
+  parts.some(p=>p.toLowerCase().includes(d.toLowerCase()))
+ )||null;
 }
+
+/* BOOKING */
 
 async function bookRide(){
  clearMessage();
+
  if(!user){message("Please login.");return}
- if(!pickupPoint||!dropPoint){message("Select pickup and drop locations.");return}
- if(!distanceKm||!estimatedFare){message("Route or fare is not ready.");return}
+ if(!pickupPoint||!dropPoint){
+  message("Select pickup and drop locations.");
+  return;
+ }
+ if(!distanceKm||!estimatedFare){
+  message("Route or fare is not ready.");
+  return;
+ }
 
  const vehicle=vehicleList.find(v=>v.name===selectedVehicle);
- if(!vehicle){message("Selected vehicle unavailable.");return}
+ if(!vehicle){
+  message("Selected vehicle unavailable.");
+  return;
+ }
 
  const pickupDistrict=getDistrict(pickupPoint.address);
  const dropDistrict=getDistrict(dropPoint.address);
@@ -368,8 +503,14 @@ async function bookRide(){
   drop_district:dropDistrict
  };
 
- const {data,error}=await db.from("bookings").insert(payload).select().single();
- if(error){message("Booking failed: "+error.message);return}
+ const {data,error}=await db.from("bookings")
+  .insert(payload).select().single();
+
+ if(error){
+  message("Booking failed: "+error.message);
+  return;
+ }
+
  activeBooking=data;
  message("Booking created successfully!");
  await showDriverOptions();
@@ -378,128 +519,153 @@ async function bookRide(){
 
 async function showDriverOptions(){
  if(!activeBooking)return;
+
  const el=document.getElementById("driverOptions");
  el.textContent="Finding available drivers...";
+
  const {data,error}=await db.rpc("sakthi_get_available_drivers",{
   p_booking_id:activeBooking.id
  });
- if(error){el.textContent="Driver search: "+error.message;return}
- if(!data?.length){
-  el.textContent="No available drivers found yet. Automatic matching may still be pending.";
+
+ if(error){
+  el.textContent="Driver search: "+error.message;
   return;
  }
+
+ if(!data?.length){
+  el.textContent="No available drivers found yet. Please wait or refresh.";
+  return;
+ }
+
  el.innerHTML="<h3>Available Drivers</h3>";
+
  data.forEach(d=>{
   const div=document.createElement("div");
   div.className="result";
+
   const info=document.createElement("span");
-  info.textContent=`${d.driver_name||"Driver"} | ${d.vehicle_name||""} | ${d.vehicle_number||""} | ${d.distance_km??"?"} km`;
+  info.textContent=
+   `${d.driver_name||"Driver"} | ${d.vehicle_name||""} | ${d.vehicle_number||""} | ${d.distance_km??"?"} km`;
+
   const btn=document.createElement("button");
   btn.className="primary";
   btn.textContent="Select Driver";
   btn.onclick=()=>selectDriver(d.driver_id);
-  div.append(info,btn);el.append(div);
+
+  div.append(info,btn);
+  el.append(div);
  });
 }
 
 async function selectDriver(id){
  if(!activeBooking)return;
+
  const {data,error}=await db.rpc("sakthi_select_driver",{
-  p_booking_id:activeBooking.id,p_driver_id:id
+  p_booking_id:activeBooking.id,
+  p_driver_id:id
  });
- if(error){message("Driver selection failed: "+error.message);return}
+
+ if(error){
+  message("Driver selection failed: "+error.message);
+  return;
+ }
+
  message("Driver selected successfully.");
  await loadActiveBooking();
 }
 
-async function loadActiveBooking(){
- if(!user)return;
- const {data,error}=await db.from("bookings")
-  .select("*")
-  .eq("customer_id",user.id)
-  .in("status",["pending","accepted","arrived","started"])
-  .order("created_at",{ascending:false}).limit(1);
+/* CUSTOMER LIVE LOCATION SHARING */
 
- if(error){document.getElementById("currentRide").textContent=error.message;return}
- activeBooking=data?.[0]||null;
- const el=document.getElementById("currentRide");
+function canShareLocation(){
+ return !!activeBooking &&
+  ["accepted","arrived","started"].includes(activeBooking.status);
+}
+
+function renderCustomerLiveControls(){
+ const el=document.getElementById("customerLiveControls");
+ if(!el)return;
+
  if(!activeBooking){
-  el.textContent="No active booking.";
-  document.getElementById("customerOTP").innerHTML="";
-  document.getElementById("driverOptions").innerHTML="";
+  el.innerHTML=
+   '<p class="muted">No active ride. Live location sharing is unavailable.</p>';
   return;
  }
- el.innerHTML=`
-  <div class="booking">
-   <p><b>Status:</b> <span class="badge">${safe(activeBooking.status)}</span></p>
-   <p><b>Pickup:</b> ${safe(activeBooking.pickup_address)}</p>
-   <p><b>Drop:</b> ${safe(activeBooking.drop_address)}</p>
-   <p><b>Fare:</b> ${money(activeBooking.estimated_fare)}</p>
-   <p><b>Payment:</b> ${safe(activeBooking.payment_method)}</p>
-   ${activeBooking.status==="pending"?'<button class="danger" onclick="cancelBooking()">CANCEL BOOKING</button>':""}
-  </div>`;
 
- if(activeBooking.status==="arrived"){
-  const {data:otp,error:otpError}=await db.rpc("sakthi_customer_get_ride_otp",{
-   p_booking_id:activeBooking.id
-  });
-  document.getElementById("customerOTP").innerHTML=otpError?
-   "OTP unavailable: "+safe(otpError.message):
-   `<div class="card"><h2>Your Ride OTP</h2><div class="price">${safe(otp)}</div><p class="muted">Share this OTP with your driver only when you are ready to start the ride.</p></div>`;
- }else{
-  document.getElementById("customerOTP").innerHTML="";
+ if(!canShareLocation()){
+  el.innerHTML=
+   '<p class="muted">Live location sharing becomes available after your driver accepts the booking.</p>';
+  return;
  }
 
- if(activeBooking.status==="pending")await showDriverOptions();
+ if(sharingBookingId===activeBooking.id && customerGpsWatch!==null){
+  el.innerHTML=`
+   <h3>Customer Live Location</h3>
+   <p><span class="live-dot on"></span><b>Location sharing is ON</b></p>
+   <p class="muted">Your assigned driver can view your latest location while this ride is active.</p>
+   <button class="danger" style="width:100%" onclick="stopCustomerLiveSharing()">STOP SHARING</button>
+  `;
+ }else{
+  el.innerHTML=`
+   <h3>Share Live Location with Driver</h3>
+   <p class="muted">Your GPS location will be shared only with the driver assigned to this booking. Sharing starts only when you press the button below.</p>
+   <button class="success" style="width:100%" onclick="startCustomerLiveSharing()">START LIVE LOCATION</button>
+  `;
+ }
 }
 
-async function cancelBooking(){
- if(!activeBooking||activeBooking.status!=="pending")return;
- if(!confirm("Cancel this booking?"))return;
- const {error}=await db.from("bookings")
-  .update({status:"cancelled"})
-  .eq("id",activeBooking.id)
-  .eq("customer_id",user.id)
-  .eq("status","pending");
- if(error){message("Cancel error: "+error.message);return}
- message("Booking cancelled.");
- await loadActiveBooking();
+async function sendCustomerLocation(position,bookingId){
+ if(!user || !bookingId || customerLocationSending)return;
+
+ customerLocationSending=true;
+
+ const payload={
+  booking_id:bookingId,
+  customer_id:user.id,
+  latitude:position.coords.latitude,
+  longitude:position.coords.longitude,
+  updated_at:new Date().toISOString()
+ };
+
+ const {error}=await db.from("customer_live_locations")
+  .upsert(payload,{onConflict:"booking_id"});
+
+ customerLocationSending=false;
+
+ if(error){
+  console.error("Customer location update failed:",error);
+  const el=document.getElementById("customerLiveControls");
+  if(el){
+   el.innerHTML=`
+    <h3>Location Sharing Error</h3>
+    <p class="muted">${safe(error.message)}</p>
+    <button class="danger" onclick="stopCustomerLiveSharing()">STOP SHARING</button>
+   `;
+  }
+  return;
+ }
+
+ const el=document.getElementById("customerLiveControls");
+ if(el && sharingBookingId===bookingId){
+  el.innerHTML=`
+   <h3>Customer Live Location</h3>
+   <p><span class="live-dot on"></span><b>Location sharing is ON</b></p>
+   <p class="muted">Last location update: ${new Date().toLocaleTimeString()}</p>
+   <p class="muted">Your assigned driver can view your latest location.</p>
+   <button class="danger" style="width:100%" onclick="stopCustomerLiveSharing()">STOP SHARING</button>
+  `;
+ }
 }
 
-async function loadHistory(){
- if(!user)return;
- const {data,error}=await db.from("bookings")
-  .select("id,status,pickup_address,drop_address,estimated_fare,final_fare,created_at")
-  .eq("customer_id",user.id)
-  .order("created_at",{ascending:false}).limit(20);
- const el=document.getElementById("history");
- if(error){el.textContent=error.message;return}
- if(!data?.length){el.textContent="No bookings yet.";return}
- el.innerHTML=data.map(b=>`
-  <div class="booking">
-   <b>${safe(b.status)}</b>
-   <p>${safe(b.pickup_address)}</p>
-   <p>↓ ${safe(b.drop_address)}</p>
-   <p>${money(b.final_fare??b.estimated_fare)}</p>
-   <small>${new Date(b.created_at).toLocaleString()}</small>
-  </div>`).join("");
-}
+function startCustomerLiveSharing(){
+ if(!user){
+  message("Please login first.");
+  return;
+ }
 
-async function logout(){
- if(refreshInterval)clearInterval(refreshInterval);
- await db.auth.signOut();
- user=null;activeBooking=null;
- document.getElementById("app").classList.add("hidden");
- document.getElementById("auth").classList.remove("hidden");
- document.getElementById("logoutBtn").style.display="none";
- message("Logged out successfully.");
-}
+ if(!activeBooking || !canShareLocation()){
+  message("Live location is available only after a driver accepts your booking.");
+  return;
+ }
 
-async function init(){
- const {data}=await db.auth.getSession();
- if(data.session){user=data.session.user;await startApp()}
-}
-init();
-</script>
-</body>
-</html>
+ if(!navigator.geolocation){
+  message("GPS is not supported on this
