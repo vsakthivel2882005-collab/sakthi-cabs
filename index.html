@@ -119,8 +119,31 @@ button:disabled{opacity:.5;cursor:not-allowed}
  <label>Drop District</label>
  <select id="dropDistrict"></select>
 
- <button class="secondary" onclick="getGPS()">USE MY CURRENT LOCATION</button>
- <p class="small" id="gpsStatus">Pickup GPS not captured</p>
+<button class="secondary" onclick="getGPS()">
+ USE MY CURRENT LOCATION
+</button>
+
+<p class="small" id="gpsStatus">
+ Pickup GPS not captured
+</p>
+
+<div id="mapSection" style="display:none;margin-top:15px;">
+ <h3 style="color:#e8b94f;">Your Pickup Location</h3>
+
+ <iframe
+  id="pickupMap"
+  width="100%"
+  height="300"
+  style="border:0;border-radius:12px;"
+  loading="lazy"
+  allowfullscreen>
+ </iframe>
+
+ <button type="button" onclick="openGoogleMaps()">
+  OPEN IN GOOGLE MAPS
+ </button>
+</div>
+ 
 
  <label>Approximate Distance (KM)</label>
  <input id="distance" type="number" min="1" placeholder="Enter distance">
@@ -375,6 +398,8 @@ function calculateFare(){
 
 
 function getGPS(){
+
+function getGPS(){
  if(!navigator.geolocation){
   alert("GPS not supported");
   return;
@@ -393,12 +418,36 @@ function getGPS(){
     "GPS Location Captured Successfully";
 
    const mapUrl =
-    `https://www.google.com/maps?q=${pickupLat},${pickupLng}`;
+    `https://maps.google.com/maps?q=${pickupLat},${pickupLng}&z=16&output=embed`;
 
-   // Open Google Maps directly
-   window.location.href = mapUrl;
+   document.getElementById("pickupMap").src = mapUrl;
+
+   document.getElementById("mapSection").style.display = "block";
 
   },
+  function(error){
+   alert("GPS Error: "+error.message);
+  },
+  {
+   enableHighAccuracy:true,
+   timeout:20000,
+   maximumAge:0
+  }
+ );
+}
+
+function openGoogleMaps(){
+ if(pickupLat === null || pickupLng === null){
+  alert("First capture GPS location");
+  return;
+ }
+
+ const url =
+  `https://www.google.com/maps?q=${pickupLat},${pickupLng}`;
+
+ window.open(url,"_blank");
+}
+ 
   function(error){
    alert("GPS Error: "+error.message);
   },
