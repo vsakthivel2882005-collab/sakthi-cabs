@@ -373,17 +373,19 @@ function calculateFare(){
   "₹"+fareEstimate.toFixed(2);
 }
 
+
 function getGPS(){
  if(!navigator.geolocation){
-  alert("GPS is not supported");
+  alert("GPS not supported");
   return;
  }
 
  document.getElementById("gpsStatus").textContent =
-  "Getting your location...";
+  "Getting GPS location...";
 
  navigator.geolocation.getCurrentPosition(
   function(position){
+
    pickupLat = position.coords.latitude;
    pickupLng = position.coords.longitude;
 
@@ -391,17 +393,14 @@ function getGPS(){
     "GPS Location Captured Successfully";
 
    const mapUrl =
-    "https://www.google.com/maps/search/?api=1&query="
-    + pickupLat + "," + pickupLng;
+    `https://www.google.com/maps?q=${pickupLat},${pickupLng}`;
 
-   if(confirm("GPS captured! Open location in Google Maps?")){
-    window.open(mapUrl,"_blank");
-   }
+   // Open Google Maps directly
+   window.location.href = mapUrl;
+
   },
   function(error){
    alert("GPS Error: "+error.message);
-   document.getElementById("gpsStatus").textContent =
-    "GPS permission failed";
   },
   {
    enableHighAccuracy:true,
@@ -410,6 +409,7 @@ function getGPS(){
   }
  );
 }
+ 
  
 
 async function bookCab(){
