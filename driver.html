@@ -1,0 +1,289 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#080808">
+<title>SAKTHI CABS | Driver Portal</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#080808;color:white;
+ font-family:Arial,sans-serif;padding:20px
+}
+.container{max-width:600px;margin:auto}
+.card{
+ background:#181818;border:1px solid #383838;
+ border-radius:18px;padding:20px;margin:18px 0
+}
+h1,h2{color:#e9bd50}
+input{
+ width:100%;padding:15px;margin:9px 0;
+ border-radius:9px;border:1px solid #555;
+ background:#252525;color:white;font-size:16px
+}
+button{
+ width:100%;padding:15px;margin-top:10px;
+ border:0;border-radius:10px;
+ background:#e9bd50;color:#111;
+ font-size:16px;font-weight:bold
+}
+.booking{
+ background:#292929;padding:16px;
+ border-radius:12px;margin:14px 0
+}
+.small{color:#bbb;font-size:14px}
+#message{color:#e9bd50;overflow-wrap:anywhere}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>🚕 SAKTHI CABS</h1>
+<p class="small">Driver Partner Portal</p>
+
+<div class="card" id="loginBox">
+<h2>Driver Login</h2>
+<input id="email" type="email" placeholder="Driver Email">
+<input id="password" type="password" placeholder="Password">
+<button onclick="login()">LOGIN</button>
+</div>
+
+<div class="card" id="dashboard" hidden>
+<h2>Driver Dashboard</h2>
+<p id="driverName">Loading...</p>
+<p id="driverVehicle"></p>
+<p id="driverStatus"></p>
+
+<button onclick="toggleOnline()" id="onlineBtn">
+Go Online
+</button>
+
+<button onclick="loadBookings()">Refresh Bookings</button>
+
+<h2>Available Bookings</h2>
+<div id="bookings">Loading bookings...</div>
+
+<button onclick="logout()">LOGOUT</button>
+</div>
+
+<p id="message"></p>
+</div>
+
+<script>
+const SUPABASE_URL =
+"https://kzcczciqaxawbesgtgcf.supabase.co";
+
+const SUPABASE_KEY =
+"sb_publishable_bKS7yIQ01_cOi972JQ7jQw_WjxhbKKb";
+
+const db = window.supabase.createClient(
+SUPABASE_URL,
+SUPABASE_KEY
+);
+
+let currentDriver = null;
+
+function showMessage(message){
+ document.getElementById("message").textContent = message;
+}
+
+async function login(){
+ const email = document.getElementById("email").value.trim();
+ const password = document.getElementById("password").value;
+
+ if(!email || !password){
+  showMessage("Enter email and password");
+  return;
+ }
+
+ showMessage("Logging in...");
+
+ const {data,error} = await db.auth.signInWithPassword({
+  email,password
+ });
+
+ if(error){
+  showMessage(error.message);
+  return;
+ }
+
+ await initializeDriver();
+}
+
+async function initializeDriver(){
+ const {data:{user}} = await db.auth.getUser();
+
+ if(!user){
+  showMessage("Please login");
+  return;
+ }
+
+ const {data:driver,error} = await db
+  .from("drivers")
+  .select("id,user_id,vehicle_number,approved,is_online")
+  .eq("user_id",user.id)
+  .maybeSingle();
+
+ if(error){
+  showMessage(error.message);
+  return;
+ }
+
+ if(!driver){
+  showMessage("Driver profile not found. Contact admin.");
+  return;
+ }
+
+ if(!driver.approved){
+  showMessage("Your driver account is waiting for admin approval.");
+  return;
+ }
+
+ currentDriver = driver;
+
+ document.getElementById("loginBox").hidden = true;
+ document.getElementById("dashboard").hidden = false;
+
+ document.getElementById("driverName").textContent =
+ "Driver ID: " + driver.id;
+
+ document.getElementById("driverVehicle").textContent =
+ "Vehicle Number: " + (driver.vehicle_number || "Not added");
+
+ updateOnlineButton();
+ await loadBookings();
+}
+
+function updateOnlineButton(){
+ document.getElementById("onlineBtn").textContent =
+ currentDriver.is_online ? "GO OFFLINE" : "GO ONLINE";
+
+ document.getElementById("driverStatus").textContent =
+ "Status: " + (currentDriver.is_online ? "ONLINE" : "OFFLINE");
+}
+
+async function toggleOnline(){
+ if(!currentDriver) return;
+
+ const newStatus = !currentDriver.is_online;
+
+ const {error} = await db
+  .from("drivers")
+  .update({is_online:newStatus})
+  .eq("id",currentDriver.id);
+
+ if(error){
+  showMessage(error.message);
+  return;
+ }
+
+ currentDriver.is_online = newStatus;
+ updateOnlineButton();
+ showMessage("Driver status updated");
+}
+
+async function loadBookings(){
+ if(!currentDriver) return;
+
+ const box = document.getElementById("bookings");
+ box.textContent = "Loading...";
+
+ const {data,error} = await db
+  .from("bookings")
+  .select("id,pickup_address,drop_address,vehicle_id,estimated_fare,status")
+  .eq("status","pending")
+  .is("driver_id",null)
+  .order("created_at",{ascending:false});
+
+ if(error){
+  box.textContent = error.message;
+  return;
+ }
+
+ if(!data || data.length === 0){
+  box.textContent = "No available bookings right now.";
+  return;
+ }
+
+ box.innerHTML = "";
+
+ data.forEach(booking=>{
+  const item = document.createElement("div");
+  item.className = "booking";
+
+  const title = document.createElement("h3");
+  title.textContent = "Booking: " + booking.id.slice(0,8);
+
+  const pickup = document.createElement("p");
+  pickup.textContent = "Pickup: " + booking.pickup_address;
+
+  const drop = document.createElement("p");
+  drop.textContent = "Drop: " + booking.drop_address;
+
+  const fare = document.createElement("p");
+  fare.textContent = "Estimated Fare: ₹" +
+   Number(booking.estimated_fare || 0).toFixed(2);
+
+  const status = document.createElement("p");
+  status.textContent = "Status: " + booking.status;
+
+  const accept = document.createElement("button");
+  accept.textContent = "ACCEPT BOOKING";
+  accept.onclick = ()=>acceptBooking(booking.id);
+
+  item.append(title,pickup,drop,fare,status,accept);
+  box.appendChild(item);
+ });
+}
+
+async function acceptBooking(bookingId){
+ if(!currentDriver.is_online){
+  showMessage("Please go online before accepting a booking.");
+  return;
+ }
+
+ showMessage("Accepting booking...");
+
+ const {error} = await db.rpc("accept_booking",{
+  p_booking_id:bookingId
+ });
+
+ if(error){
+  showMessage(error.message);
+  await loadBookings();
+  return;
+ }
+
+ showMessage("Booking accepted successfully!");
+ await loadBookings();
+}
+
+async function logout(){
+ await db.auth.signOut();
+ currentDriver = null;
+
+ document.getElementById("dashboard").hidden = true;
+ document.getElementById("loginBox").hidden = false;
+
+ showMessage("Logged out");
+}
+
+async function checkSession(){
+ const {data:{session}} = await db.auth.getSession();
+
+ if(session){
+  await initializeDriver();
+ }
+}
+
+checkSession();
+</script>
+</body>
+  </html>
+  
