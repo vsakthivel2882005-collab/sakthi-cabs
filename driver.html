@@ -5,9 +5,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#090909">
-<title>SAKTHI CABS - Driver</title>
+<title>SAKTHI CABS - Driver PRO</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<link rel="stylesheet"
+ href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
 *{box-sizing:border-box}
@@ -42,15 +47,59 @@ button{
 .secondary{background:#333;color:#fff}
 .danger{background:#c83c3c;color:white}
 .success{background:#168b55;color:white}
+.nav-btn{background:#245b9b;color:white}
 button:disabled{opacity:.4}
 .row{display:flex;gap:8px;flex-wrap:wrap}
 .row button{flex:1}
 .stat{font-size:24px;color:#f5c542;font-weight:bold}
-.status{padding:7px 11px;border-radius:20px;background:#333;display:inline-block}
+.status{
+ padding:7px 11px;border-radius:20px;
+ background:#333;display:inline-block
+}
 .hidden{display:none!important}
 hr{border:0;border-top:1px solid #333;margin:15px 0}
-#message{padding:12px;border-radius:9px;background:#242424;margin:12px 0;display:none;white-space:pre-wrap}
-.booking{border:1px solid #444;padding:14px;border-radius:12px;margin:12px 0}
+#message{
+ padding:12px;border-radius:9px;background:#242424;
+ margin:12px 0;display:none;white-space:pre-wrap
+}
+.booking{
+ border:1px solid #444;padding:14px;
+ border-radius:12px;margin:12px 0
+}
+.pro-grid{
+ display:grid;
+ grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:10px
+}
+.pro-stat{
+ background:#222;border:1px solid #393939;
+ border-radius:12px;padding:14px
+}
+.pro-stat small{color:#aaa}
+.pro-stat strong{
+ display:block;color:#f5c542;
+ font-size:22px;margin-top:8px
+}
+.action-grid{
+ display:grid;
+ grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:9px
+}
+.action-grid button{width:100%;margin:0}
+#customerLiveMap{
+ height:320px;width:100%;
+ border-radius:12px;z-index:1;
+ background:#222
+}
+.map-status{
+ padding:10px;background:#222;
+ border-radius:9px;margin:10px 0;
+ font-size:13px;color:#ddd
+}
+@media(max-width:380px){
+ body{padding:10px}
+ .pro-grid,.action-grid{grid-template-columns:1fr 1fr}
+}
 </style>
 </head>
 
@@ -75,16 +124,19 @@ hr{border:0;border-top:1px solid #333;margin:15px 0}
 <section id="dashboard" class="hidden">
 
 <div class="card">
- <h2>Driver Dashboard</h2>
+ <h2>Driver Dashboard PRO</h2>
  <h3 id="driverName">Driver</h3>
  <p id="vehicleInfo" class="muted">Vehicle loading...</p>
  <p id="districtInfo" class="muted">Tamil Nadu</p>
+
  <p>Approval: <span id="approval" class="status">Checking</span></p>
  <p>Availability: <span id="onlineStatus" class="status">Offline</span></p>
+
  <div class="row">
   <button class="success" id="onlineBtn" onclick="toggleOnline()">GO ONLINE</button>
   <button class="secondary" onclick="refreshAll()">REFRESH</button>
  </div>
+
  <p class="muted" id="gpsStatus">GPS: Waiting</p>
 </div>
 
@@ -104,8 +156,54 @@ hr{border:0;border-top:1px solid #333;margin:15px 0}
 </div>
 
 <div class="card">
+ <h2>Driver Performance</h2>
+ <div class="pro-grid">
+  <div class="pro-stat">
+   <small>Completed Rides</small>
+   <strong id="completedCount">0</strong>
+  </div>
+  <div class="pro-stat">
+   <small>Today's Rides</small>
+   <strong id="todayCount">0</strong>
+  </div>
+  <div class="pro-stat">
+   <small>Weekly Earnings</small>
+   <strong id="weeklyEarnings">₹0</strong>
+  </div>
+  <div class="pro-stat">
+   <small>Monthly Earnings</small>
+   <strong id="monthlyEarnings">₹0</strong>
+  </div>
+ </div>
+</div>
+
+<div class="card">
+ <h2>Quick Actions</h2>
+ <div class="action-grid">
+  <button class="nav-btn" onclick="openNavigation()">NAVIGATION</button>
+  <button class="secondary" onclick="shareCurrentTrip()">SHARE TRIP</button>
+  <button class="danger" onclick="emergencyCall()">SOS / 112</button>
+  <button class="primary" onclick="refreshAll()">SYNC DATA</button>
+ </div>
+</div>
+
+<div class="card">
  <h2>Active Ride</h2>
  <div id="activeBooking">No active ride.</div>
+</div>
+
+<div class="card">
+ <h2>Customer Live Location</h2>
+ <p id="customerLocationStatus" class="map-status">
+  Waiting for an assigned ride...
+ </p>
+
+ <div id="customerLiveMap"></div>
+
+ <button class="primary" style="width:100%"
+ onclick="navigateToCustomer()">
+ NAVIGATE TO CUSTOMER
+ </button>
 </div>
 
 <div class="card">
@@ -117,10 +215,15 @@ hr{border:0;border-top:1px solid #333;margin:15px 0}
 </div>
 
 <script>
-const SUPABASE_URL = "https://kzcczciqaxawbesgtgcf.supabase.co";
-const SUPABASE_KEY = "sb_publishable_bKS7yIQ01_cOi972JQ7jQw_WjxhbKKb";
+const SUPABASE_URL =
+ "https://kzcczciqaxawbesgtgcf.supabase.co";
 
-const db = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const SUPABASE_KEY =
+ "sb_publishable_bKS7yIQ01_cOi972JQ7jQw_WjxhbKKb";
+
+const db = window.supabase.createClient(
+ SUPABASE_URL,SUPABASE_KEY
+);
 
 let currentUser = null;
 let driver = null;
@@ -128,37 +231,66 @@ let currentBooking = null;
 let gpsWatch = null;
 let refreshTimer = null;
 
+let customerLiveMap = null;
+let customerLiveMarker = null;
+let customerLiveTimer = null;
+let latestCustomerPosition = null;
+let customerMapBookingId = null;
+let isRefreshing = false;
+
 function msg(text){
  const el=document.getElementById("message");
  el.style.display="block";
  el.textContent=text;
 }
+
 function clearMsg(){
  document.getElementById("message").style.display="none";
 }
+
 function money(v){
  return "₹"+Number(v||0).toFixed(2);
 }
+
 function escapeHTML(v){
  return String(v??"").replace(/[&<>"']/g,c=>({
- "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  "&":"&amp;","<":"&lt;",">":"&gt;",
+  '"':"&quot;","'":"&#39;"
  }[c]));
 }
 
 async function login(){
  clearMsg();
+
  const email=document.getElementById("email").value.trim();
  const password=document.getElementById("password").value;
- if(!email||!password){msg("Enter Gmail and password.");return;}
 
- const {data,error}=await db.auth.signInWithPassword({email,password});
- if(error){msg(error.message);return;}
+ if(!email||!password){
+  msg("Enter Gmail and password.");
+  return;
+ }
+
+ const {data,error}=await db.auth.signInWithPassword({
+  email,password
+ });
+
+ if(error){
+  msg(error.message);
+  return;
+ }
+
  currentUser=data.user;
  await loadDashboard();
 }
 
 async function init(){
- const {data}=await db.auth.getSession();
+ const {data,error}=await db.auth.getSession();
+
+ if(error){
+  msg(error.message);
+  return;
+ }
+
  if(data.session){
   currentUser=data.session.user;
   await loadDashboard();
@@ -171,11 +303,14 @@ async function loadDashboard(){
   document.getElementById("dashboard").classList.remove("hidden");
 
   const {data,error}=await db.from("drivers")
-   .select("id,user_id,vehicle_id,vehicle_number,license_number,approved,is_online,is_available,state,district,city,service_type")
+   .select(
+    "id,user_id,vehicle_id,vehicle_number,license_number,approved,is_online,is_available,state,district,city,service_type"
+   )
    .eq("user_id",currentUser.id)
    .maybeSingle();
 
   if(error)throw error;
+
   if(!data){
    msg("Driver registration not found. Please register as a driver.");
    return;
@@ -184,7 +319,8 @@ async function loadDashboard(){
   driver=data;
 
   if(!driver.approved){
-   document.getElementById("approval").textContent="Pending Admin Approval";
+   document.getElementById("approval").textContent=
+    "Pending Admin Approval";
    document.getElementById("onlineBtn").disabled=true;
    msg("Your driver account is waiting for admin approval.");
   }else{
@@ -196,27 +332,35 @@ async function loadDashboard(){
    currentUser.email||"Driver";
 
   document.getElementById("districtInfo").textContent=
-   [driver.city,driver.district,driver.state].filter(Boolean).join(", ")||"Tamil Nadu";
+   [driver.city,driver.district,driver.state]
+   .filter(Boolean).join(", ")||"Tamil Nadu";
 
   if(driver.vehicle_id){
    const {data:v}=await db.from("vehicles")
     .select("name,base_fare,per_km")
-    .eq("id",driver.vehicle_id).maybeSingle();
+    .eq("id",driver.vehicle_id)
+    .maybeSingle();
 
    document.getElementById("vehicleInfo").textContent=
-    v ? `${v.name} | Base ${money(v.base_fare)} | ${money(v.per_km)}/km`
-      : "Vehicle details unavailable";
+    v
+     ? `${v.name} | Base ${money(v.base_fare)} | ${money(v.per_km)}/km`
+     : "Vehicle details unavailable";
   }else{
-   document.getElementById("vehicleInfo").textContent="Vehicle not assigned";
+   document.getElementById("vehicleInfo").textContent=
+    "Vehicle not assigned";
   }
 
   updateOnlineUI();
+
   await refreshAll();
 
   if(refreshTimer)clearInterval(refreshTimer);
+
   refreshTimer=setInterval(refreshAll,10000);
 
-  if(driver.approved && driver.is_online)startGPS();
+  if(driver.approved && driver.is_online){
+   startGPS();
+  }
 
  }catch(e){
   msg("Dashboard error: "+e.message);
@@ -225,8 +369,10 @@ async function loadDashboard(){
 
 function updateOnlineUI(){
  if(!driver)return;
+
  document.getElementById("onlineStatus").textContent=
   driver.is_online?"ONLINE":"OFFLINE";
+
  document.getElementById("onlineBtn").textContent=
   driver.is_online?"GO OFFLINE":"GO ONLINE";
 }
@@ -236,18 +382,29 @@ async function toggleOnline(){
   msg("Admin approval is required.");
   return;
  }
+
  clearMsg();
 
  const next=!driver.is_online;
 
  const {data,error}=await db.from("drivers")
-  .update({is_online:next,is_available:next})
+  .update({
+   is_online:next,
+   is_available:next
+  })
   .eq("id",driver.id)
   .select()
   .maybeSingle();
 
- if(error){msg("Online update error: "+error.message);return;}
- if(!data){msg("Driver status was not updated. Check RLS permissions.");return;}
+ if(error){
+  msg("Online update error: "+error.message);
+  return;
+ }
+
+ if(!data){
+  msg("Driver status was not updated. Check RLS permissions.");
+  return;
+ }
 
  driver=data;
  updateOnlineUI();
@@ -266,34 +423,44 @@ function startGPS(){
   msg("GPS is not supported by this browser.");
   return;
  }
+
  if(gpsWatch!==null)return;
 
- gpsWatch=navigator.geolocation.watchPosition(async position=>{
-  try{
-   const payload={
-    driver_id:driver.id,
-    latitude:position.coords.latitude,
-    longitude:position.coords.longitude,
-    updated_at:new Date().toISOString()
-   };
+ gpsWatch=navigator.geolocation.watchPosition(
+  async position=>{
+   try{
+    const payload={
+     driver_id:driver.id,
+     latitude:position.coords.latitude,
+     longitude:position.coords.longitude,
+     updated_at:new Date().toISOString()
+    };
 
-   const {error}=await db.from("driver_locations")
-    .upsert(payload,{onConflict:"driver_id"});
+    const {error}=await db.from("driver_locations")
+     .upsert(payload,{onConflict:"driver_id"});
 
-   if(error){
-    document.getElementById("gpsStatus").textContent=
-     "GPS save error: "+error.message;
-   }else{
-    document.getElementById("gpsStatus").textContent=
-     "GPS: Location updated";
+    if(error){
+     document.getElementById("gpsStatus").textContent=
+      "GPS save error: "+error.message;
+    }else{
+     document.getElementById("gpsStatus").textContent=
+      "GPS: Location updated";
+    }
+
+   }catch(e){
+    document.getElementById("gpsStatus").textContent=e.message;
    }
-  }catch(e){
-   document.getElementById("gpsStatus").textContent=e.message;
+  },
+  error=>{
+   document.getElementById("gpsStatus").textContent=
+    "GPS error: "+error.message;
+  },
+  {
+   enableHighAccuracy:true,
+   maximumAge:5000,
+   timeout:15000
   }
- },error=>{
-  document.getElementById("gpsStatus").textContent=
-   "GPS error: "+error.message;
- },{enableHighAccuracy:true,maximumAge:5000,timeout:15000});
+ );
 }
 
 function stopGPS(){
@@ -301,14 +468,23 @@ function stopGPS(){
   navigator.geolocation.clearWatch(gpsWatch);
   gpsWatch=null;
  }
+
  document.getElementById("gpsStatus").textContent="GPS: Offline";
 }
 
 async function refreshAll(){
- if(!driver)return;
- await loadActiveBooking();
- await loadEarnings();
- await loadHistory();
+ if(!driver || isRefreshing)return;
+
+ isRefreshing=true;
+
+ try{
+  await loadActiveBooking();
+  await loadEarnings();
+  await loadHistory();
+  await loadAdvancedPerformance();
+ }finally{
+  isRefreshing=false;
+ }
 }
 
 async function loadActiveBooking(){
@@ -330,10 +506,17 @@ async function loadActiveBooking(){
 
  if(!currentBooking){
   el.innerHTML="<p>No active ride. Waiting for requests.</p>";
+  stopCustomerLocationPolling();
   return;
  }
 
  renderBooking(currentBooking);
+
+ if(["accepted","arrived","started"].includes(currentBooking.status)){
+  startCustomerLocationPolling();
+ }else{
+  stopCustomerLocationPolling();
+ }
 }
 
 function renderBooking(b){
@@ -343,22 +526,37 @@ function renderBooking(b){
 
  if(b.status==="pending"){
   actions=`
-   <button class="success" onclick="acceptRide('${b.id}')">ACCEPT RIDE</button>
-   <button class="danger" onclick="rejectRide('${b.id}')">REJECT</button>`;
+   <button class="success" onclick="acceptRide('${b.id}')">
+    ACCEPT RIDE
+   </button>
+   <button class="danger" onclick="rejectRide('${b.id}')">
+    REJECT
+   </button>`;
  }else if(b.status==="accepted"){
-  actions=`<button class="primary" onclick="arriveRide('${b.id}')">ARRIVED AT PICKUP</button>`;
+  actions=`
+   <button class="primary" onclick="arriveRide('${b.id}')">
+    ARRIVED AT PICKUP
+   </button>`;
  }else if(b.status==="arrived"){
   actions=`
-   <input id="rideOtp" inputmode="numeric" maxlength="4" placeholder="Enter customer OTP">
-   <button class="success" onclick="startRide('${b.id}')">VERIFY OTP & START</button>`;
+   <input id="rideOtp" inputmode="numeric"
+    maxlength="4" placeholder="Enter customer OTP">
+   <button class="success" onclick="startRide('${b.id}')">
+    VERIFY OTP & START
+   </button>`;
  }else if(b.status==="started"){
-  actions=`<button class="success" onclick="completeRide('${b.id}')">COMPLETE RIDE</button>`;
+  actions=`
+   <button class="success" onclick="completeRide('${b.id}')">
+    COMPLETE RIDE
+   </button>`;
  }
 
  el.innerHTML=`
   <div class="booking">
    <p><b>Booking ID:</b> ${escapeHTML(b.id)}</p>
-   <p><b>Status:</b> <span class="status">${escapeHTML(b.status)}</span></p>
+   <p><b>Status:</b>
+    <span class="status">${escapeHTML(b.status)}</span>
+   </p>
    <hr>
    <p><b>Pickup:</b><br>${escapeHTML(b.pickup_address)}</p>
    <p><b>Drop:</b><br>${escapeHTML(b.drop_address)}</p>
@@ -371,47 +569,93 @@ function renderBooking(b){
 
 async function acceptRide(id){
  if(!confirm("Accept this ride?"))return;
- const {data,error}=await db.rpc("sakthi_accept_booking",{p_booking_id:id});
- if(error){msg("Accept error: "+error.message);return;}
+
+ const {data,error}=await db.rpc(
+  "sakthi_accept_booking",
+  {p_booking_id:id}
+ );
+
+ if(error){
+  msg("Accept error: "+error.message);
+  return;
+ }
+
  msg("Ride accepted: "+data);
  await refreshAll();
 }
 
 async function rejectRide(id){
  if(!confirm("Reject this ride?"))return;
- const {data,error}=await db.rpc("sakthi_reject_booking",{p_booking_id:id});
- if(error){msg("Reject error: "+error.message);return;}
+
+ const {data,error}=await db.rpc(
+  "sakthi_reject_booking",
+  {p_booking_id:id}
+ );
+
+ if(error){
+  msg("Reject error: "+error.message);
+  return;
+ }
+
  msg("Reject result: "+JSON.stringify(data));
  await refreshAll();
 }
 
 async function arriveRide(id){
  if(!confirm("Confirm that you have reached pickup location?"))return;
- const {data,error}=await db.rpc("sakthi_mark_arrived",{p_booking_id:id});
- if(error){msg("Arrived error: "+error.message);return;}
+
+ const {data,error}=await db.rpc(
+  "sakthi_mark_arrived",
+  {p_booking_id:id}
+ );
+
+ if(error){
+  msg("Arrived error: "+error.message);
+  return;
+ }
+
  msg("Pickup arrival recorded. Ask the customer for their OTP.");
  await refreshAll();
 }
 
 async function startRide(id){
  const otp=document.getElementById("rideOtp")?.value.trim();
+
  if(!/^[0-9]{4}$/.test(otp||"")){
   msg("Enter the customer's 4-digit OTP.");
   return;
  }
- const {data,error}=await db.rpc("sakthi_start_ride",{
-  p_booking_id:id,
-  p_otp:otp
- });
- if(error){msg("OTP verification failed: "+error.message);return;}
+
+ const {data,error}=await db.rpc(
+  "sakthi_start_ride",
+  {
+   p_booking_id:id,
+   p_otp:otp
+  }
+ );
+
+ if(error){
+  msg("OTP verification failed: "+error.message);
+  return;
+ }
+
  msg("Ride started successfully.");
  await refreshAll();
 }
 
 async function completeRide(id){
  if(!confirm("Are you sure the ride is completed?"))return;
- const {data,error}=await db.rpc("sakthi_complete_ride",{p_booking_id:id});
- if(error){msg("Complete error: "+error.message);return;}
+
+ const {data,error}=await db.rpc(
+  "sakthi_complete_ride",
+  {p_booking_id:id}
+ );
+
+ if(error){
+  msg("Complete error: "+error.message);
+  return;
+ }
+
  msg("Ride completed successfully.");
  await refreshAll();
 }
@@ -436,11 +680,72 @@ async function loadEarnings(){
  (data||[]).forEach(b=>{
   const amount=Number(b.final_fare??b.estimated_fare??0);
   total+=amount;
-  if(b.completed_at&&new Date(b.completed_at)>=start)today+=amount;
+
+  if(b.completed_at && new Date(b.completed_at)>=start){
+   today+=amount;
+  }
  });
 
  document.getElementById("todayEarnings").textContent=money(today);
  document.getElementById("totalEarnings").textContent=money(total);
+}
+
+async function loadAdvancedPerformance(){
+ const now=new Date();
+
+ const today=new Date(now);
+ today.setHours(0,0,0,0);
+
+ const weekStart=new Date(now);
+ weekStart.setDate(now.getDate()-6);
+ weekStart.setHours(0,0,0,0);
+
+ const monthStart=new Date(
+  now.getFullYear(),now.getMonth(),1
+ );
+
+ const {data,error}=await db.from("bookings")
+  .select("final_fare,estimated_fare,completed_at")
+  .eq("driver_id",driver.id)
+  .eq("status","completed")
+  .gte("completed_at",monthStart.toISOString());
+
+ if(error){
+  console.error("Performance error:",error.message);
+  return;
+ }
+
+ let todayTotal=0;
+ let weeklyTotal=0;
+ let monthlyTotal=0;
+ let todayRides=0;
+
+ (data||[]).forEach(b=>{
+  if(!b.completed_at)return;
+
+  const date=new Date(b.completed_at);
+  const amount=Number(b.final_fare??b.estimated_fare??0);
+
+  monthlyTotal+=amount;
+
+  if(date>=weekStart)weeklyTotal+=amount;
+
+  if(date>=today){
+   todayTotal+=amount;
+   todayRides++;
+  }
+ });
+
+ document.getElementById("completedCount").textContent=
+  data?.length||0;
+
+ document.getElementById("todayCount").textContent=todayRides;
+
+ document.getElementById("weeklyEarnings").textContent=
+  money(weeklyTotal);
+
+ document.getElementById("monthlyEarnings").textContent=
+  money(monthlyTotal);
 }
 
 async function loadHistory(){
@@ -453,38 +758,129 @@ async function loadHistory(){
   .order("created_at",{ascending:false})
   .limit(10);
 
- if(error){el.textContent="History error: "+error.message;return;}
+ if(error){
+  el.textContent="History error: "+error.message;
+  return;
+ }
 
- if(!data?.length){el.textContent="No completed rides yet.";return;}
+ if(!data?.length){
+  el.textContent="No completed rides yet.";
+  return;
+ }
 
  el.innerHTML=data.map(b=>`
   <div class="booking">
    <small>${escapeHTML(b.id)}</small>
    <p>Completed</p>
    <b>${money(b.final_fare??b.estimated_fare)}</b>
-   <p class="muted">${b.completed_at?new Date(b.completed_at).toLocaleString():""}</p>
+   <p class="muted">
+    ${b.completed_at
+     ?new Date(b.completed_at).toLocaleString()
+     :""}
+   </p>
   </div>
  `).join("");
 }
 
-async function logout(){
- if(driver&&driver.is_online){
-  await db.from("drivers")
-   .update({is_online:false,is_available:false})
-   .eq("id",driver.id);
- }
- stopGPS();
- if(refreshTimer)clearInterval(refreshTimer);
- await db.auth.signOut();
- currentUser=null;
- driver=null;
- currentBooking=null;
- document.getElementById("dashboard").classList.add("hidden");
- document.getElementById("loginSection").classList.remove("hidden");
- msg("Logged out.");
+/* CUSTOMER LIVE LOCATION MAP */
+
+function initCustomerLiveMap(){
+ if(customerLiveMap)return;
+
+ const mapElement=document.getElementById("customerLiveMap");
+ if(!mapElement || !window.L)return;
+
+ customerLiveMap=L.map(mapElement).setView(
+  [11.1271,78.6569],7
+ );
+
+ L.tileLayer(
+  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+  {
+   attribution:"&copy; OpenStreetMap contributors",
+   maxZoom:19
+  }
+ ).addTo(customerLiveMap);
 }
 
-init();
-</script>
-</body>
-</html>
+async function loadCustomerLiveLocation(){
+ if(!driver || !currentBooking)return;
+
+ const bookingId=currentBooking.id;
+
+ if(!["accepted","arrived","started"].includes(currentBooking.status)){
+  return;
+ }
+
+ const {data,error}=await db.from("customer_live_locations")
+  .select("latitude,longitude,updated_at")
+  .eq("booking_id",bookingId)
+  .maybeSingle();
+
+ if(error){
+  document.getElementById("customerLocationStatus").textContent=
+   "Location error: "+error.message;
+  return;
+ }
+
+ if(!data){
+  document.getElementById("customerLocationStatus").textContent=
+   "Waiting for customer to share GPS location.";
+  return;
+ }
+
+ const lat=Number(data.latitude);
+ const lng=Number(data.longitude);
+
+ if(!Number.isFinite(lat)||!Number.isFinite(lng)){
+  document.getElementById("customerLocationStatus").textContent=
+   "Invalid customer GPS coordinates.";
+  return;
+ }
+
+ latestCustomerPosition={lat,lng};
+
+ initCustomerLiveMap();
+
+ if(!customerLiveMap)return;
+
+ const point=[lat,lng];
+
+ if(customerMapBookingId!==bookingId){
+  customerMapBookingId=bookingId;
+  customerLiveMarker=null;
+ }
+
+ if(!customerLiveMarker){
+  customerLiveMarker=L.marker(point)
+   .addTo(customerLiveMap)
+   .bindPopup("Customer Live Location");
+
+  customerLiveMap.setView(point,16);
+ }else{
+  customerLiveMarker.setLatLng(point);
+ }
+
+ const updatedAt=new Date(data.updated_at);
+ const ageSeconds=Math.max(
+  0,Math.floor((Date.now()-updatedAt.getTime())/1000)
+ );
+
+ let statusText="Customer GPS updated: "+
+  updatedAt.toLocaleTimeString();
+
+ if(ageSeconds>60){
+  statusText+=" | Location may be outdated ("+
+   ageSeconds+" seconds old)";
+ }
+
+ document.getElementById("customerLocationStatus").textContent=
+  statusText;
+
+ setTimeout(()=>{
+  if(customerLiveMap)customerLiveMap.invalidateSize();
+ },100);
+}
+
+function startCustomerLocationPolling(){
+ if(!currentBooking)re
