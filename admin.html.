@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#080808">
+<title>SAKTHI CABS | Admin Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#090909;color:white;font-family:Arial,sans-serif}
+header{background:#171717;padding:20px;border-bottom:1px solid #444}
+h1,h2{color:#e9bd50}
+main{max-width:1100px;margin:auto;padding:18px}
+.card{background:#191919;border:1px solid #393939;border-radius:14px;padding:18px;margin:15px 0}
+input{width:100%;padding:14px;margin:8px 0;background:#292929;color:white;border:1px solid #555;border-radius:8px}
+button{padding:12px 16px;border:0;border-radius:8px;background:#e9bd50;color:#111;font-weight:bold;margin:5px;cursor:pointer}
+button.danger{background:#b83d3d;color:white}
+button.secondary{background:#444;color:white}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.stat{background:#292929;padding:17px;border-radius:10px}
+.stat strong{display:block;color:#e9bd50;font-size:27px;margin-top:10px}
+.item{background:#292929;border-radius:10px;padding:15px;margin:12px 0;overflow-wrap:anywhere}
+.item p{color:#ddd;line-height:1.5}
+small{color:#aaa}
+.hidden{display:none}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:520px}
+td,th{padding:11px;border-bottom:1px solid #444;text-align:left}
+#message{color:#e9bd50;overflow-wrap:anywhere}
+nav{display:flex;flex-wrap:wrap;gap:5px}
+nav button{flex:1}
+@media(min-width:700px){.stats{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+
+<body>
+<header>
+<h1>🚕 SAKTHI CABS</h1>
+<p>Admin Management Portal</p>
+</header>
+
+<main>
+<div id="loginBox" class="card">
+<h2>Admin Login</h2>
+<input id="email" type="email" placeholder="Admin Email">
+<input id="password" type="password" placeholder="Password">
+<button onclick="login()">LOGIN</button>
+</div>
+
+<div id="dashboard" class="hidden">
+<div class="card">
+<h2>Admin Dashboard</h2>
+<p id="adminEmail"></p>
+<button class="secondary" onclick="refreshAll()">Refresh Data</button>
+<button class="danger" onclick="logout()">Logout</button>
+</div>
+
+<div class="stats">
+<div class="stat">Total Bookings<strong id="totalBookings">0</strong></div>
+<div class="stat">Pending<strong id="pendingBookings">0</strong></div>
+<div class="stat">Total Drivers<strong id="totalDrivers">0</strong></div>
+<div class="stat">Approved Drivers<strong id="approvedDrivers">0</strong></div>
+</div>
+
+<div class="card">
+<nav>
+<button onclick="showSection('drivers')">Drivers</button>
+<button onclick="showSection('bookings')">Bookings</button>
+<button onclick="showSection('vehicles')">Vehicles</button>
+<button onclick="showSection('payments')">Payments</button>
+</nav>
+</div>
+
+<div class="card" id="driversSection">
+<h2>Driver Management</h2>
+<div id="driversList">Loading...</div>
+</div>
+
+<div class="card hidden" id="bookingsSection">
+<h2>Booking Management</h2>
+<div id="bookingsList">Loading...</div>
+</div>
+
+<div class="card hidden" id="vehiclesSection">
+<h2>Vehicle Management</h2>
+<div id="vehiclesList">Loading...</div>
+</div>
+
+<div class="card hidden" id="paymentsSection">
+<h2>Payment Details</h2>
+<div id="paymentsList">Loading...</div>
+</div>
+</div>
+
+<p id="message"></p>
+</main>
+
+<script>
+const SUPABASE_URL =
+"https://kzcczciqaxawbesgtgcf.supabase.co";
+
+const SUPABASE_KEY =
+"sb_publishable_bKS7yIQ01_cOi972JQ7jQw_WjxhbKKb";
+
+const db = window.supabase.createClient(
+SUPABASE_URL,SUPABASE_KEY
+);
+
+let adminUser = null;
+
+function msg(text){
+ document.getElementById("message").textContent=text;
+}
+
+function safe(value){
+ return String(value ?? "")
+ .replace(/[&<>"']/g,c=>({
+  "&":"&amp;","<":"&lt;",">":"&gt;",
+  '"':"&quot;","'":"&#39;"
+ }[c]));
+}
+
+async function login(){
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
+
+ if(!email || !password){
+  msg("Enter email and password");
+  return;
+ }
+
+ msg("Checking admin login...");
+
+ const {error}=await db.auth.signInWithPassword({
+  email,password
+ });
+
+ if(error){
+  msg(error.message);
+  return;
+ }
+
+ await checkAdmin();
+}
+
+async function checkAdmin(){
+ const {data:{user},error:userError}=await db.auth.getUser();
+
+ if(userError || !user){
+  msg("Please login");
+  return;
+ }
+
+ const {data:profile,error}=await db
+ .from("profiles")
+ .select("role")
+ .eq("id",user.id)
+ .maybeSingle();
+
+ if(error){
+  msg("Admin verification failed: "+error.message);
+  return;
+ }
+
+ if(!profile || profile.role!=="admin"){
+  await db.auth.signOut();
+  msg("Access denied. Admin account required.");
+  return;
+ }
+
+ adminUser=user;
+
+ document.getElementById("loginBox").classList.add("hidden");
+ document.getElementById("dashboard").classList.remove("hidden");
+ document.getElementById("adminEmail").textContent=user.email;
+
+ await refreshAll();
+}
+
+function showSection(name){
+ ["drivers","bookings","vehicles","payments"].forEach(section=>{
+  document.getElementById(section+"Section")
+   .classList.toggle("hidden",section!==name);
+ });
+}
+
+async function refreshAll(){
+ msg("Refreshing dashboard...");
+ await Promise.all([
+  loadDrivers(),
+  loadBookings(),
+  loadVehicles(),
+  loadPayments()
+ ]);
+ msg("Dashboard refreshed");
+}
+
+async function loadDrivers(){
+ const box=document.getElementById("driversList");
+ box.textContent="Loading drivers...";
+
+ const {data,error}=await db
+  .from("drivers")
+  .select("id,user_id,vehicle_id,vehicle_number,license_number,approved,is_online,created_at")
+  .order("created_at",{ascending:false});
+
+ if(error){
+  box.textContent=error.message;
+  return;
+ }
+
+ const drivers=data||[];
+
+ document.getElementById("totalDrivers").textContent=drivers.length;
+ document.getElementById("approvedDrivers").textContent=
+ drivers.filter(d=>d.approved).length;
+
+ if(!drivers.length){
+  box.textContent="No driver registrations found.";
+  return;
+ }
+
+ const userIds=[...new Set(drivers.map(d=>d.user_id).filter(Boolean))];
+ let profiles={};
+
+ if(userIds.length){
+  const result=await db.from("profiles")
+   .select("id,full_name,phone")
+   .in("id",userIds);
+
+  if(result.error){
+   box.textContent=result.error.message;
+   return;
+  }
+
+  (result.data||[]).forEach(p=>profiles[p.id]=p);
+ }
+
+ box.innerHTML="";
+
+ drivers.forEach(d=>{
+  const p=profiles[d.user_id]||{};
+  const item=document.createElement("div");
+  item.className="item";
+
+  item.innerHTML=`
+   <h3>${safe(p.full_name||"Driver")}</h3>
+   <p>Phone: ${safe(p.phone||"Not available")}</p>
+   <p>Vehicle: ${safe(d.vehicle_number||"Not added")}</p>
+   <p>License: ${safe(d.license_number||"Not added")}</p>
+   <p>Approval: <b>${d.approved?"APPROVED":"NOT APPROVED"}</b></p>
+   <p>Availability: ${d.is_online?"ONLINE":"OFFLINE"}</p>
+   <button data-action="approve">Approve</button>
+   <button class="danger" data-action="reject">Reject</button>
+  `;
+
+  item.querySelector('[data-action="approve"]')
+   .onclick=()=>updateDriver(d.id,true);
+
+  item.querySelector('[data-action="reject"]')
+   .onclick=()=>updateDriver(d.id,false);
+
+  box.appendChild(item);
+ });
+}
+
+async function updateDriver(id,approved){
+ if(!confirm(approved?"Approve this driver?":"Reject this driver?"))return;
+
+ msg("Updating driver...");
+
+ const {error}=await db.from("drivers")
+  .update({approved})
+  .eq("id",id);
+
+ if(error){
+  msg(error.message);
+  return;
+ }
+
+ msg(approved?"Driver approved":"Driver approval removed");
+ await loadDrivers();
+}
+
+async function loadBookings(){
+ const box=document.getElementById("bookingsList");
+ box.textContent="Loading bookings...";
+
+ const {data,error}=await db
+  .from("bookings")
+  .select("id,customer_id,driver_id,vehicle_id,pickup_address,drop_address,estimated_fare,final_fare,status,payment_method,payment_status,created_at")
+  .order("created_at",{ascending:false})
+  .limit(100);
+
+ if(error){
+  box.textContent=error.message;
+  return;
+ }
+
+ const rows=data||[];
+
+ document.getElementById("totalBookings").textContent=rows.length;
+ document.getElementById("pendingBookings").textContent=
+ rows.filter(b=>b.status==="pending").length;
+
+ if(!rows.length){
+  box.textContent="No bookings found.";
+  return;
+ }
+
+ box.innerHTML="";
+
+ rows.forEach(b=>{
+  const item=document.createElement("div");
+  item.className="item";
+
+  item.innerHTML=`
+   <h3>Booking: ${safe(b.id)}</h3>
+   <p>Pickup: ${safe(b.pickup_address)}</p>
+   <p>Drop: ${safe(b.drop_address)}</p>
+   <p>Fare: ₹${safe(b.estimated_fare)}</p>
+   <p>Final Fare: ₹${safe(b.final_fare)}</p>
+   <p>Status: <b>${safe(b.status)}</b></p>
+   <p>Payment: ${safe(b.payment_method)} / ${safe(b.payment_status)}</p>
+  `;
+
+  box.appendChild(item);
+ });
+}
+
+async function loadVehicles(){
+ const box=document.getElementById("vehiclesList");
+ box.textContent="Loading vehicles...";
+
+ const {data,error}=await db
+  .from("vehicles")
+  .select("id,name,base_fare,per_km,is_active")
+  .order("name");
+
+ if(error){
+  box.textContent=error.message;
+  return;
+ }
+
+ box.innerHTML="";
+
+ (data||[]).forEach(v=>{
+  const item=document.createElement("div");
+  item.className="item";
+
+  item.innerHTML=`
+   <h3>${safe(v.name)}</h3>
+   <p>Base Fare: ₹${safe(v.base_fare)}</p>
+   <p>Per KM: ₹${safe(v.per_km)}</p>
+   <p>Status: ${v.is_active?"ACTIVE":"INACTIVE"}</p>
+   <button>${v.is_active?"Deactivate":"Activate"}</button>
+  `;
+
+  item.querySelector("button").onclick=()=>toggleVehicle(v.id,!v.is_active);
+  box.appendChild(item);
+ });
+
+ if(!data || !data.length)box.textContent="No vehicles found.";
+}
+
+async function toggleVehicle(id,active){
+ if(!confirm(active?"Activate vehicle?":"Deactivate vehicle?"))return;
+
+ const {error}=await db.from("vehicles")
+  .update({is_active:active})
+  .eq("id",id);
+
+ if(error){
+  msg(error.message);
+  return;
+ }
+
+ msg("Vehicle status updated");
+ await loadVehicles();
+}
+
+async function loadPayments(){
+ const box=document.getElementById("paymentsList");
+ box.textContent="Loading payments...";
+
+ const {data,error}=await db
+  .from("payments")
+  .select("id,bookings_id,amount,provider,transaction_id,status,created_at")
+  .order("created_at",{ascending:false})
+  .limit(100);
+
+ if(error){
+  box.textContent=error.message;
+  return;
+ }
+
+ box.innerHTML="";
+
+ (data||[]).forEach(p=>{
+  const item=document.createElement("div");
+  item.className="item";
+
+  item.innerHTML=`
+   <h3>Payment: ${safe(p.id)}</h3>
+   <p>Booking: ${safe(p.bookings_id)}</p>
+   <p>Amount: ₹${safe(p.amount)}</p>
+   <p>Provider: ${safe(p.provider)}</p>
+   <p>Transaction: ${safe(p.transaction_id)}</p>
+   <p>Status: ${safe(p.status)}</p>
+  `;
+
+  box.appendChild(item);
+ });
+
+ if(!data || !data.length)box.textContent="No payment records.";
+}
+
+async function logout(){
+ await db.auth.signOut();
+ adminUser=null;
+ document.getElementById("dashboard").classList.add("hidden");
+ document.getElementById("loginBox").classList.remove("hidden");
+ msg("Logged out");
+}
+
+async function checkSession(){
+ const {data:{session}}=await db.auth.getSession();
+ if(session)await checkAdmin();
+}
+
+checkSession();
+</script>
+</body>
+</html>
