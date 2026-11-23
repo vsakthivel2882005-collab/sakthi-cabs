@@ -5,128 +5,88 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#080808">
-<title>SAKTHI CABS | Book Your Ride</title>
+<title>SAKTHI CABS</title>
 
-<link rel="stylesheet"
- href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
 *{box-sizing:border-box}
-body{
- margin:0;background:#080808;color:white;
- font-family:Arial,sans-serif;
-}
+body{margin:0;background:#080808;color:white;font-family:Arial,sans-serif}
 button,input,select{font:inherit}
 button{cursor:pointer}
 .hidden{display:none!important}
 
-#map{
- position:fixed;inset:0;width:100%;height:100%;
- z-index:1;
-}
+#map{position:fixed;inset:0;width:100%;height:100%;z-index:1}
+
 .topbar{
- position:fixed;top:12px;left:12px;right:12px;
- z-index:500;display:flex;justify-content:space-between;
- align-items:center;background:#111e;
- padding:13px 16px;border:1px solid #333;
- border-radius:15px;backdrop-filter:blur(10px);
+ position:fixed;top:12px;left:12px;right:12px;z-index:500;
+ display:flex;justify-content:space-between;align-items:center;
+ background:#111e;padding:13px 16px;border:1px solid #333;
+ border-radius:15px;backdrop-filter:blur(10px)
 }
 .logo{font-size:20px;font-weight:900;color:#f5bd36}
 .logo span{color:white}
 .top-actions{display:flex;gap:8px}
-.smallbtn{
- border:1px solid #444;background:#222;color:white;
- padding:9px 12px;border-radius:9px;
-}
+.smallbtn{border:1px solid #444;background:#222;color:white;padding:9px 12px;border-radius:9px}
+
 .panel{
  position:fixed;z-index:500;bottom:0;left:0;right:0;
- max-height:77vh;overflow-y:auto;
- background:#101010;border-radius:24px 24px 0 0;
- padding:18px 16px 30px;
- border-top:1px solid #333;
- box-shadow:0 -10px 35px #0008;
+ max-height:77vh;overflow-y:auto;background:#101010;
+ border-radius:24px 24px 0 0;padding:18px 16px 30px;
+ border-top:1px solid #333;box-shadow:0 -10px 35px #0008
 }
-.handle{
- width:45px;height:5px;background:#555;
- border-radius:10px;margin:0 auto 16px;
-}
+.handle{width:45px;height:5px;background:#555;border-radius:10px;margin:0 auto 16px}
 h2{font-size:20px;margin:5px 0 15px}
 h3{font-size:15px;margin:18px 0 10px}
 .field{margin-bottom:12px}
-label{
- display:block;color:#aaa;font-size:12px;
- margin-bottom:6px;
-}
+label{display:block;color:#aaa;font-size:12px;margin-bottom:6px}
 input,select{
- width:100%;padding:13px;background:#1b1b1b;
- color:white;border:1px solid #393939;
- border-radius:10px;outline:none;
+ width:100%;padding:13px;background:#1b1b1b;color:white;
+ border:1px solid #393939;border-radius:10px;outline:none
 }
 input:focus,select:focus{border-color:#f5bd36}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .primary{
- width:100%;padding:15px;background:#f5bd36;
- color:#111;border:0;border-radius:12px;
- font-weight:900;margin-top:8px;
+ width:100%;padding:15px;background:#f5bd36;color:#111;
+ border:0;border-radius:12px;font-weight:900;margin-top:8px
 }
+.primary:disabled{opacity:.5}
 .secondary{
- width:100%;padding:13px;background:#252525;
- color:white;border:1px solid #444;
- border-radius:10px;margin-top:8px;
+ width:100%;padding:13px;background:#252525;color:white;
+ border:1px solid #444;border-radius:10px;margin-top:8px
 }
-.vehicle-grid{
- display:grid;grid-template-columns:repeat(2,1fr);
- gap:9px;
-}
+.vehicle-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
 .vehicle{
  background:#1b1b1b;border:1px solid #383838;
- padding:12px;border-radius:12px;
- cursor:pointer;
+ padding:12px;border-radius:12px;cursor:pointer
 }
-.vehicle.active{
- border:2px solid #f5bd36;
- background:#302714;
-}
+.vehicle.active{border:2px solid #f5bd36;background:#302714}
 .vehicle strong{display:block;margin-bottom:5px}
 .vehicle small{color:#aaa}
-.info{
- background:#1b1b1b;padding:12px;
- border-radius:10px;margin:10px 0;
- color:#ddd;font-size:13px;
-}
-.fare{
- font-size:25px;font-weight:900;color:#f5bd36;
-}
-.card{
- background:#1b1b1b;padding:13px;
- border:1px solid #333;border-radius:12px;
- margin:9px 0;
-}
+.info{background:#1b1b1b;padding:12px;border-radius:10px;margin:10px 0;color:#ddd;font-size:13px}
+.fare{font-size:25px;font-weight:900;color:#f5bd36}
+.card{background:#1b1b1b;padding:13px;border:1px solid #333;border-radius:12px;margin:9px 0}
 .card button{margin-top:9px}
 .status{color:#f5bd36;font-weight:bold}
 #authSection{
- position:fixed;inset:0;z-index:2000;
- background:#080808;display:flex;
- align-items:center;justify-content:center;
- padding:20px;
+ position:fixed;inset:0;z-index:2000;background:#080808;
+ display:flex;align-items:center;justify-content:center;padding:20px
 }
 .authbox{
- width:100%;max-width:400px;
- background:#151515;border:1px solid #333;
- border-radius:20px;padding:24px;
+ width:100%;max-width:400px;background:#151515;
+ border:1px solid #333;border-radius:20px;padding:24px
 }
 .authbox h1{color:#f5bd36;text-align:center}
 .authbox p{text-align:center;color:#aaa;font-size:13px}
 .authbox input{margin:7px 0}
-#message{
- font-size:13px;color:#f5bd36;
- margin:10px 0;white-space:pre-wrap;
-}
+#message{font-size:13px;color:#f5bd36;margin:10px 0;white-space:pre-wrap}
+.error{color:#ff7777!important}
+.success{color:#7de3a0!important}
 #historySection{margin-top:15px}
 .leaflet-control-attribution{font-size:9px}
+
 @media(min-width:750px){
  .panel{left:auto;width:420px;max-height:85vh;bottom:20px;right:20px;border-radius:20px}
  .topbar{right:460px}
@@ -146,6 +106,7 @@ input:focus,select:focus{border-color:#f5bd36}
  </div>
 </div>
 
+<!-- LOGIN -->
 <div id="authSection">
  <div class="authbox">
   <h1>SAKTHI CABS</h1>
@@ -153,24 +114,21 @@ input:focus,select:focus{border-color:#f5bd36}
 
   <div id="registerFields" class="hidden">
    <input id="regName" placeholder="Full Name">
-   <input id="regPhone" placeholder="Mobile Number">
+   <input id="regPhone" placeholder="Mobile Number" type="tel">
   </div>
 
-  <input id="email" type="email" placeholder="Email Address">
-  <input id="password" type="password" placeholder="Password">
+  <input id="email" type="email" placeholder="Email Address" autocomplete="email">
+  <input id="password" type="password" placeholder="Password" autocomplete="current-password">
 
   <button class="primary" id="authButton" onclick="login()">LOGIN</button>
-  <button class="secondary" onclick="toggleRegister()" id="toggleButton">
-   Create New Account
-  </button>
-
+  <button class="secondary" onclick="toggleRegister()" id="toggleButton">Create New Account</button>
   <div id="message"></div>
  </div>
 </div>
 
+<!-- CUSTOMER APP -->
 <div class="panel hidden" id="appSection">
  <div class="handle"></div>
-
  <h2>Book Your Ride</h2>
 
  <div class="field">
@@ -197,9 +155,7 @@ input:focus,select:focus{border-color:#f5bd36}
   </div>
  </div>
 
- <button class="secondary" onclick="getGPS()">
-  📍 Use Current GPS Location
- </button>
+ <button class="secondary" onclick="getGPS()">📍 Use Current GPS Location</button>
 
  <div class="field" style="margin-top:13px">
   <label>DROP LOCATION</label>
@@ -217,18 +173,14 @@ input:focus,select:focus{border-color:#f5bd36}
   </div>
  </div>
 
- <button class="secondary" onclick="calculateRoute()">
-  🗺️ Calculate Route & Distance
- </button>
+ <button class="secondary" onclick="calculateRoute()">🗺️ Calculate Route & Distance</button>
 
  <div class="info" id="routeInfo">
   Select pickup and drop locations to calculate distance.
  </div>
 
  <h3>Select Vehicle</h3>
- <div class="vehicle-grid" id="vehicleList">
-  Loading vehicles...
- </div>
+ <div class="vehicle-grid" id="vehicleList">Loading vehicles...</div>
 
  <h3>Payment Method</h3>
  <select id="paymentMethod">
@@ -243,40 +195,35 @@ input:focus,select:focus{border-color:#f5bd36}
   <small id="fareDetails">Calculate route and select vehicle.</small>
  </div>
 
- <button class="primary" onclick="bookCab()" id="bookButton">
-  BOOK YOUR RIDE
- </button>
-
- <button class="secondary" onclick="findDrivers()">
-  Find Available Drivers
- </button>
+ <button class="primary" onclick="bookCab()" id="bookButton">BOOK YOUR RIDE</button>
+ <button class="secondary" onclick="findDrivers()">Find Available Drivers</button>
 
  <div id="driverSection"></div>
  <div id="historySection"></div>
 </div>
 
 <script>
-// ----------------------------------
-// SUPABASE CONFIGURATION
-// ----------------------------------
+// ==========================================
+// 1. SUPABASE CONFIGURATION
+// ==========================================
 
-const SUPABASE_URL =
- "https://kzcczciqaxawbesgtgcf.supabase.co";
+const SUPABASE_URL = "https://kzcczciqaxawbesgtgcf.supabase.co";
 
-const SUPABASE_KEY =
- "sb_publishable_bKS7yIQ01_cOi972JQ7jQw_WjxhbKKb";
+const SUPABASE_KEY = "sb_publishable_bKS7yIQ01_cOi972JQ7jQw_WjxhbKKb";
 
 const supabaseClient = window.supabase.createClient(
  SUPABASE_URL,
  SUPABASE_KEY
 );
 
-// ----------------------------------
-// GLOBAL VARIABLES
-// ----------------------------------
+// ==========================================
+// 2. GLOBAL VARIABLES
+// ==========================================
 
 let currentUser = null;
 let isRegister = false;
+let appStarted = false;
+
 let map = null;
 let pickupMarker = null;
 let dropMarker = null;
@@ -290,27 +237,24 @@ let dropLng = null;
 let routeDistance = 0;
 let selectedVehicle = null;
 let vehicles = [];
-
 let currentBookingId = null;
+let realtimeChannel = null;
+
+// ==========================================
+// 3. TAMIL NADU DISTRICTS
+// ==========================================
 
 const districts = [
-"அரியலூர்","செங்கல்பட்டு","சென்னை","கோயம்புத்தூர்",
-"கடலூர்","தர்மபுரி","திண்டுக்கல்","ஈரோடு",
-"கள்ளக்குறிச்சி","காஞ்சிபுரம்","கன்னியாகுமரி",
-"கரூர்","கிருஷ்ணகிரி","மதுரை","மயிலாடுதுறை",
-"நாகப்பட்டினம்","நாமக்கல்","நீலகிரி",
-"பெரம்பலூர்","புதுக்கோட்டை","ராமநாதபுரம்",
-"ராணிப்பேட்டை","சேலம்","சிவகங்கை",
-"தென்காசி","தஞ்சாவூர்","தேனி",
-"திருவள்ளூர்","திருவாரூர்","தூத்துக்குடி",
-"திருச்சிராப்பள்ளி","திருநெல்வேலி",
-"திருப்பத்தூர்","திருப்பூர்","திருவண்ணாமலை",
-"வேலூர்","விழுப்புரம்","விருதுநகர்"
+"Chennai","Chengalpattu","Kancheepuram","Tiruvallur",
+"Vellore","Ranipet","Tirupattur","Tiruvannamalai",
+"Villupuram","Kallakurichi","Cuddalore","Mayiladuthurai",
+"Nagapattinam","Tiruvarur","Thanjavur","Pudukkottai",
+"Trichy","Perambalur","Ariyalur","Karur","Namakkal",
+"Salem","Dharmapuri","Krishnagiri","Erode","Coimbatore",
+"Tiruppur","The Nilgiris","Dindigul","Theni","Madurai",
+"Sivaganga","Ramanathapuram","Virudhunagar","Tenkasi",
+"Tirunelveli","Thoothukudi","Kanniyakumari"
 ];
-
-// ----------------------------------
-// DISTRICT DROPDOWNS
-// ----------------------------------
 
 function loadDistricts(){
  const options =
@@ -321,9 +265,15 @@ function loadDistricts(){
  document.getElementById("dropDistrict").innerHTML=options;
 }
 
-// ----------------------------------
-// AUTHENTICATION
-// ----------------------------------
+// ==========================================
+// 4. AUTHENTICATION
+// ==========================================
+
+function showMessage(message,type=""){
+ const el=document.getElementById("message");
+ el.innerText=message;
+ el.className=type;
+}
 
 function toggleRegister(){
  isRegister=!isRegister;
@@ -337,74 +287,88 @@ function toggleRegister(){
  document.getElementById("toggleButton").innerText=
   isRegister?"Already have an account? Login":"Create New Account";
 
- document.getElementById("message").innerText="";
+ showMessage("");
 }
 
 async function login(){
  const email=document.getElementById("email").value.trim();
  const password=document.getElementById("password").value;
-
- const msg=document.getElementById("message");
+ const button=document.getElementById("authButton");
 
  if(!email||!password){
-  msg.innerText="Enter email and password.";
+  showMessage("Enter email and password.","error");
   return;
  }
 
- msg.innerText="Please wait...";
+ button.disabled=true;
+ button.innerText="PLEASE WAIT...";
+ showMessage("Connecting to Supabase...");
 
- if(isRegister){
-  const name=document.getElementById("regName").value.trim();
-  const phone=document.getElementById("regPhone").value.trim();
+ try{
+  if(isRegister){
+   const name=document.getElementById("regName").value.trim();
+   const phone=document.getElementById("regPhone").value.trim();
 
-  if(!name||!phone){
-   msg.innerText="Enter your name and mobile number.";
-   return;
-  }
-
-  const {data,error}=await supabaseClient.auth.signUp({
-   email,
-   password,
-   options:{
-    data:{
-     full_name:name,
-     phone:phone
-    }
+   if(!name||!phone){
+    throw new Error("Enter your name and mobile number.");
    }
-  });
 
-  if(error){
-   msg.innerText=error.message;
-   return;
-  }
+   const {data,error}=await supabaseClient.auth.signUp({
+    email:email,
+    password:password,
+    options:{
+     data:{
+      full_name:name,
+      phone:phone
+     }
+    }
+   });
 
-  if(data.session){
-   await saveProfile(name,phone);
-   msg.innerText="Registration successful.";
-   await startApp(data.session.user);
+   if(error)throw error;
+
+   if(!data.session){
+    showMessage(
+     "Account created. Please verify your email, then login.",
+     "success"
+    );
+    alert("Registration successful. Check your email for verification.");
+   }else{
+    currentUser=data.user;
+    await saveProfile(name,phone);
+    await startApp(data.user);
+   }
+
   }else{
-   msg.innerText=
-    "Account created. Verify your email, then login.";
+   const {data,error}=await supabaseClient.auth.signInWithPassword({
+    email:email,
+    password:password
+   });
+
+   if(error)throw error;
+
+   currentUser=data.user;
+   await startApp(data.user);
   }
 
- }else{
-  const {data,error}=await supabaseClient.auth.signInWithPassword({
-   email,password
-  });
+ }catch(error){
+  console.error("LOGIN ERROR:",error);
+  showMessage("ERROR: "+error.message,"error");
+  alert("SAKTHI CABS: "+error.message);
 
-  if(error){
-   msg.innerText=error.message;
-   return;
-  }
-
-  await startApp(data.user);
+ }finally{
+  button.disabled=false;
+  button.innerText=isRegister?"REGISTER":"LOGIN";
  }
 }
+
+// ==========================================
+// 5. PROFILE SAVE
+// ==========================================
 
 async function saveProfile(name,phone){
  if(!currentUser)return;
 
- // Role is deliberately not accepted from the browser.
+ // Do not change or assign the user's role here.
  const {error}=await supabaseClient
   .from("profiles")
   .upsert({
@@ -413,58 +377,73 @@ async function saveProfile(name,phone){
    phone:phone
   },{onConflict:"id"});
 
- if(error)console.error("Profile update:",error.message);
+ if(error){
+  console.error("Profile save error:",error.message);
+ }
 }
 
+// ==========================================
+// 6. START APP - SINGLE ENTRY
+// ==========================================
+
 async function startApp(user){
+ if(!user)return;
+
+ if(appStarted && currentUser?.id===user.id)return;
+
  currentUser=user;
+ appStarted=true;
 
  document.getElementById("authSection").classList.add("hidden");
  document.getElementById("appSection").classList.remove("hidden");
 
- const metadata=user.user_metadata||{};
-
- if(metadata.full_name||metadata.phone){
-  await saveProfile(
-   metadata.full_name||"",
-   metadata.phone||""
-  );
- }
-
  initMap();
+
  await loadVehicles();
  await loadHistory();
+ enableRealtime();
+
+ setTimeout(()=>{
+  if(map)map.invalidateSize();
+ },500);
 }
 
 async function logout(){
+ if(realtimeChannel){
+  await supabaseClient.removeChannel(realtimeChannel);
+  realtimeChannel=null;
+ }
+
  await supabaseClient.auth.signOut();
  location.reload();
 }
 
-// ----------------------------------
-// SESSION CHECK
-// ----------------------------------
+// ==========================================
+// 7. SESSION CHECK
+// ==========================================
 
 async function checkSession(){
  loadDistricts();
 
- const {data,error}=await supabaseClient.auth.getSession();
+ try{
+  const {data,error}=await supabaseClient.auth.getSession();
 
- if(error){
-  document.getElementById("message").innerText=error.message;
-  return;
- }
+  if(error)throw error;
 
- if(data.session){
-  await startApp(data.session.user);
+  if(data.session){
+   currentUser=data.session.user;
+   await startApp(data.session.user);
+  }
+
+ }catch(error){
+  console.error(error);
+  showMessage("Session error: "+error.message,"error");
  }
 }
 
-checkSession();
-
-// ----------------------------------
-// MAP
-// ----------------------------------
+// ==========================================
+// 8. MAP INITIALIZATION
+// ==========================================
 
 function initMap(){
  if(map)return;
@@ -507,13 +486,13 @@ function updateMarker(type,lat,lng){
  }
 }
 
-// ----------------------------------
-// GPS LOCATION
-// ----------------------------------
+// ==========================================
+// 9. GPS LOCATION
+// ==========================================
 
 async function getGPS(){
  if(!navigator.geolocation){
-  alert("GPS is not supported.");
+  alert("GPS is not supported by this browser.");
   return;
  }
 
@@ -532,6 +511,9 @@ async function getGPS(){
      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${pickupLat}&lon=${pickupLng}`;
 
     const response=await fetch(url);
+
+    if(!response.ok)throw new Error("Address lookup failed");
+
     const result=await response.json();
 
     document.getElementById("pickupAddress").value=
@@ -544,16 +526,22 @@ async function getGPS(){
 
    resetRoute();
   },
+
   error=>{
-   alert("Unable to get GPS. Allow location permission and try again.");
+   alert("GPS unavailable. Allow location permission and try again.");
   },
-  {enableHighAccuracy:true,timeout:15000}
+
+  {
+   enableHighAccuracy:true,
+   timeout:15000,
+   maximumAge:0
+  }
  );
 }
 
-// ----------------------------------
-// ADDRESS GEOCODING
-// ----------------------------------
+// ==========================================
+// 10. ADDRESS SEARCH
+// ==========================================
 
 async function geocodeAddress(address,district,city){
  const query=[
@@ -569,6 +557,11 @@ async function geocodeAddress(address,district,city){
   encodeURIComponent(query);
 
  const response=await fetch(url);
+
+ if(!response.ok){
+  throw new Error("Address search service unavailable.");
+ }
+
  const results=await response.json();
 
  if(!results.length){
@@ -582,9 +575,9 @@ async function geocodeAddress(address,district,city){
  };
 }
 
-// ----------------------------------
-// ROUTE & DISTANCE
-// ----------------------------------
+// ==========================================
+// 11. ROUTE CALCULATION
+// ==========================================
 
 async function calculateRoute(){
  try{
@@ -607,14 +600,13 @@ async function calculateRoute(){
    document.getElementById("dropCity").value.trim();
 
   if(!pickupAddress||!dropAddress){
-   alert("Enter pickup and drop addresses.");
-   return;
+   throw new Error("Enter pickup and drop addresses.");
   }
 
   document.getElementById("routeInfo").innerText=
    "Finding locations and calculating road route...";
 
-  if(pickupLat===null){
+  if(pickupLat===null||pickupLng===null){
    const p=await geocodeAddress(
     pickupAddress,pickupDistrict,pickupCity
    );
@@ -637,6 +629,11 @@ async function calculateRoute(){
    `https://router.project-osrm.org/route/v1/driving/${pickupLng},${pickupLat};${dropLng},${dropLat}?overview=full&geometries=geojson`;
 
   const routeResponse=await fetch(routeURL);
+
+  if(!routeResponse.ok){
+   throw new Error("Route service unavailable.");
+  }
+
   const routeData=await routeResponse.json();
 
   if(routeData.code!=="Ok"||!routeData.routes.length){
@@ -661,14 +658,18 @@ async function calculateRoute(){
 
   document.getElementById("routeInfo").innerHTML=
    `<b>Road Distance:</b> ${routeDistance.toFixed(2)} KM<br>
-    <b>Estimated Travel Time:</b> ${Math.round(route.duration/60)} minutes`;
+   <b>Estimated Travel Time:</b> ${Math.round(route.duration/60)} minutes`;
 
   updateFare();
 
  }catch(error){
-  console.error(error);
+  console.error("ROUTE ERROR:",error);
+
+  routeDistance=0;
+  updateFare();
+
   document.getElementById("routeInfo").innerText=
-   error.message+" Please check your address and try again.";
+   error.message;
  }
 }
 
@@ -677,18 +678,30 @@ function resetRoute(){
  dropLat=null;
  dropLng=null;
 
+ if(routeLayer&&map){
+  map.removeLayer(routeLayer);
+  routeLayer=null;
+ }
+
+ if(dropMarker&&map){
+  map.removeLayer(dropMarker);
+  dropMarker=null;
+ }
+
  document.getElementById("routeInfo").innerText=
-  "Route needs to be calculated again.";
+  "Calculate route again after changing locations.";
 
  updateFare();
 }
 
-// ----------------------------------
-// VEHICLES
-// ----------------------------------
+// ==========================================
+// 12. VEHICLES
+// ==========================================
 
 async function loadVehicles(){
  const list=document.getElementById("vehicleList");
+
+ list.innerText="Loading vehicles...";
 
  const {data,error}=await supabaseClient
   .from("vehicles")
@@ -698,13 +711,14 @@ async function loadVehicles(){
 
  if(error){
   list.innerText="Vehicle loading failed: "+error.message;
+  console.error(error);
   return;
  }
 
  vehicles=data||[];
 
  if(!vehicles.length){
-  list.innerText="No active vehicles found.";
+  list.innerText="No active vehicles found in database.";
   return;
  }
 
@@ -728,10 +742,15 @@ function selectVehicle(id){
  });
 
  const element=document.getElementById("vehicle-"+id);
+
  if(element)element.classList.add("active");
 
  updateFare();
 }
+
+// ==========================================
+// 13. FARE CALCULATION
+// ==========================================
 
 function updateFare(){
  const fareElement=document.getElementById("fare");
@@ -753,13 +772,13 @@ function updateFare(){
   `Base ₹${base} + ${routeDistance.toFixed(2)} KM × ₹${perKm}/KM`;
 }
 
-// ----------------------------------
-// BOOKING
-// ----------------------------------
+// ==========================================
+// 14. CREATE BOOKING
+// ==========================================
 
 async function bookCab(){
  if(!currentUser){
-  alert("Please login.");
+  alert("Please login first.");
   return;
  }
 
@@ -777,87 +796,4 @@ async function bookCab(){
   document.getElementById("pickupAddress").value.trim();
 
  const dropAddress=
-  document.getElementById("dropAddress").value.trim();
-
- const pickupDistrict=
-  document.getElementById("pickupDistrict").value;
-
- const dropDistrict=
-  document.getElementById("dropDistrict").value;
-
- const pickupCity=
-  document.getElementById("pickupCity").value.trim();
-
- const dropCity=
-  document.getElementById("dropCity").value.trim();
-
- if(!pickupAddress||!dropAddress||!pickupDistrict||!dropDistrict){
-  alert("Complete pickup and drop details.");
-  return;
- }
-
- const tripType=
-  document.getElementById("tripType").value;
-
- if(tripType==="local"&&pickupDistrict!==dropDistrict){
-  alert("For local rides, select the same pickup and drop district. Choose Outstation for inter-district rides.");
-  return;
- }
-
- const fare=
-  Math.ceil(
-   Number(selectedVehicle.base_fare)+
-   routeDistance*Number(selectedVehicle.per_km)
-  );
-
- const paymentMethod=
-  document.getElementById("paymentMethod").value;
-
- const button=document.getElementById("bookButton");
- button.disabled=true;
- button.innerText="BOOKING...";
-
- const booking={
-  customer_id:currentUser.id,
-  vehicle_id:selectedVehicle.id,
-  pickup_address:pickupAddress,
-  drop_address:dropAddress,
-  pickup_lat:pickupLat,
-  pickup_lng:pickupLng,
-  drop_lat:dropLat,
-  drop_lng:dropLng,
-  estimated_fare:fare,
-  payment_method:paymentMethod,
-  payment_status:"pending",
-  status:"pending",
-  trip_type:tripType,
-  pickup_city:pickupCity||pickupDistrict,
-  pickup_district:pickupDistrict,
-  drop_city:dropCity||dropDistrict,
-  drop_district:dropDistrict
- };
-
- const {data,error}=await supabaseClient
-  .from("bookings")
-  .insert(booking)
-  .select()
-  .single();
-
- button.disabled=false;
- button.innerText="BOOK YOUR RIDE";
-
- if(error){
-  console.error(error);
-  alert("Booking failed: "+error.message);
-  return;
- }
-
- currentBookingId=data.id;
-
- alert("Booking successful! Booking ID: "+data.id);
-
- await loadHistory();
- await findDrivers();
-}
-
-//
+  
