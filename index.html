@@ -7,1076 +7,499 @@
 <meta name="theme-color" content="#080808">
 <title>SAKTHI CABS | Book Your Ride</title>
 
-<link rel="stylesheet"
- href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#080808;color:white;font-family:Arial,sans-serif}
-button,input,select{font:inherit}
-button{cursor:pointer}
-.hidden{display:none!important}
-
-#map{position:fixed;inset:0;width:100%;height:100%;z-index:1}
-
-.topbar{
- position:fixed;top:12px;left:12px;right:12px;z-index:500;
- display:flex;justify-content:space-between;align-items:center;
- background:#111e;padding:13px 15px;border:1px solid #333;
- border-radius:15px;backdrop-filter:blur(10px)
-}
-.logo{font-size:21px;font-weight:900;color:#f5bd36}
-.logo span{color:white}
-.smallbtn{
- border:1px solid #444;background:#222;color:white;
- padding:9px 12px;border-radius:9px
-}
-
-.panel{
- position:fixed;z-index:500;bottom:0;left:0;right:0;
- max-height:76vh;overflow-y:auto;background:#101010;
- border-radius:24px 24px 0 0;padding:18px 16px 35px;
- border-top:1px solid #333;box-shadow:0 -10px 35px #0008
-}
-.handle{width:45px;height:5px;background:#555;border-radius:10px;margin:0 auto 16px}
-h2{font-size:21px;margin:5px 0 16px}
-h3{font-size:15px;margin:18px 0 10px}
-label{display:block;color:#aaa;font-size:12px;margin-bottom:6px}
-.field{margin-bottom:12px}
-
-input,select{
- width:100%;padding:13px;background:#1b1b1b;color:white;
- border:1px solid #393939;border-radius:10px;outline:none
-}
-input:focus,select:focus{border-color:#f5bd36}
-
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-
-.primary{
- width:100%;padding:15px;background:#f5bd36;color:#111;
- border:0;border-radius:12px;font-weight:900;margin-top:8px
-}
-.primary:disabled{opacity:.5;cursor:not-allowed}
-.secondary{
- width:100%;padding:13px;background:#252525;color:white;
- border:1px solid #444;border-radius:10px;margin-top:8px
-}
-
-.vehicle-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
-.vehicle{
- background:#1b1b1b;border:1px solid #383838;
- padding:12px;border-radius:12px;cursor:pointer
-}
-.vehicle.active{border:2px solid #f5bd36;background:#302714}
+header{padding:17px;background:#111;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #333}
+.logo{font-size:22px;font-weight:900;color:#f5c542}
+.container{max-width:850px;margin:auto;padding:14px}
+.card{background:#151515;border:1px solid #303030;border-radius:16px;padding:17px;margin:13px 0}
+h2{font-size:19px;margin:5px 0 14px}
+h3{font-size:16px}
+input,select{width:100%;padding:14px;margin:7px 0;background:#222;color:white;border:1px solid #444;border-radius:10px;font-size:15px}
+button{border:0;border-radius:10px;padding:13px 16px;font-weight:bold;cursor:pointer;margin:4px 2px}
+.primary{background:#f5c542;color:#111}
+.secondary{background:#333;color:white}
+.danger{background:#bd3535;color:white}
+.success{background:#168c56;color:white}
+button:disabled{opacity:.45}
+#map{height:320px;border-radius:13px;margin-top:12px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.vehicle{background:#222;border:1px solid #444;border-radius:12px;padding:14px;text-align:center;cursor:pointer}
+.vehicle.active{border:2px solid #f5c542;background:#302a16}
 .vehicle strong{display:block;margin-bottom:5px}
-.vehicle small{color:#aaa}
-
-.info{background:#1b1b1b;padding:12px;border-radius:10px;margin:10px 0;color:#ddd;font-size:13px}
-.fare{font-size:27px;font-weight:900;color:#f5bd36}
-.card{background:#1b1b1b;padding:13px;border:1px solid #333;border-radius:12px;margin:9px 0}
-.status{color:#f5bd36;font-weight:bold}
-#message{font-size:13px;color:#f5bd36;margin:12px 0;white-space:pre-wrap}
-.error{color:#ff7777!important}
-.success{color:#7de3a0!important}
-
-#authSection{
- position:fixed;inset:0;z-index:2000;background:#080808;
- display:flex;align-items:center;justify-content:center;padding:20px;
- overflow-y:auto
-}
-.authbox{
- width:100%;max-width:430px;background:#151515;
- border:1px solid #333;border-radius:22px;padding:28px
-}
-.authbox h1{color:#f5bd36;text-align:center;font-size:36px}
-.authbox p{text-align:center;color:#aaa;margin-bottom:28px}
-.authbox input{margin:7px 0;padding:16px;font-size:17px}
-.authbox button{font-size:16px}
-#historySection{margin-top:18px}
-
-@media(min-width:750px){
- .panel{left:auto;width:420px;max-height:85vh;bottom:20px;right:20px;border-radius:20px}
- .topbar{right:460px}
-}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row button{flex:1}
+.muted{color:#aaa;font-size:13px}
+.price{color:#f5c542;font-size:25px;font-weight:bold}
+#message{display:none;background:#292929;padding:12px;border-radius:10px;margin:10px 0;white-space:pre-wrap}
+.hidden{display:none!important}
+.result,.booking{padding:13px;background:#222;border:1px solid #444;border-radius:11px;margin:8px 0}
+.result button{float:right}
+.badge{background:#333;padding:6px 10px;border-radius:20px}
 </style>
 </head>
 
 <body>
+<header>
+ <div class="logo">SAKTHI CABS</div>
+ <button class="secondary" id="logoutBtn" onclick="logout()" style="display:none">Logout</button>
+</header>
 
-<div id="map"></div>
+<div class="container">
+<div id="message"></div>
 
-<div class="topbar">
- <div class="logo">SAKTHI <span>CABS</span></div>
- <div>
-  <button class="smallbtn" onclick="showHistory()">My Rides</button>
-  <button class="smallbtn" onclick="logout()">Logout</button>
+<section id="auth" class="card">
+ <h2>Welcome to SAKTHI CABS</h2>
+ <p class="muted">Book your ride anywhere in Tamil Nadu.</p>
+ <input id="email" type="email" placeholder="Email address">
+ <input id="password" type="password" placeholder="Password">
+ <input id="fullname" placeholder="Full name (for registration)">
+ <input id="phone" placeholder="Mobile number">
+ <div class="row">
+  <button class="primary" onclick="login()">LOGIN</button>
+  <button class="secondary" onclick="register()">REGISTER</button>
  </div>
+</section>
+
+<main id="app" class="hidden">
+
+<div class="card">
+ <h2>Where do you want to go?</h2>
+ <label>Pickup Location</label>
+ <input id="pickup" placeholder="Search pickup location">
+ <button class="secondary" onclick="useGPS()">Use Current GPS Location</button>
+ <div id="pickupResults"></div>
+
+ <label>Drop Location</label>
+ <input id="drop" placeholder="Search destination">
+ <div id="dropResults"></div>
+
+ <div id="map"></div>
+ <p class="muted" id="routeInfo">Choose pickup and drop locations.</p>
 </div>
 
-<!-- AUTHENTICATION -->
-<div id="authSection">
- <div class="authbox">
-  <h1>SAKTHI CABS</h1>
-  <p>Your ride. Your choice.</p>
-
-  <div id="registerFields" class="hidden">
-   <input id="regName" placeholder="Full Name" autocomplete="name">
-   <input id="regPhone" placeholder="Mobile Number" type="tel" autocomplete="tel">
+<div class="card">
+ <h2>Trip Type</h2>
+ <select id="tripType" onchange="updateFare()">
+  <option value="local">Local</option>
+  <option value="outstation">Outstation</option>
+ </select>
+ <h2>Select Vehicle</h2>
+ <div class="grid" id="vehicles">
+  <div class="vehicle active" data-name="Bike" onclick="chooseVehicle(this)">
+   <strong>🏍 Bike</strong><span class="muted">Two wheeler</span>
   </div>
-
-  <input id="email" type="email" placeholder="Email Address" autocomplete="username">
-  <input id="password" type="password" placeholder="Password" autocomplete="current-password">
-
-  <button type="button" class="primary" id="authButton" onclick="login()">
-   LOGIN
-  </button>
-
-  <button type="button" class="secondary" id="toggleButton" onclick="toggleRegister()">
-   Create New Account
-  </button>
-
-  <div id="message"></div>
+  <div class="vehicle" data-name="Auto" onclick="chooseVehicle(this)">
+   <strong>🛺 Auto</strong><span class="muted">Auto ride</span>
+  </div>
+  <div class="vehicle" data-name="Mini Car" onclick="chooseVehicle(this)">
+   <strong>🚗 Mini Car</strong><span class="muted">Compact car</span>
+  </div>
+  <div class="vehicle" data-name="Sedan" onclick="chooseVehicle(this)">
+   <strong>🚘 Sedan</strong><span class="muted">Comfort ride</span>
+  </div>
+  <div class="vehicle" data-name="SUV" onclick="chooseVehicle(this)">
+   <strong>🚙 SUV</strong><span class="muted">Family ride</span>
+  </div>
  </div>
+ <p class="muted" id="fareBreakdown">Fare will be calculated after route selection.</p>
+ <div class="price" id="fare">₹0.00</div>
 </div>
 
-<!-- CUSTOMER APPLICATION -->
-<div class="panel hidden" id="appSection">
- <div class="handle"></div>
- <h2>Book Your Ride</h2>
-
- <div class="field">
-  <label>TRIP TYPE</label>
-  <select id="tripType" onchange="resetRoute()">
-   <option value="local">Local Ride</option>
-   <option value="outstation">Outstation Ride</option>
-  </select>
- </div>
-
- <div class="field">
-  <label>PICKUP ADDRESS</label>
-  <input id="pickupAddress" placeholder="Enter pickup location">
- </div>
-
- <div class="grid2">
-  <div class="field">
-   <label>PICKUP DISTRICT</label>
-   <select id="pickupDistrict"></select>
-  </div>
-  <div class="field">
-   <label>PICKUP CITY</label>
-   <input id="pickupCity" placeholder="City">
-  </div>
- </div>
-
- <button class="secondary" onclick="getGPS()">📍 Use Current GPS Location</button>
-
- <div class="field" style="margin-top:14px">
-  <label>DROP ADDRESS</label>
-  <input id="dropAddress" placeholder="Enter destination">
- </div>
-
- <div class="grid2">
-  <div class="field">
-   <label>DROP DISTRICT</label>
-   <select id="dropDistrict"></select>
-  </div>
-  <div class="field">
-   <label>DROP CITY</label>
-   <input id="dropCity" placeholder="City">
-  </div>
- </div>
-
- <button class="secondary" onclick="calculateRoute()">🗺️ Calculate Route & Distance</button>
-
- <div class="info" id="routeInfo">
-  Enter pickup and drop locations.
- </div>
-
- <h3>Select Vehicle</h3>
- <div class="vehicle-grid" id="vehicleList">
-  Loading vehicles...
- </div>
-
- <h3>Payment Method</h3>
- <select id="paymentMethod">
+<div class="card">
+ <h2>Payment Method</h2>
+ <select id="payment">
   <option value="cash">Cash</option>
   <option value="upi">UPI</option>
-  <option value="online">Online</option>
+  <option value="online">Online Payment</option>
  </select>
-
- <div class="info">
-  Estimated Fare
-  <div class="fare" id="fare">₹0</div>
-  <small id="fareDetails">Calculate route first.</small>
- </div>
-
- <button class="primary" id="bookButton" onclick="bookCab()">
-  BOOK YOUR RIDE
- </button>
-
- <button class="secondary" onclick="findDrivers()">
-  Find Available Drivers
- </button>
-
- <div id="driverSection"></div>
- <div id="historySection"></div>
+ <p class="muted">UPI and online payment require a payment gateway before real transactions can be processed.</p>
+ <button class="primary" style="width:100%" onclick="bookRide()">CONFIRM BOOKING</button>
 </div>
 
-<!-- LIBRARIES -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<div class="card">
+ <h2>My Current Ride</h2>
+ <div id="currentRide">No active booking.</div>
+ <div id="driverOptions"></div>
+ <div id="customerOTP"></div>
+</div>
+
+<div class="card">
+ <h2>My Ride History</h2>
+ <button class="secondary" onclick="loadHistory()">Refresh History</button>
+ <div id="history"></div>
+</div>
+
+</main>
+</div>
 
 <script>
-// ========================================
-// 1. SUPABASE CONFIGURATION
-// ========================================
+const SUPABASE_URL="https://kzcczciqaxawbesgtgcf.supabase.co";
+const SUPABASE_KEY="sb_publishable_bKS7yIQ01_cOi972JQ7jQw_WjxhbKKb";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-const SUPABASE_URL =
- "https://kzcczciqaxawbesgtgcf.supabase.co";
+let user=null;
+let vehicleList=[];
+let selectedVehicle="Bike";
+let pickupPoint=null,dropPoint=null;
+let distanceKm=0,estimatedFare=0;
+let map,pickupMarker,dropMarker,routeLine;
+let activeBooking=null;
+let refreshInterval=null;
 
-const SUPABASE_KEY =
- "sb_publishable_bKS7yIQ01_cOi972JQ7jQw_WjxhbKKb";
-
-let supabaseClient;
-
-// ========================================
-// 2. APPLICATION VARIABLES
-// ========================================
-
-let currentUser = null;
-let isRegister = false;
-let appStarted = false;
-
-let map = null;
-let pickupMarker = null;
-let dropMarker = null;
-let routeLayer = null;
-
-let pickupLat = null;
-let pickupLng = null;
-let dropLat = null;
-let dropLng = null;
-
-let routeDistance = 0;
-let selectedVehicle = null;
-let vehicles = [];
-let currentBookingId = null;
-let realtimeChannel = null;
-
-const districts = [
-"Chennai","Chengalpattu","Kancheepuram","Tiruvallur",
-"Vellore","Ranipet","Tirupattur","Tiruvannamalai",
-"Villupuram","Kallakurichi","Cuddalore","Mayiladuthurai",
-"Nagapattinam","Tiruvarur","Thanjavur","Pudukkottai",
-"Trichy","Perambalur","Ariyalur","Karur","Namakkal",
-"Salem","Dharmapuri","Krishnagiri","Erode","Coimbatore",
-"Tiruppur","The Nilgiris","Dindigul","Theni","Madurai",
-"Sivaganga","Ramanathapuram","Virudhunagar","Tenkasi",
-"Tirunelveli","Thoothukudi","Kanniyakumari"
-];
-
-// ========================================
-// 3. MESSAGE DISPLAY
-// ========================================
-
-function showMessage(message,type=""){
+function message(t){
  const el=document.getElementById("message");
- el.textContent=message;
- el.className=type;
+ el.style.display="block";el.textContent=t;
 }
-
-// ========================================
-// 4. DISTRICT DROPDOWNS
-// ========================================
-
-function loadDistricts(){
- const html =
-  '<option value="">Select District</option>'+
-  districts.map(d=>`<option value="${d}">${d}</option>`).join("");
-
- document.getElementById("pickupDistrict").innerHTML=html;
- document.getElementById("dropDistrict").innerHTML=html;
+function clearMessage(){document.getElementById("message").style.display="none"}
+function safe(v){
+ return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
-
-// ========================================
-// 5. REGISTER / LOGIN SWITCH
-// ========================================
-
-function toggleRegister(){
- isRegister=!isRegister;
-
- document.getElementById("registerFields")
-  .classList.toggle("hidden",!isRegister);
-
- document.getElementById("authButton").textContent=
-  isRegister?"REGISTER":"LOGIN";
-
- document.getElementById("toggleButton").textContent=
-  isRegister?"Already have an account? Login":"Create New Account";
-
- showMessage("");
-}
-
-// ========================================
-// 6. LOGIN
-// ========================================
+function money(v){return "₹"+Number(v||0).toFixed(2)}
 
 async function login(){
+ clearMessage();
+ const {data,error}=await db.auth.signInWithPassword({
+  email:document.getElementById("email").value.trim(),
+  password:document.getElementById("password").value
+ });
+ if(error){message(error.message);return}
+ user=data.user;await startApp();
+}
+
+async function register(){
+ clearMessage();
  const email=document.getElementById("email").value.trim();
  const password=document.getElementById("password").value;
- const button=document.getElementById("authButton");
+ const name=document.getElementById("fullname").value.trim();
+ const phone=document.getElementById("phone").value.trim();
+ if(!email||!password||!name||!phone){message("Fill all registration fields.");return}
+ if(password.length<6){message("Password must contain at least 6 characters.");return}
 
- if(!email || !password){
-  showMessage("Enter email and password.","error");
-  return;
- }
+ const {data,error}=await db.auth.signUp({email,password});
+ if(error){message(error.message);return}
+ if(!data.user){message("Registration submitted. Check your email for confirmation.");return}
 
- button.disabled=true;
- button.textContent="PLEASE WAIT...";
- showMessage("Connecting...");
-
- try{
-  if(isRegister){
-   const name=document.getElementById("regName").value.trim();
-   const phone=document.getElementById("regPhone").value.trim();
-
-   if(!name || !phone){
-    throw new Error("Enter your name and mobile number.");
-   }
-
-   const {data,error}=await supabaseClient.auth.signUp({
-    email,
-    password,
-    options:{
-     data:{full_name:name,phone:phone}
-    }
-   });
-
-   if(error)throw error;
-
-   if(!data.session){
-    showMessage(
-     "Account created. Verify your email before login.",
-     "success"
-    );
-    alert("Registration successful. Check your email.");
-   }else{
-    currentUser=data.user;
-    await saveProfile(name,phone);
-    await startApp(data.user);
-   }
-
-  }else{
-   const {data,error}=await supabaseClient.auth.signInWithPassword({
-    email,
-    password
-   });
-
-   if(error)throw error;
-
-   currentUser=data.user;
-   await startApp(data.user);
-  }
-
- }catch(error){
-  console.error("AUTH ERROR:",error);
-  showMessage("ERROR: "+error.message,"error");
-  alert("SAKTHI CABS: "+error.message);
-
- }finally{
-  button.disabled=false;
-  button.textContent=isRegister?"REGISTER":"LOGIN";
- }
+ const {error:profileError}=await db.from("profiles").upsert({
+  id:data.user.id,full_name:name,phone:phone
+ });
+ if(profileError){message("Account created. Profile error: "+profileError.message);return}
+ if(!data.session){message("Registration successful. Confirm your email and then login.");return}
+ user=data.user;await startApp();
 }
 
-// ========================================
-// 7. PROFILE
-// ========================================
-
-async function saveProfile(name,phone){
- if(!currentUser)return;
-
- const {error}=await supabaseClient
-  .from("profiles")
-  .upsert({
-   id:currentUser.id,
-   full_name:name,
-   phone:phone
-  },{onConflict:"id"});
-
- if(error){
-  console.error("Profile save:",error.message);
- }
+async function startApp(){
+ document.getElementById("auth").classList.add("hidden");
+ document.getElementById("app").classList.remove("hidden");
+ document.getElementById("logoutBtn").style.display="block";
+ initializeMap();
+ await loadVehicles();
+ await loadActiveBooking();
+ await loadHistory();
+ if(refreshInterval)clearInterval(refreshInterval);
+ refreshInterval=setInterval(loadActiveBooking,8000);
 }
 
-// ========================================
-// 8. START APPLICATION
-// ========================================
-
-async function startApp(user){
- if(!user)return;
-
- if(appStarted && currentUser?.id===user.id)return;
-
- currentUser=user;
- appStarted=true;
-
- document.getElementById("authSection").classList.add("hidden");
- document.getElementById("appSection").classList.remove("hidden");
-
- initMap();
-
- try{
-  await loadVehicles();
-  await loadHistory();
-  enableRealtime();
- }catch(error){
-  console.error("APP ERROR:",error);
- }
-
- setTimeout(()=>{
-  if(map)map.invalidateSize();
- },500);
-}
-
-// ========================================
-// 9. SESSION CHECK
-// ========================================
-
-async function checkSession(){
- loadDistricts();
-
- try{
-  const {data,error}=await supabaseClient.auth.getSession();
-
-  if(error)throw error;
-
-  if(data.session){
-   await startApp(data.session.user);
-  }
-
- }catch(error){
-  console.error(error);
-  showMessage("Session error: "+error.message,"error");
- }
-}
-
-// ========================================
-// 10. LOGOUT
-// ========================================
-
-async function logout(){
- if(realtimeChannel){
-  await supabaseClient.removeChannel(realtimeChannel);
-  realtimeChannel=null;
- }
-
- await supabaseClient.auth.signOut();
- location.reload();
-}
-
-// ========================================
-// 11. MAP INITIALIZATION
-// ========================================
-
-function initMap(){
+function initializeMap(){
  if(map)return;
-
  map=L.map("map").setView([11.1271,78.6569],7);
-
- L.tileLayer(
-  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-  {
-   maxZoom:19,
-   attribution:"© OpenStreetMap contributors"
-  }
- ).addTo(map);
+ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+  attribution:"© OpenStreetMap contributors"
+ }).addTo(map);
+ setTimeout(()=>map.invalidateSize(),300);
 }
 
-function updateMarker(type,lat,lng){
- const point=[lat,lng];
-
- if(type==="pickup"){
-  if(pickupMarker)map.removeLayer(pickupMarker);
-
-  pickupMarker=L.marker(point)
-   .addTo(map)
-   .bindPopup("Pickup Location");
- }else{
-  if(dropMarker)map.removeLayer(dropMarker);
-
-  dropMarker=L.marker(point)
-   .addTo(map)
-   .bindPopup("Drop Location");
- }
-
- if(pickupMarker && dropMarker){
-  map.fitBounds(
-   L.featureGroup([pickupMarker,dropMarker])
-    .getBounds().pad(0.2)
-  );
- }else{
-  map.setView(point,15);
- }
+async function loadVehicles(){
+ const {data,error}=await db.from("vehicles")
+  .select("id,name,base_fare,per_km,is_active")
+  .eq("is_active",true);
+ if(error){message("Vehicle loading error: "+error.message);return}
+ vehicleList=data||[];
+ updateFare();
 }
 
-// ========================================
-// 12. GPS
-// ========================================
-
-async function getGPS(){
- if(!navigator.geolocation){
-  alert("GPS not supported.");
-  return;
- }
-
- navigator.geolocation.getCurrentPosition(
-  async position=>{
-   pickupLat=position.coords.latitude;
-   pickupLng=position.coords.longitude;
-
-   updateMarker("pickup",pickupLat,pickupLng);
-
-   document.getElementById("routeInfo").textContent=
-    "GPS pickup captured.";
-
-   try{
-    const url=
-     `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${pickupLat}&lon=${pickupLng}`;
-
-    const response=await fetch(url);
-    if(!response.ok)throw new Error("Address lookup failed");
-
-    const result=await response.json();
-
-    document.getElementById("pickupAddress").value=
-     result.display_name||"Current GPS Location";
-
-   }catch(error){
-    document.getElementById("pickupAddress").value=
-     "Current GPS Location";
-   }
-
-   resetRoute();
-  },
-  error=>{
-   alert("GPS unavailable. Allow location permission.");
-  },
-  {enableHighAccuracy:true,timeout:15000,maximumAge:0}
- );
+function chooseVehicle(el){
+ document.querySelectorAll(".vehicle").forEach(v=>v.classList.remove("active"));
+ el.classList.add("active");
+ selectedVehicle=el.dataset.name;
+ updateFare();
 }
 
-// ========================================
-// 13. ADDRESS SEARCH
-// ========================================
+async function searchLocation(type){
+ const input=document.getElementById(type);
+ const q=input.value.trim();
+ if(q.length<3)return;
+ const results=document.getElementById(type+"Results");
+ results.textContent="Searching...";
+ try{
+  const url="https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&countrycodes=in&q="+encodeURIComponent(q+", Tamil Nadu, India");
+  const response=await fetch(url);
+  const data=await response.json();
+  results.innerHTML="";
+  if(!data.length){results.textContent="Location not found. Try another spelling or PIN code.";return}
+  data.forEach(place=>{
+   const div=document.createElement("div");
+   div.className="result";
+   const label=place.display_name;
+   const button=document.createElement("button");
+   button.className="primary";
+   button.textContent="Select";
+   button.onclick=()=>selectLocation(type,place);
+   const span=document.createElement("span");
+   span.textContent=label;
+   div.append(span,button);
+   results.appendChild(div);
+  });
+ }catch(e){results.textContent="Location search failed: "+e.message}
+}
 
-async function geocodeAddress(address,district,city){
- const query=[
-  address,city,district,"Tamil Nadu","India"
- ].filter(Boolean).join(", ");
+document.getElementById("pickup").addEventListener("input",()=>searchLocation("pickup"));
+document.getElementById("drop").addEventListener("input",()=>searchLocation("drop"));
 
- const url=
-  "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q="+
-  encodeURIComponent(query);
-
- const response=await fetch(url);
-
- if(!response.ok)throw new Error("Address service unavailable.");
-
- const results=await response.json();
-
- if(!results.length)throw new Error("Location not found: "+query);
-
- return {
-  lat:Number(results[0].lat),
-  lng:Number(results[0].lon),
-  name:results[0].display_name
+function selectLocation(type,p){
+ const point={
+  lat:Number(p.lat),lng:Number(p.lon),address:p.display_name
  };
+ if(type==="pickup"){
+  pickupPoint=point;
+  document.getElementById("pickup").value=point.address;
+  document.getElementById("pickupResults").innerHTML="";
+  if(pickupMarker)map.removeLayer(pickupMarker);
+  pickupMarker=L.marker([point.lat,point.lng]).addTo(map).bindPopup("Pickup").openPopup();
+ }else{
+  dropPoint=point;
+  document.getElementById("drop").value=point.address;
+  document.getElementById("dropResults").innerHTML="";
+  if(dropMarker)map.removeLayer(dropMarker);
+  dropMarker=L.marker([point.lat,point.lng]).addTo(map).bindPopup("Drop");
+ }
+ if(pickupPoint&&dropPoint){
+  map.fitBounds([[pickupPoint.lat,pickupPoint.lng],[dropPoint.lat,dropPoint.lng]],{padding:[30,30]});
+  calculateRoute();
+ }
 }
 
-// ========================================
-// 14. ROUTE CALCULATION
-// ========================================
+function useGPS(){
+ if(!navigator.geolocation){message("GPS not supported.");return}
+ navigator.geolocation.getCurrentPosition(async pos=>{
+  const lat=pos.coords.latitude,lng=pos.coords.longitude;
+  try{
+   const res=await fetch("https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat="+lat+"&lon="+lng);
+   const p=await res.json();
+   selectLocation("pickup",{lat:String(lat),lon:String(lng),display_name:p.display_name||"Current GPS location"});
+  }catch(e){
+   selectLocation("pickup",{lat:String(lat),lon:String(lng),display_name:"Current GPS location"});
+  }
+ },e=>message("GPS error: "+e.message),{enableHighAccuracy:true,timeout:15000});
+}
 
 async function calculateRoute(){
  try{
-  const pickupAddress=document.getElementById("pickupAddress").value.trim();
-  const dropAddress=document.getElementById("dropAddress").value.trim();
-
-  const pickupDistrict=document.getElementById("pickupDistrict").value;
-  const dropDistrict=document.getElementById("dropDistrict").value;
-
-  const pickupCity=document.getElementById("pickupCity").value.trim();
-  const dropCity=document.getElementById("dropCity").value.trim();
-
-  if(!pickupAddress||!dropAddress){
-   throw new Error("Enter pickup and drop addresses.");
-  }
-
-  document.getElementById("routeInfo").textContent=
-   "Finding route...";
-
-  if(pickupLat===null||pickupLng===null){
-   const p=await geocodeAddress(
-    pickupAddress,pickupDistrict,pickupCity
-   );
-   pickupLat=p.lat;
-   pickupLng=p.lng;
-  }
-
-  const d=await geocodeAddress(
-   dropAddress,dropDistrict,dropCity
-  );
-
-  dropLat=d.lat;
-  dropLng=d.lng;
-
-  updateMarker("pickup",pickupLat,pickupLng);
-  updateMarker("drop",dropLat,dropLng);
-
-  const routeURL=
-   `https://router.project-osrm.org/route/v1/driving/${pickupLng},${pickupLat};${dropLng},${dropLat}?overview=full&geometries=geojson`;
-
-  const response=await fetch(routeURL);
-  if(!response.ok)throw new Error("Route service unavailable.");
-
+  const url=`https://router.project-osrm.org/route/v1/driving/${pickupPoint.lng},${pickupPoint.lat};${dropPoint.lng},${dropPoint.lat}?overview=full&geometries=geojson`;
+  const response=await fetch(url);
   const result=await response.json();
-
-  if(result.code!=="Ok"||!result.routes.length){
-   throw new Error("Route not found.");
-  }
-
+  if(result.code!=="Ok"||!result.routes?.length){message("Route not found.");return}
   const route=result.routes[0];
-  routeDistance=route.distance/1000;
-
-  if(routeLayer)map.removeLayer(routeLayer);
-
-  routeLayer=L.geoJSON(route.geometry,{
-   style:{color:"#e6a900",weight:5,opacity:0.9}
-  }).addTo(map);
-
-  map.fitBounds(routeLayer.getBounds().pad(0.15));
-
-  document.getElementById("routeInfo").innerHTML=
-   `<b>Road Distance:</b> ${routeDistance.toFixed(2)} KM<br>
-    <b>Estimated Time:</b> ${Math.round(route.duration/60)} minutes`;
-
+  distanceKm=route.distance/1000;
+  if(routeLine)map.removeLayer(routeLine);
+  routeLine=L.geoJSON(route.geometry,{style:{color:"#f5c542",weight:5}}).addTo(map);
+  document.getElementById("routeInfo").textContent=
+   "Distance: "+distanceKm.toFixed(2)+" km | Approx. route duration: "+Math.ceil(route.duration/60)+" min";
   updateFare();
-
- }catch(error){
-  console.error("ROUTE ERROR:",error);
-  routeDistance=0;
-  updateFare();
-  document.getElementById("routeInfo").textContent=error.message;
- }
+ }catch(e){message("Route error: "+e.message)}
 }
-
-function resetRoute(){
- routeDistance=0;
- dropLat=null;
- dropLng=null;
-
- if(routeLayer&&map){
-  map.removeLayer(routeLayer);
-  routeLayer=null;
- }
-
- if(dropMarker&&map){
-  map.removeLayer(dropMarker);
-  dropMarker=null;
- }
-
- document.getElementById("routeInfo").textContent=
-  "Calculate route after changing locations.";
-
- updateFare();
-}
-
-// ========================================
-// 15. LOAD VEHICLES
-// ========================================
-
-async function loadVehicles(){
- const list=document.getElementById("vehicleList");
- list.textContent="Loading vehicles...";
-
- const {data,error}=await supabaseClient
-  .from("vehicles")
-  .select("id,name,base_fare,per_km,is_active")
-  .eq("is_active",true)
-  .order("base_fare");
-
- if(error){
-  list.textContent="Vehicle error: "+error.message;
-  return;
- }
-
- vehicles=data||[];
-
- if(!vehicles.length){
-  list.textContent="No active vehicles available.";
-  return;
- }
-
- list.innerHTML="";
-
- vehicles.forEach(v=>{
-  const card=document.createElement("div");
-  card.className="vehicle";
-  card.id="vehicle-"+v.id;
-
-  const name=document.createElement("strong");
-  name.textContent=v.name;
-
-  const base=document.createElement("small");
-  base.textContent="Base Fare: ₹"+Number(v.base_fare);
-
-  const rate=document.createElement("small");
-  rate.textContent=" | Per KM: ₹"+Number(v.per_km);
-
-  card.append(name,base,rate);
-  card.onclick=()=>selectVehicle(v.id);
-
-  list.appendChild(card);
- });
-
- selectVehicle(vehicles[0].id);
-}
-
-// ========================================
-// 16. SELECT VEHICLE
-// ========================================
-
-function selectVehicle(id){
- selectedVehicle=vehicles.find(v=>v.id===id);
-
- document.querySelectorAll(".vehicle").forEach(el=>{
-  el.classList.remove("active");
- });
-
- const card=document.getElementById("vehicle-"+id);
- if(card)card.classList.add("active");
-
- updateFare();
-}
-
-// ========================================
-// 17. FARE
-// ========================================
 
 function updateFare(){
- const fareElement=document.getElementById("fare");
- const details=document.getElementById("fareDetails");
-
- if(!selectedVehicle||routeDistance<=0){
-  fareElement.textContent="₹0";
-  details.textContent="Calculate route and select vehicle.";
+ const v=vehicleList.find(x=>x.name===selectedVehicle);
+ if(!v||!distanceKm){
+  document.getElementById("fare").textContent="₹0.00";
   return;
  }
-
- const base=Number(selectedVehicle.base_fare);
- const rate=Number(selectedVehicle.per_km);
- const total=Math.ceil(base+routeDistance*rate);
-
- fareElement.textContent="₹"+total;
-
- details.textContent=
-  `Base ₹${base} + ${routeDistance.toFixed(2)} KM × ₹${rate}/KM`;
+ estimatedFare=Number(v.base_fare)+distanceKm*Number(v.per_km);
+ if(document.getElementById("tripType").value==="outstation"){
+  estimatedFare*=1.15;
+ }
+ document.getElementById("fare").textContent=money(estimatedFare);
+ document.getElementById("fareBreakdown").textContent=
+  `${v.name}: Base ${money(v.base_fare)} + ${distanceKm.toFixed(2)} km × ${money(v.per_km)}/km. Outstation estimate includes a 15% provisional multiplier.`;
 }
 
-// ========================================
-// 18. BOOK RIDE
-// ========================================
+function getDistrict(address){
+ const parts=address.split(",").map(x=>x.trim());
+ const districtHints=["Salem","Namakkal","Erode","Chennai","Coimbatore","Madurai","Trichy","Thanjavur","Tirunelveli","Vellore","Dharmapuri","Karur","Dindigul","Kanchipuram","Tiruppur","Villupuram","Cuddalore","Krishnagiri","Theni","Tenkasi","Sivaganga","Virudhunagar","Ramanathapuram","Pudukkottai","Nagapattinam","Mayiladuthurai","Tiruvannamalai","Ranipet","Tirupattur","Kallakurichi","Perambalur","Ariyalur","Nilgiris","Kanniyakumari","Thoothukudi","Tiruvallur","Chengalpattu"];
+ return districtHints.find(d=>parts.some(p=>p.toLowerCase().includes(d.toLowerCase())))||null;
+}
 
-async function bookCab(){
- if(!currentUser)return alert("Please login first.");
- if(!selectedVehicle)return alert("Select a vehicle.");
+async function bookRide(){
+ clearMessage();
+ if(!user){message("Please login.");return}
+ if(!pickupPoint||!dropPoint){message("Select pickup and drop locations.");return}
+ if(!distanceKm||!estimatedFare){message("Route or fare is not ready.");return}
 
- if(routeDistance<=0||pickupLat===null||dropLat===null){
-  return alert("Calculate route first.");
- }
+ const vehicle=vehicleList.find(v=>v.name===selectedVehicle);
+ if(!vehicle){message("Selected vehicle unavailable.");return}
 
- const pickupAddress=document.getElementById("pickupAddress").value.trim();
- const dropAddress=document.getElementById("dropAddress").value.trim();
-
- const pickupDistrict=document.getElementById("pickupDistrict").value;
- const dropDistrict=document.getElementById("dropDistrict").value;
-
- const pickupCity=document.getElementById("pickupCity").value.trim();
- const dropCity=document.getElementById("dropCity").value.trim();
-
+ const pickupDistrict=getDistrict(pickupPoint.address);
+ const dropDistrict=getDistrict(dropPoint.address);
  const tripType=document.getElementById("tripType").value;
 
- if(!pickupAddress||!dropAddress||!pickupDistrict||!dropDistrict){
-  return alert("Complete pickup and drop details.");
- }
+ const payload={
+  customer_id:user.id,
+  vehicle_id:vehicle.id,
+  pickup_address:pickupPoint.address,
+  drop_address:dropPoint.address,
+  pickup_lat:pickupPoint.lat,
+  pickup_lng:pickupPoint.lng,
+  drop_lat:dropPoint.lat,
+  drop_lng:dropPoint.lng,
+  estimated_fare:Number(estimatedFare.toFixed(2)),
+  payment_method:document.getElementById("payment").value,
+  payment_status:"pending",
+  status:"pending",
+  trip_type:tripType,
+  pickup_city:pickupPoint.address.split(",")[0],
+  pickup_district:pickupDistrict,
+  drop_city:dropPoint.address.split(",")[0],
+  drop_district:dropDistrict
+ };
 
- if(tripType==="local"&&pickupDistrict!==dropDistrict){
-  return alert("Select Outstation for different districts.");
- }
-
- const fare=Math.ceil(
-  Number(selectedVehicle.base_fare)+
-  routeDistance*Number(selectedVehicle.per_km)
- );
-
- const button=document.getElementById("bookButton");
- button.disabled=true;
- button.textContent="BOOKING...";
-
- try{
-  const {data,error}=await supabaseClient
-   .from("bookings")
-   .insert({
-    customer_id:currentUser.id,
-    vehicle_id:selectedVehicle.id,
-    pickup_address:pickupAddress,
-    drop_address:dropAddress,
-    pickup_lat:pickupLat,
-    pickup_lng:pickupLng,
-    drop_lat:dropLat,
-    drop_lng:dropLng,
-    estimated_fare:fare,
-    payment_method:document.getElementById("paymentMethod").value,
-    payment_status:"pending",
-    status:"pending",
-    trip_type:tripType,
-    pickup_city:pickupCity||pickupDistrict,
-    pickup_district:pickupDistrict,
-    drop_city:dropCity||dropDistrict,
-    drop_district:dropDistrict
-   })
-   .select()
-   .single();
-
-  if(error)throw error;
-
-  currentBookingId=data.id;
-
-  alert("Booking successful! Booking ID: "+data.id);
-
-  await loadHistory();
-  await findDrivers();
-
- }catch(error){
-  console.error("BOOKING ERROR:",error);
-  alert("Booking failed: "+error.message);
- }finally{
-  button.disabled=false;
-  button.textContent="BOOK YOUR RIDE";
- }
+ const {data,error}=await db.from("bookings").insert(payload).select().single();
+ if(error){message("Booking failed: "+error.message);return}
+ activeBooking=data;
+ message("Booking created successfully!");
+ await showDriverOptions();
+ await loadActiveBooking();
 }
 
-// ========================================
-// 19. AVAILABLE DRIVERS
-// ========================================
-
-async function findDrivers(){
- const section=document.getElementById("driverSection");
-
- if(!currentBookingId){
-  section.textContent="Book a ride first.";
+async function showDriverOptions(){
+ if(!activeBooking)return;
+ const el=document.getElementById("driverOptions");
+ el.textContent="Finding available drivers...";
+ const {data,error}=await db.rpc("sakthi_get_available_drivers",{
+  p_booking_id:activeBooking.id
+ });
+ if(error){el.textContent="Driver search: "+error.message;return}
+ if(!data?.length){
+  el.textContent="No available drivers found yet. Automatic matching may still be pending.";
   return;
  }
-
- section.textContent="Finding drivers...";
-
- const {data,error}=await supabaseClient.rpc(
-  "sakthi_get_available_drivers",
-  {p_booking_id:currentBookingId}
- );
-
- if(error){
-  section.textContent="Driver search error: "+error.message;
-  return;
- }
-
- if(!data||!data.length){
-  section.textContent="No available drivers found.";
-  return;
- }
-
- section.innerHTML="<h3>Available Drivers</h3>";
-
- data.forEach(driver=>{
-  const card=document.createElement("div");
-  card.className="card";
-
-  const name=document.createElement("b");
-  name.textContent=driver.driver_name||"Driver";
-
-  const details=document.createElement("p");
-  details.textContent=
-   `${driver.vehicle_name||""} | ${driver.vehicle_number||""} | ${Number(driver.distance_km||0).toFixed(1)} KM`;
-
-  const button=document.createElement("button");
-  button.className="primary";
-  button.textContent="SELECT DRIVER";
-  button.onclick=()=>selectDriver(driver.driver_id);
-
-  card.append(name,details,button);
-  section.appendChild(card);
+ el.innerHTML="<h3>Available Drivers</h3>";
+ data.forEach(d=>{
+  const div=document.createElement("div");
+  div.className="result";
+  const info=document.createElement("span");
+  info.textContent=`${d.driver_name||"Driver"} | ${d.vehicle_name||""} | ${d.vehicle_number||""} | ${d.distance_km??"?"} km`;
+  const btn=document.createElement("button");
+  btn.className="primary";
+  btn.textContent="Select Driver";
+  btn.onclick=()=>selectDriver(d.driver_id);
+  div.append(info,btn);el.append(div);
  });
 }
 
-// ========================================
-// 20. SELECT DRIVER
-// ========================================
-
-async function selectDriver(driverId){
- if(!currentBookingId)return;
- if(!confirm("Select this driver?"))return;
-
- const {error}=await supabaseClient.rpc(
-  "sakthi_select_driver",
-  {
-   p_booking_id:currentBookingId,
-   p_driver_id:driverId
-  }
- );
-
- if(error){
-  alert("Driver selection failed: "+error.message);
-  return;
- }
-
- alert("Driver selected. Waiting for acceptance.");
- await loadHistory();
+async function selectDriver(id){
+ if(!activeBooking)return;
+ const {data,error}=await db.rpc("sakthi_select_driver",{
+  p_booking_id:activeBooking.id,p_driver_id:id
+ });
+ if(error){message("Driver selection failed: "+error.message);return}
+ message("Driver selected successfully.");
+ await loadActiveBooking();
 }
 
-// ========================================
-// 21. BOOKING HISTORY
-// ========================================
+async function loadActiveBooking(){
+ if(!user)return;
+ const {data,error}=await db.from("bookings")
+  .select("*")
+  .eq("customer_id",user.id)
+  .in("status",["pending","accepted","arrived","started"])
+  .order("created_at",{ascending:false}).limit(1);
+
+ if(error){document.getElementById("currentRide").textContent=error.message;return}
+ activeBooking=data?.[0]||null;
+ const el=document.getElementById("currentRide");
+ if(!activeBooking){
+  el.textContent="No active booking.";
+  document.getElementById("customerOTP").innerHTML="";
+  document.getElementById("driverOptions").innerHTML="";
+  return;
+ }
+ el.innerHTML=`
+  <div class="booking">
+   <p><b>Status:</b> <span class="badge">${safe(activeBooking.status)}</span></p>
+   <p><b>Pickup:</b> ${safe(activeBooking.pickup_address)}</p>
+   <p><b>Drop:</b> ${safe(activeBooking.drop_address)}</p>
+   <p><b>Fare:</b> ${money(activeBooking.estimated_fare)}</p>
+   <p><b>Payment:</b> ${safe(activeBooking.payment_method)}</p>
+   ${activeBooking.status==="pending"?'<button class="danger" onclick="cancelBooking()">CANCEL BOOKING</button>':""}
+  </div>`;
+
+ if(activeBooking.status==="arrived"){
+  const {data:otp,error:otpError}=await db.rpc("sakthi_customer_get_ride_otp",{
+   p_booking_id:activeBooking.id
+  });
+  document.getElementById("customerOTP").innerHTML=otpError?
+   "OTP unavailable: "+safe(otpError.message):
+   `<div class="card"><h2>Your Ride OTP</h2><div class="price">${safe(otp)}</div><p class="muted">Share this OTP with your driver only when you are ready to start the ride.</p></div>`;
+ }else{
+  document.getElementById("customerOTP").innerHTML="";
+ }
+
+ if(activeBooking.status==="pending")await showDriverOptions();
+}
+
+async function cancelBooking(){
+ if(!activeBooking||activeBooking.status!=="pending")return;
+ if(!confirm("Cancel this booking?"))return;
+ const {error}=await db.from("bookings")
+  .update({status:"cancelled"})
+  .eq("id",activeBooking.id)
+  .eq("customer_id",user.id)
+  .eq("status","pending");
+ if(error){message("Cancel error: "+error.message);return}
+ message("Booking cancelled.");
+ await loadActiveBooking();
+}
 
 async function loadHistory(){
- if(!currentUser)return;
-
- const section=document.getElementById("historySection");
-
- const {data,error}=await supabaseClient
-  .from("bookings")
-  .select(`
-   id,
-   pickup_address,
-   drop_address,
-   estimated_fare,
-   final_fare,
-   status,
-   payment_method,
-   created_at,
-   vehicles(name)
-  `)
-  .eq("customer_id",currentUser.id)
-  .order("created_at",{ascending:false})
-  .limit(10);
-
- if(error){
-  section.textContent="History error: "+error.message;
-  return;
- }
-
- section.innerHTML="<h3>My Bookings</h3>";
-
- if(!data||!data.length){
-  section.innerHTML+="<div class='info'>No bookings yet.</div>";
-  return;
- }
-
- data.forEach(b=>{
-  const card=document.createElement("div");
-  card.className="card";
-
-  const title=document.createElement("b");
-  title.textContent=b.vehicles?.name||"Cab";
-
-  const status=document.createElement("p");
-  status.textContent="Status: "+b.status;
-  status.className="status";
-
-  const route=document.createElement("p");
-  route.textContent=b.pickup_address+" → "+b.drop_address;
-
-  const fare=document.createElement("p");
-  fare.textContent="Fare: ₹"+(b.final_fare??b.estimated_fare??0);
-
-  const date=document.createElement("small");
-  date.textContent=new Date(b.created_at).toLocaleString();
-
-  card.append(title,status,route,fare,date);
-  section.appendChild(card);
- });
+ if(!user)return;
+ const {data,error}=await db.from("bookings")
+  .select("id,status,pickup_address,drop_address,estimated_fare,final_fare,created_at")
+  .eq("customer_id",user.id)
+  .order("created_at",{ascending:false}).limit(20);
+ const el=document.getElementById("history");
+ if(error){el.textContent=error.message;return}
+ if(!data?.length){el.textContent="No bookings yet.";return}
+ el.innerHTML=data.map(b=>`
+  <div class="booking">
+   <b>${safe(b.status)}</b>
+   <p>${safe(b.pickup_address)}</p>
+   <p>↓ ${safe(b.drop_address)}</p>
+   <p>${money(b.final_fare??b.estimated_fare)}</p>
+   <small>${new Date(b.created_at).toLocaleString()}</small>
+  </div>`).join("");
 }
 
-function showHistory(){
- document.getElementById("historySection")
-  .scrollIntoView({behavior:"smooth"});
- loadHistory();
+async function logout(){
+ if(refreshInterval)clearInterval(refreshInterval);
+ await db.auth.signOut();
+ user=null;activeBooking=null;
+ document.getElementById("app").classList.add("hidden");
+ document.getElementById("auth").classList.remove("hidden");
+ document.getElementById("logoutBtn").style.display="none";
+ message("Logged out successfully.");
 }
 
-// ========================================
-// 22. REALTIME UPDATES
-// ========================================
-
-function enableRealtime(){
- if(!currentUser)return;
-
- if(realtimeChannel){
-  supabaseClient.removeChannel(realtimeChannel);
-  realtimeChannel=null;
- }
-
- realtimeChannel=supabaseClient
-  .channel("customer-bookings-"+currentUser.id)
-  .on("postgres_changes",{
-   event:"UPDATE",
-   schema:"public",
-   table:"bookings",
-   filter:"customer_id=eq."+currentUser.id
-  },payload=>{
-   loadHistory();
-
-   const status=payload.new.status;
-
-   if(status==="accepted")alert("Driver accepted your ride!");
-   if(status==="arrived")alert("Driver arrived!");
-   if(status==="started")alert("Your ride started!");
-   if(status==="completed")alert("Ride completed!");
-   if(status==="cancelled")alert("Booking cancelled.");
-  })
-  .subscribe(status=>{
-   console.log("Realtime:",status);
-  });
+async function init(){
+ const {data}=await db.auth.getSession();
+ if(data.session){user=data.session.user;await startApp()}
 }
-
-// ========================================
-// 23. INITIALIZATION
-// ========================================
-
-async function initializeApp(){
- try{
-  if(!window.supabase){
-   throw new Error("Supabase library failed to load. Refresh the page.");
-  }
-
-  if(!window.L){
-   throw new Error("Map library failed to load. Refresh the page.");
-  }
-
-  supabaseClient=window.supabase.createClient(
-   SUPABASE_URL,
-   SUPABASE_KEY
-  );
-
-  await checkSession();
-
- }catch(error){
-  console.error("INITIALIZATION ERROR:",error);
-  showMessage(error.message,"error");
- }
-}
-
-document.addEventListener("DOMContentLoaded",initializeApp);
-
+init();
 </script>
 </body>
 </html>
