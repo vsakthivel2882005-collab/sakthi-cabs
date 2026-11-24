@@ -1,0 +1,470 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#080808">
+<title>SAKTHI CABS | Driver Registration</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;
+ background:#080808;
+ color:#fff;
+ font-family:Arial,sans-serif;
+}
+header{
+ background:#111;
+ padding:20px;
+ border-bottom:1px solid #c99b36;
+ text-align:center;
+}
+.logo{
+ color:#e5b84b;
+ font-size:25px;
+ font-weight:bold;
+ letter-spacing:2px;
+}
+.container{
+ max-width:650px;
+ margin:25px auto;
+ padding:15px;
+}
+.card{
+ background:#151515;
+ border:1px solid #333;
+ border-radius:15px;
+ padding:22px;
+ margin-bottom:18px;
+}
+h2{color:#e5b84b;font-size:20px}
+label{
+ display:block;
+ margin:15px 0 7px;
+ color:#ddd;
+ font-size:14px;
+}
+input,select,textarea{
+ width:100%;
+ padding:14px;
+ background:#080808;
+ border:1px solid #444;
+ border-radius:8px;
+ color:white;
+ font-size:15px;
+}
+input[type=file]{padding:10px}
+button{
+ width:100%;
+ padding:15px;
+ background:#d6a638;
+ color:#080808;
+ border:0;
+ border-radius:9px;
+ font-size:16px;
+ font-weight:bold;
+ margin-top:18px;
+ cursor:pointer;
+}
+button:disabled{opacity:.5}
+.status{
+ padding:13px;
+ background:#202020;
+ border-radius:8px;
+ margin-top:15px;
+ line-height:1.5;
+}
+.small{color:#aaa;font-size:12px}
+.hidden{display:none}
+#message{white-space:pre-wrap}
+</style>
+</head>
+
+<body>
+
+<header>
+ <div class="logo">SAKTHI CABS</div>
+ <div class="small">DRIVER REGISTRATION PORTAL</div>
+</header>
+
+<div class="container">
+
+<div class="card">
+ <h2>Driver Registration</h2>
+ <p class="small">Register as a SAKTHI CABS driver in Tamil Nadu.</p>
+ <div id="loginStatus" class="status">Checking login...</div>
+</div>
+
+<div id="registration" class="card hidden">
+
+<h2>Personal Information</h2>
+
+<form id="driverForm">
+
+<label>Full Name *</label>
+<input id="fullName" required maxlength="100"
+ placeholder="Enter your full name">
+
+<label>Mobile Number *</label>
+<input id="phone" required type="tel"
+ pattern="[0-9]{10}" maxlength="10"
+ placeholder="10 digit mobile number">
+
+<label>District *</label>
+<select id="district" required>
+ <option value="">Loading districts...</option>
+</select>
+
+<label>City / Town</label>
+<input id="city" placeholder="Enter your city">
+
+<label>Address</label>
+<textarea id="address" rows="3"
+ placeholder="Enter your address"></textarea>
+
+<h2>Vehicle Information</h2>
+
+<label>Vehicle Type *</label>
+<select id="vehicleType" required>
+ <option value="">Select vehicle</option>
+ <option value="bike">Bike</option>
+ <option value="auto">Auto</option>
+ <option value="mini">Mini</option>
+ <option value="sedan">Sedan</option>
+ <option value="suv">SUV</option>
+ <option value="premium">Premium</option>
+</select>
+
+<label>Vehicle Model *</label>
+<input id="vehicleModel" required
+ placeholder="Example: Swift Dzire">
+
+<label>Vehicle Registration Number *</label>
+<input id="vehicleNumber" required
+ placeholder="TN 00 AB 0000">
+
+<h2>Documents Upload</h2>
+<p class="small">PDF, JPG or PNG. Maximum 5 MB per document.</p>
+
+<div id="documents"></div>
+
+<button type="submit" id="submitBtn">
+SUBMIT DRIVER APPLICATION
+</button>
+
+</form>
+</div>
+
+<div id="applicationStatus" class="card hidden">
+<h2>Application Status</h2>
+<div id="statusDetails" class="status"></div>
+</div>
+
+<div class="card">
+ <p id="message"></p>
+ <button onclick="logout()" style="background:#333;color:white">
+ LOGOUT
+ </button>
+</div>
+
+</div>
+
+<script>
+const SUPABASE_URL =
+"https://kzcczciqaxawbesgtgcf.supabase.co";
+
+const SUPABASE_KEY =
+"sb_publishable_bKS7yIQ01_cOi972JQ7jQw_WjxhbKKb";
+
+const db = window.supabase.createClient(
+ SUPABASE_URL,
+ SUPABASE_KEY
+);
+
+let currentUser = null;
+let currentApplication = null;
+
+const documentTypes = [
+ ["aadhaar","Aadhaar"],
+ ["driving_license","Driving Licence"],
+ ["vehicle_rc","Vehicle RC"],
+ ["insurance","Insurance"],
+ ["permit","Vehicle Permit"],
+ ["fitness_certificate","Fitness Certificate"]
+];
+
+const message = document.getElementById("message");
+
+function showMessage(text){
+ message.textContent = text;
+}
+
+function escapeHTML(value){
+ return String(value ?? "").replace(/[&<>"']/g, c => ({
+ "&":"&amp;",
+ "<":"&lt;",
+ ">":"&gt;",
+ '"':"&quot;",
+ "'":"&#39;"
+ })[c]);
+}
+
+// Create document upload inputs
+document.getElementById("documents").innerHTML =
+documentTypes.map(([key,name]) => `
+ <label>${name}</label>
+ <input type="file"
+ id="doc_${key}"
+ accept=".pdf,.jpg,.jpeg,.png">
+`).join("");
+
+async function init(){
+
+ try{
+  const {data,error} = await db.auth.getUser();
+
+  if(error || !data.user){
+   document.getElementById("loginStatus").textContent =
+   "Please login using your existing Driver App first.";
+   return;
+  }
+
+  currentUser = data.user;
+
+  document.getElementById("loginStatus").textContent =
+  "Logged in: " + currentUser.email;
+
+  await loadDistricts();
+  await loadExistingApplication();
+
+ }catch(error){
+  showMessage(error.message);
+ }
+}
+
+async function loadDistricts(){
+
+ const {data,error} = await db
+ .from("districts")
+ .select("id,district_name")
+ .eq("is_active",true)
+ .order("district_name");
+
+ if(error) throw error;
+
+ const select = document.getElementById("district");
+
+ select.innerHTML =
+ '<option value="">Select district</option>';
+
+ data.forEach(d=>{
+  const option = document.createElement("option");
+  option.value = d.id;
+  option.textContent = d.district_name;
+  select.appendChild(option);
+ });
+}
+
+async function loadExistingApplication(){
+
+ const {data,error} = await db
+ .from("driver_applications")
+ .select("*")
+ .eq("user_id",currentUser.id)
+ .maybeSingle();
+
+ if(error) throw error;
+
+ if(data){
+  currentApplication = data;
+  showApplicationStatus(data);
+ }else{
+  document.getElementById("registration")
+  .classList.remove("hidden");
+ }
+}
+
+function showApplicationStatus(app){
+
+ document.getElementById("registration")
+ .classList.add("hidden");
+
+ document.getElementById("applicationStatus")
+ .classList.remove("hidden");
+
+ document.getElementById("statusDetails").innerHTML =
+ `
+ <b>Name:</b> ${escapeHTML(app.full_name)}<br>
+ <b>Vehicle:</b> ${escapeHTML(app.vehicle_model)}<br>
+ <b>District ID:</b> ${escapeHTML(app.district_id)}<br>
+ <b>Status:</b> ${escapeHTML(app.application_status)}
+ <br><br>
+ <b>Admin Remarks:</b>
+ ${escapeHTML(app.admin_remarks || "Awaiting review")}
+ `;
+}
+
+async function uploadDocument(
+ applicationId,
+ type,
+ file
+){
+
+ if(!file) return;
+
+ const allowed = [
+ "application/pdf",
+ "image/jpeg",
+ "image/png"
+ ];
+
+ if(!allowed.includes(file.type)){
+  throw new Error("Invalid file type: " + type);
+ }
+
+ if(file.size > 5 * 1024 * 1024){
+  throw new Error("File exceeds 5 MB: " + type);
+ }
+
+ const extension = file.name.split(".").pop()
+ .toLowerCase();
+
+ const path =
+ currentUser.id + "/" +
+ applicationId + "/" +
+ type + "_" + Date.now() + "." + extension;
+
+ const {error:uploadError} = await db.storage
+ .from("driver-documents")
+ .upload(path,file,{
+  contentType:file.type,
+  upsert:false
+ });
+
+ if(uploadError) throw uploadError;
+
+ const {error:insertError} = await db
+ .from("driver_application_documents")
+ .insert({
+  application_id:applicationId,
+  user_id:currentUser.id,
+  document_type:type,
+  file_path:path,
+  verification_status:"pending"
+ });
+
+ if(insertError) throw insertError;
+}
+
+document.getElementById("driverForm")
+.addEventListener("submit",async function(e){
+
+ e.preventDefault();
+
+ const button = document.getElementById("submitBtn");
+
+ button.disabled = true;
+ button.textContent = "Submitting...";
+
+ try{
+
+  const fullName =
+  document.getElementById("fullName").value.trim();
+
+  const phone =
+  document.getElementById("phone").value.trim();
+
+  if(!/^[0-9]{10}$/.test(phone)){
+   throw new Error("Enter a valid 10 digit mobile number.");
+  }
+
+  const application = {
+   user_id:currentUser.id,
+   full_name:fullName,
+   phone_number:phone,
+   district_id:Number(
+    document.getElementById("district").value
+   ),
+   city:document.getElementById("city").value.trim(),
+   address:document.getElementById("address").value.trim(),
+   vehicle_type:document.getElementById("vehicleType").value,
+   vehicle_model:document.getElementById("vehicleModel").value.trim(),
+   vehicle_number:document.getElementById("vehicleNumber").value.trim().toUpperCase(),
+   application_status:"pending"
+  };
+
+  if(!application.district_id){
+   throw new Error("Select your district.");
+  }
+
+  const {data,error} = await db
+   .from("driver_applications")
+   .insert(application)
+   .select()
+   .single();
+
+  if(error) throw error;
+
+  currentApplication = data;
+
+  let uploaded = 0;
+
+  for(const [type] of documentTypes){
+
+   const file =
+   document.getElementById("doc_"+type).files[0];
+
+   if(file){
+    await uploadDocument(data.id,type,file);
+    uploaded++;
+   }
+  }
+
+  showApplicationStatus(data);
+
+  showMessage(
+   "Application submitted successfully. " +
+   uploaded + " documents uploaded. " +
+   "Your application is pending admin verification."
+  );
+
+ }catch(error){
+
+  showMessage("Error: " + error.message);
+
+  // A database application may already exist if
+  // a document upload failed. Do not blindly resubmit.
+
+  if(currentApplication){
+   showApplicationStatus(currentApplication);
+  }
+
+ }finally{
+
+  button.disabled = false;
+  button.textContent = "SUBMIT DRIVER APPLICATION";
+
+ }
+});
+
+async function logout(){
+
+ const {error} = await db.auth.signOut();
+
+ if(error){
+  showMessage(error.message);
+  return;
+ }
+
+ location.href = "driver.html";
+}
+
+init();
+</script>
+
+</body>
+</html>
