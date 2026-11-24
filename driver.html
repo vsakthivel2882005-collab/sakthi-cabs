@@ -716,6 +716,7 @@ async function loadActiveRide(){
  }
 
  currentBooking = data?.[0] || null;
+ checkBookingSound();
 
  if(!currentBooking){
   $("activeRide").textContent = "No active ride.";
