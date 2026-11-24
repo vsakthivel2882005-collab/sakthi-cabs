@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -55,6 +56,7 @@ button{
  font-size:14px;
  cursor:pointer;
 }
+button:disabled{opacity:.5;cursor:not-allowed}
 .primary{background:#ffc928;color:#071426;width:100%}
 .green{background:#16a36a;color:white}
 .red{background:#d94b4b;color:white}
@@ -81,11 +83,12 @@ button{
  border-radius:12px;
  margin-top:10px;
 }
-.booking p{font-size:13px;line-height:1.5}
+.booking p{font-size:13px;line-height:1.5;overflow-wrap:anywhere}
 #map{
  height:300px;
  border-radius:12px;
  margin-top:12px;
+ z-index:1;
 }
 .hidden{display:none!important}
 #message{
@@ -103,6 +106,7 @@ button{
  z-index:9999;
  display:none;
 }
+.section-title{color:#ffc928}
 </style>
 </head>
 
@@ -118,35 +122,26 @@ button{
 
 <main>
 
-<!-- LOGIN -->
 <section id="loginSection" class="card">
  <h2>Driver Login</h2>
  <p class="small">Login using your registered Driver account.</p>
-
  <input id="email" type="email" placeholder="Email Address">
  <input id="password" type="password" placeholder="Password">
-
  <button class="primary full" id="loginBtn">LOGIN</button>
  <p class="small">Only registered and approved drivers can access this app.</p>
 </section>
 
-<!-- DASHBOARD -->
 <section id="dashboard" class="hidden">
 
  <div class="card">
-  <h2>Welcome, Driver!</h2>
+  <h2>Driver Dashboard</h2>
   <div class="value">Driver: <b id="driverName">Loading...</b></div>
   <div class="value">Vehicle: <b id="vehicleNumber">-</b></div>
   <div class="value">Approval: <span id="approval" class="status">Checking</span></div>
   <div class="value">Status: <span id="onlineStatus" class="status offline">OFFLINE</span></div>
 
-  <button id="onlineBtn" class="green full">
-   GO ONLINE
-  </button>
-
-  <button id="logoutBtn" class="gray full">
-   LOGOUT
-  </button>
+  <button id="onlineBtn" class="green full">GO ONLINE</button>
+  <button id="logoutBtn" class="gray full">LOGOUT</button>
  </div>
 
  <div class="card">
@@ -170,12 +165,11 @@ button{
   <p class="small" id="gpsStatus">GPS not started.</p>
   <div id="map"></div>
   <button id="navigateBtn" class="blue full hidden">
-   OPEN GOOGLE MAPS
+   NAVIGATE TO PICKUP
   </button>
  </div>
 
 </section>
-
 </main>
 
 <div id="message"></div>
@@ -205,21 +199,35 @@ let pickupMarker = null;
 let map = null;
 let bookingChannel = null;
 let locationChannel = null;
-let lastGPS = null;
 
 const $ = id => document.getElementById(id);
 
 function message(text){
  $('message').textContent = text;
  $('message').style.display = 'block';
+
  setTimeout(()=>{
   $('message').style.display = 'none';
  },3500);
 }
 
+function escapeHTML(value){
+ return String(value ?? '').replace(/[&<>"']/g,c=>({
+  '&':'&amp;',
+  '<':'&lt;',
+  '>':'&gt;',
+  '"':'&quot;',
+  "'":'&#39;'
+ }[c]));
+}
+
 function showDashboard(){
  $('loginSection').classList.add('hidden');
  $('dashboard').classList.remove('hidden');
+
+ if(map){
+  setTimeout(()=>map.invalidateSize(),200);
+ }
 }
 
 function showLogin(){
@@ -309,13 +317,20 @@ async function loadDriver(){
 
  $('approval').textContent = 'APPROVED';
  $('approval').className = 'status online';
+ $('onlineBtn').disabled = false;
 
  showDashboard();
  initMap();
  updateOnlineUI();
- await refreshRides();
+
  await loadActiveRide();
+ await refreshRides();
+
  setupRealtime();
+
+ if(driver.is_online === true){
+  startGPS();
+ }
 }
 
 function updateOnlineUI(){
@@ -383,6 +398,12 @@ async function refreshRides(){
   return;
  }
 
+ if(activeBooking){
+  $('rides').innerHTML =
+   '<p class="small">You already have an active booking. Complete or cancel it before accepting another ride.</p>';
+  return;
+ }
+
  const {data,error} = await db
   .from('bookings')
   .select('*')
@@ -393,7 +414,8 @@ async function refreshRides(){
 
  if(error){
   $('rides').innerHTML =
-   '<p class="small">Ride loading error: '+escapeHTML(error.message)+'</p>';
+   '<p class="small">Ride loading error: '+
+   escapeHTML(error.message)+'</p>';
   return;
  }
 
@@ -408,7 +430,7 @@ async function refreshRides(){
    <h3>New Ride Request</h3>
    <p><b>Pickup:</b> ${escapeHTML(b.pickup_address)}</p>
    <p><b>Drop:</b> ${escapeHTML(b.drop_address)}</p>
-   <p><b>Fare:</b> ${b.estimated_fare ?? 'Not specified'}</p>
+   <p><b>Fare:</b> ${escapeHTML(b.estimated_fare ?? 'Not specified')}</p>
    <p><b>Payment:</b> ${escapeHTML(b.payment_method || '-')}</p>
    <button class="primary full"
     onclick="acceptRide('${b.id}')">
@@ -418,20 +440,15 @@ async function refreshRides(){
  `).join('');
 }
 
-function escapeHTML(value){
- return String(value ?? '').replace(/[&<>"']/g,c=>({
-  '&':'&amp;',
-  '<':'&lt;',
-  '>':'&gt;',
-  '"':'&quot;',
-  "'":'&#39;'
- }[c]));
-}
-
 async function acceptRide(id){
 
  if(!driver || !driver.is_online){
   message('Go ONLINE first');
+  return;
+ }
+
+ if(activeBooking){
+  message('Complete your current booking first');
   return;
  }
 
@@ -449,11 +466,14 @@ async function acceptRide(id){
  }
 
  message('Ride accepted successfully!');
+
  await loadActiveRide();
  await refreshRides();
 }
 
 async function loadActiveRide(){
+
+ if(!driver) return;
 
  const {data,error} = await db
   .from('bookings')
@@ -471,34 +491,84 @@ async function loadActiveRide(){
  activeBooking = data && data.length ? data[0] : null;
 
  if(!activeBooking){
+
   $('activeRide').innerHTML =
    '<p class="small">No active ride.</p>';
+
   $('navigateBtn').classList.add('hidden');
+
   clearCustomerMarker();
+
+  if(locationChannel){
+   db.removeChannel(locationChannel);
+   locationChannel = null;
+  }
+
   return;
  }
 
  const b = activeBooking;
 
+ let actionButtons = '';
+
+ if(b.status === 'accepted'){
+  actionButtons = `
+   <button class="green full"
+    onclick="updateRideStatus('arrived')">
+    ARRIVED
+   </button>
+
+   <button class="red full"
+    onclick="updateRideStatus('cancelled')">
+    CANCEL BOOKING
+   </button>
+  `;
+ }
+
+ if(b.status === 'arrived'){
+  actionButtons = `
+   <button class="blue full"
+    onclick="updateRideStatus('started')">
+    START TRIP
+   </button>
+  `;
+ }
+
+ if(b.status === 'started'){
+  actionButtons = `
+   <button class="green full"
+    onclick="updateRideStatus('completed')">
+    COMPLETE TRIP
+   </button>
+  `;
+ }
+
  $('activeRide').innerHTML = `
   <div class="booking">
-   <h3>Active Customer Booking</h3>
+   <h3 class="section-title">Active Customer Booking</h3>
+
    <p><b>Booking ID:</b> ${escapeHTML(b.id)}</p>
    <p><b>Pickup:</b> ${escapeHTML(b.pickup_address)}</p>
    <p><b>Drop:</b> ${escapeHTML(b.drop_address)}</p>
-   <p><b>Status:</b> ${escapeHTML(b.status)}</p>
+   <p><b>Status:</b> <span class="status online">${escapeHTML(b.status.toUpperCase())}</span></p>
    <p><b>Payment:</b> ${escapeHTML(b.payment_method || '-')}</p>
+
+   ${actionButtons}
   </div>
  `;
 
  $('navigateBtn').classList.remove('hidden');
 
  if(b.pickup_lat != null && b.pickup_lng != null){
+
   const lat = Number(b.pickup_lat);
   const lng = Number(b.pickup_lng);
 
   if(Number.isFinite(lat) && Number.isFinite(lng)){
-   if(pickupMarker) map.removeLayer(pickupMarker);
+
+   if(pickupMarker){
+    map.removeLayer(pickupMarker);
+   }
 
    pickupMarker = L.marker([lat,lng])
     .addTo(map)
@@ -510,6 +580,53 @@ async function loadActiveRide(){
 
  await loadCustomerLocation();
  setupCustomerLocationRealtime();
+}
+
+/* DRIVER TRIP STATUS UPDATE */
+
+async function updateRideStatus(nextStatus){
+
+ if(!activeBooking || !activeBooking.id){
+  message('No active booking');
+  return;
+ }
+
+ const labels = {
+  arrived:'Confirm that you reached pickup location?',
+  started:'Start this trip?',
+  completed:'Complete this trip?',
+  cancelled:'Cancel this booking?'
+ };
+
+ if(!labels[nextStatus]){
+  message('Invalid booking status');
+  return;
+ }
+
+ if(!confirm(labels[nextStatus])) return;
+
+ const {data,error} = await db.rpc(
+  'driver_update_booking_status',
+  {
+   p_booking_id:activeBooking.id,
+   p_new_status:nextStatus
+  }
+ );
+
+ if(error){
+  message('Status update failed: '+error.message);
+  return;
+ }
+
+ if(data !== true){
+  message('Booking status was not updated. Please refresh.');
+  return;
+ }
+
+ message('Booking status updated: '+nextStatus.toUpperCase());
+
+ await loadActiveRide();
+ await refreshRides();
 }
 
 async function loadCustomerLocation(){
@@ -530,6 +647,8 @@ async function loadCustomerLocation(){
 
  if(data){
   showCustomerLocation(data.latitude,data.longitude);
+  $('gpsStatus').textContent =
+   'Customer live location received.';
  }else{
   $('gpsStatus').textContent =
    'Waiting for customer live location...';
@@ -550,14 +669,15 @@ function showCustomerLocation(lat,lng){
    .addTo(map)
    .bindPopup('Customer Live Location');
  }
-
 }
 
 function clearCustomerMarker(){
+
  if(customerMarker && map){
   map.removeLayer(customerMarker);
   customerMarker = null;
  }
+
  if(pickupMarker && map){
   map.removeLayer(pickupMarker);
   pickupMarker = null;
@@ -585,8 +705,11 @@ function setupCustomerLocationRealtime(){
   },
   payload=>{
    const row = payload.new;
+
    if(row && row.latitude != null){
     showCustomerLocation(row.latitude,row.longitude);
+    $('gpsStatus').textContent =
+     'Customer live location updated.';
    }
   }
  )
@@ -608,12 +731,14 @@ function setupRealtime(){
    table:'bookings'
   },
   async ()=>{
-   await refreshRides();
    await loadActiveRide();
+   await refreshRides();
   }
  )
  .subscribe();
 }
+
+/* DRIVER GPS */
 
 function startGPS(){
 
@@ -632,10 +757,9 @@ function startGPS(){
    const lat = position.coords.latitude;
    const lng = position.coords.longitude;
 
-   lastGPS = {lat,lng};
-
    $('gpsStatus').textContent =
-    'Driver GPS active: '+lat.toFixed(5)+', '+lng.toFixed(5);
+    'Driver GPS active: '+
+    lat.toFixed(5)+', '+lng.toFixed(5);
 
    if(driverMarker){
     driverMarker.setLatLng([lat,lng]);
@@ -741,14 +865,23 @@ async function logout(){
 
  stopGPS();
 
- if(bookingChannel) db.removeChannel(bookingChannel);
- if(locationChannel) db.removeChannel(locationChannel);
+ if(bookingChannel){
+  db.removeChannel(bookingChannel);
+  bookingChannel = null;
+ }
+
+ if(locationChannel){
+  db.removeChannel(locationChannel);
+  locationChannel = null;
+ }
 
  await db.auth.signOut();
 
  currentUser = null;
  driver = null;
  activeBooking = null;
+
+ clearCustomerMarker();
 
  showLogin();
  message('Logged out');
@@ -760,8 +893,10 @@ $('logoutBtn').addEventListener('click',logout);
 $('refreshBtn').addEventListener('click',refreshRides);
 $('navigateBtn').addEventListener('click',navigateToPickup);
 
-// Restore existing authenticated session
+/* RESTORE LOGIN SESSION */
+
 (async function(){
+
  const {data,error} = await db.auth.getSession();
 
  if(error){
@@ -773,6 +908,7 @@ $('navigateBtn').addEventListener('click',navigateToPickup);
   currentUser = data.session.user;
   await loadDriver();
  }
+
 })();
 </script>
 
