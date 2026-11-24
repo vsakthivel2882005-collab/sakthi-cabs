@@ -1,52 +1,107 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#080808">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#071426">
 <title>SAKTHI CABS | Driver Partner</title>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet"
+href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#080808;color:#fff;font-family:Arial,sans-serif}
-header{background:#111;padding:16px;border-bottom:1px solid #333;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:500}
-.logo{font-size:20px;font-weight:900;color:#f5c542}
-.container{max-width:850px;margin:auto;padding:14px}
-.card{background:#151515;border:1px solid #333;border-radius:15px;padding:16px;margin:13px 0}
-h2{font-size:19px;margin:5px 0 14px}
-h3{font-size:16px}
-input,select,textarea{width:100%;padding:14px;margin:7px 0;background:#222;color:#fff;border:1px solid #444;border-radius:9px;font-size:15px}
-button{border:0;border-radius:9px;padding:13px 15px;font-weight:bold;margin:4px 2px;cursor:pointer}
-button:disabled{opacity:.5;cursor:not-allowed}
-.primary{background:#f5c542;color:#111}
-.secondary{background:#333;color:white}
-.success{background:#168c56;color:white}
-.danger{background:#bd3535;color:white}
-.hidden{display:none!important}
-.muted{color:#aaa;font-size:13px}
-#message{display:none;background:#292929;padding:12px;border-radius:10px;margin:10px 0;white-space:pre-wrap;overflow-wrap:anywhere}
-.row{display:flex;gap:8px;flex-wrap:wrap}
+body{
+ margin:0;
+ background:#071426;
+ color:#fff;
+ font-family:Arial,sans-serif;
+}
+header{
+ background:#102b4c;
+ padding:18px;
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ border-bottom:3px solid #ffc928;
+}
+.logo{font-size:21px;font-weight:900;color:#ffc928}
+.sub{font-size:11px;color:#c6d5e8;margin-top:4px}
+main{max-width:650px;margin:auto;padding:15px}
+.card{
+ background:#10243d;
+ border:1px solid #29415e;
+ border-radius:16px;
+ padding:17px;
+ margin-bottom:15px;
+}
+h2{font-size:19px;margin:0 0 15px}
+h3{font-size:16px;margin:0 0 10px}
+input{
+ width:100%;
+ padding:14px;
+ border-radius:10px;
+ border:1px solid #526780;
+ background:#071426;
+ color:white;
+ margin:7px 0;
+ font-size:15px;
+}
+button{
+ border:0;
+ padding:13px;
+ border-radius:10px;
+ font-weight:bold;
+ font-size:14px;
+ cursor:pointer;
+}
+.primary{background:#ffc928;color:#071426;width:100%}
+.green{background:#16a36a;color:white}
+.red{background:#d94b4b;color:white}
+.blue{background:#2879ce;color:white}
+.gray{background:#40536a;color:white}
+.full{width:100%;margin-top:8px}
+.row{display:flex;gap:9px;align-items:center}
 .row button{flex:1}
-.statgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
-.stat{background:#222;padding:14px;border-radius:11px;border:1px solid #383838}
-.stat strong{display:block;color:#f5c542;font-size:22px;margin-top:7px}
-.booking{background:#222;padding:14px;border-radius:11px;margin:10px 0;border:1px solid #444;overflow-wrap:anywhere}
-.badge{background:#333;padding:5px 9px;border-radius:20px}
-#customerMap{height:300px;border-radius:12px;margin-top:10px}
-.price{font-size:23px;color:#f5c542;font-weight:bold}
-.status{padding:9px;border-radius:8px;background:#222}
-a{color:#f5c542}
-.historyItem{padding:12px;background:#222;border-radius:9px;margin:8px 0;border:1px solid #383838}
-small{color:#aaa}
-@media(max-width:480px){
- .logo{font-size:17px}
- .container{padding:9px}
- .card{padding:13px}
+.status{
+ padding:7px 12px;
+ background:#263e59;
+ border-radius:20px;
+ font-size:12px;
+ display:inline-block;
+}
+.online{background:#126b48;color:#aaffd1}
+.offline{background:#6a3434;color:#ffd2d2}
+.small{font-size:12px;color:#a9bdd4}
+.value{font-size:14px;margin:8px 0}
+.booking{
+ background:#091a2e;
+ border:1px solid #344c68;
+ padding:14px;
+ border-radius:12px;
+ margin-top:10px;
+}
+.booking p{font-size:13px;line-height:1.5}
+#map{
+ height:300px;
+ border-radius:12px;
+ margin-top:12px;
+}
+.hidden{display:none!important}
+#message{
+ position:fixed;
+ bottom:15px;
+ left:5%;
+ width:90%;
+ max-width:600px;
+ padding:13px;
+ border-radius:10px;
+ background:#ffc928;
+ color:#071426;
+ font-weight:bold;
+ text-align:center;
+ z-index:9999;
+ display:none;
 }
 </style>
 </head>
@@ -54,611 +109,552 @@ small{color:#aaa}
 <body>
 
 <header>
- <div class="logo">SAKTHI CABS DRIVER</div>
- <button id="logoutBtn" class="secondary hidden">LOGOUT</button>
+ <div>
+  <div class="logo">SAKTHI CABS</div>
+  <div class="sub">DRIVER PARTNER APP</div>
+ </div>
+ <span class="status">TAMIL NADU</span>
 </header>
 
-<div class="container">
+<main>
 
-<div id="message"></div>
-
-<!-- GMAIL LOGIN -->
+<!-- LOGIN -->
 <section id="loginSection" class="card">
- <h2>Driver Gmail Login</h2>
- <p class="muted">SAKTHI CABS Driver Partner App</p>
+ <h2>Driver Login</h2>
+ <p class="small">Login using your registered Driver account.</p>
 
- <form id="loginForm">
-  <input id="email" type="email"
-   placeholder="Enter Gmail address"
-   autocomplete="username" required>
+ <input id="email" type="email" placeholder="Email Address">
+ <input id="password" type="password" placeholder="Password">
 
-  <input id="password" type="password"
-   placeholder="Enter password"
-   autocomplete="current-password" required>
-
-  <button id="loginBtn" class="primary"
-   type="submit" style="width:100%">
-   LOGIN
-  </button>
- </form>
-
- <p class="muted">Registered SAKTHI CABS drivers only.</p>
-
- <p class="muted">
-  New driver?
-  <a href="driver-register.html">Driver Registration</a>
- </p>
+ <button class="primary full" id="loginBtn">LOGIN</button>
+ <p class="small">Only registered and approved drivers can access this app.</p>
 </section>
 
 <!-- DASHBOARD -->
-<main id="dashboard" class="hidden">
+<section id="dashboard" class="hidden">
 
- <section class="card">
-  <h2>Driver Dashboard</h2>
-  <h3 id="driverName">Driver</h3>
+ <div class="card">
+  <h2>Welcome, Driver!</h2>
+  <div class="value">Driver: <b id="driverName">Loading...</b></div>
+  <div class="value">Vehicle: <b id="vehicleNumber">-</b></div>
+  <div class="value">Approval: <span id="approval" class="status">Checking</span></div>
+  <div class="value">Status: <span id="onlineStatus" class="status offline">OFFLINE</span></div>
 
-  <p id="approvalStatus" class="status">
-   Checking approval...
-  </p>
-
-  <p id="vehicleInfo" class="muted"></p>
-  <p id="districtInfo" class="muted"></p>
-
-  <div class="row">
-   <button id="onlineBtn" class="success" disabled>
-    GO ONLINE
-   </button>
-
-   <button id="refreshBtn" class="secondary">
-    REFRESH
-   </button>
-  </div>
-
-  <p id="onlineStatus" class="muted">Status: Offline</p>
-  <p id="gpsStatus" class="muted">GPS: Not started</p>
- </section>
-
- <section class="card">
-  <h2>Driver Performance</h2>
-
-  <div class="statgrid">
-   <div class="stat">
-    Completed rides
-    <strong id="completedCount">0</strong>
-   </div>
-
-   <div class="stat">
-    Today's rides
-    <strong id="todayCount">0</strong>
-   </div>
-
-   <div class="stat">
-    Today's earnings
-    <strong id="todayEarnings">₹0</strong>
-   </div>
-
-   <div class="stat">
-    This month
-    <strong id="monthEarnings">₹0</strong>
-   </div>
-  </div>
-
-  <p class="muted">Earnings shown are based on booking fare fields, not verified driver payouts.</p>
- </section>
-
- <section class="card">
-  <h2>Assigned Ride</h2> 
-  <button id="enableBookingSoundBtn" class="primary">
-🔔 ENABLE BOOKING SOUND
-</button>
-
-<p id="bookingSoundStatus" class="muted">
-Sound is not enabled
-</p>
-  <div id="activeRide">No active ride.</div>
- </section>
-
- <section class="card">
-  <h2>Customer Live Location</h2>
-
-  <p id="customerLocationStatus" class="muted">
-   Waiting for customer location.
-  </p>
-
-  <div id="customerMap"></div>
-
-  <button id="navigateBtn" class="primary hidden">
-   NAVIGATE TO CUSTOMER
+  <button id="onlineBtn" class="green full">
+   GO ONLINE
   </button>
- </section>
 
- <section class="card">
-  <h2>Quick Actions</h2>
+  <button id="logoutBtn" class="gray full">
+   LOGOUT
+  </button>
+ </div>
 
-  <div class="row">
-   <button id="sosBtn" class="danger">SOS 112</button>
-   <button id="supportBtn" class="secondary">DRIVER SUPPORT</button>
+ <div class="card">
+  <h2>Ride Requests</h2>
+  <p class="small">Available customer bookings will appear here.</p>
+  <button id="refreshBtn" class="blue full">REFRESH RIDES</button>
+  <div id="rides">
+   <p class="small">No rides loaded.</p>
   </div>
+ </div>
 
-  <p class="muted">SOS opens your phone emergency dialer.</p>
- </section>
+ <div class="card">
+  <h2>My Active Ride</h2>
+  <div id="activeRide">
+   <p class="small">No active ride.</p>
+  </div>
+ </div>
 
- <section class="card">
-  <h2>Recent Ride History</h2>
-  <div id="rideHistory">Loading...</div>
- </section>
+ <div class="card">
+  <h2>Live GPS & Navigation</h2>
+  <p class="small" id="gpsStatus">GPS not started.</p>
+  <div id="map"></div>
+  <button id="navigateBtn" class="blue full hidden">
+   OPEN GOOGLE MAPS
+  </button>
+ </div>
+
+</section>
 
 </main>
-</div>
+
+<div id="message"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-"use strict";
-
-/* SUPABASE CONFIG */
 const SUPABASE_URL =
- "https://kzcczciqaxawbesgtgcf.supabase.co";
+'https://kzcczciqaxawbesgtgcf.supabase.co';
 
 const SUPABASE_KEY =
- "sb_publishable_bKS7yIQ01_cOi972JQ7jQw_WjxhbKKb";
+'sb_publishable_bKS7yIQ01_cOi972JQ7jQw_WjxhbKKb';
 
 const db = window.supabase.createClient(
  SUPABASE_URL,
  SUPABASE_KEY
 );
 
-/* STATE */
-let user = null;
+let currentUser = null;
 let driver = null;
-let vehicle = null;
-let currentBooking = null;
-
-let gpsWatch = null;
-let refreshTimer = null;
-let locationTimer = null;
-
-let customerMap = null;
+let activeBooking = null;
+let watchId = null;
+let driverMarker = null;
 let customerMarker = null;
-let customerMapBookingId = null;
-let latestCustomerLocation = null;
-
-let gpsSending = false;
-let busy = false;
-let dashboardLoading = false;
- let bookingAudioContext = null;
-let bookingSoundEnabled = false;
-let lastAlertedBookingId = null;
-let bookingAlertTimer = null;
+let pickupMarker = null;
+let map = null;
+let bookingChannel = null;
+let locationChannel = null;
+let lastGPS = null;
 
 const $ = id => document.getElementById(id);
 
-/* HELPERS */
-function showMessage(message){
- $("message").style.display = "block";
- $("message").textContent = message;
+function message(text){
+ $('message').textContent = text;
+ $('message').style.display = 'block';
+ setTimeout(()=>{
+  $('message').style.display = 'none';
+ },3500);
 }
 
-function clearMessage(){
- $("message").style.display = "none";
- $("message").textContent = "";
+function showDashboard(){
+ $('loginSection').classList.add('hidden');
+ $('dashboard').classList.remove('hidden');
 }
 
-function money(value){
- return "₹" + Number(value || 0).toFixed(2);
+function showLogin(){
+ $('dashboard').classList.add('hidden');
+ $('loginSection').classList.remove('hidden');
 }
 
-function safe(value){
- return String(value ?? "").replace(/[&<>"']/g,c=>({
-  "&":"&amp;",
-  "<":"&lt;",
-  ">":"&gt;",
-  '"':"&quot;",
-  "'":"&#39;"
- }[c]));
-}
+function initMap(){
+ if(map) return;
 
-function setButton(id,text,disabled=false){
- $(id).textContent = text;
- $(id).disabled = disabled;
-}
+ map = L.map('map').setView([11.0168,76.9558],7);
 
-function stopRefreshTimer(){
- if(refreshTimer){
-  clearInterval(refreshTimer);
-  refreshTimer = null;
- }
-}
- function playBookingAlert(){
-
- if(!bookingSoundEnabled || !bookingAudioContext) return;
-
- const ctx = bookingAudioContext;
-
- [880,660,880].forEach((frequency,index)=>{
-
-  const oscillator = ctx.createOscillator();
-  const gain = ctx.createGain();
-
-  const start = ctx.currentTime + index * 0.28;
-
-  oscillator.type = "sine";
-  oscillator.frequency.setValueAtTime(frequency,start);
-
-  gain.gain.setValueAtTime(0.0001,start);
-  gain.gain.linearRampToValueAtTime(0.25,start+0.03);
-  gain.gain.exponentialRampToValueAtTime(0.0001,start+0.22);
-
-  oscillator.connect(gain);
-  gain.connect(ctx.destination);
-
-  oscillator.start(start);
-  oscillator.stop(start+0.24);
-
- });
-}
-
-function alertPendingBooking(){
-
- if(!bookingSoundEnabled) return;
-
- if(!currentBooking || currentBooking.status !== "pending") return;
-
- if(lastAlertedBookingId === currentBooking.id) return;
-
- lastAlertedBookingId = currentBooking.id;
-
- playBookingAlert();
-
- showMessage("NEW RIDE BOOKING! Please accept or reject.");
-}
-
-$("enableBookingSoundBtn").addEventListener("click",async()=>{
-
- try{
-
-  const AudioContextClass =
-   window.AudioContext || window.webkitAudioContext;
-
-  if(!AudioContextClass){
-   showMessage("Audio is not supported in this browser.");
-   return;
+ L.tileLayer(
+  'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  {
+   attribution:'© OpenStreetMap'
   }
+ ).addTo(map);
+}
 
-  if(!bookingAudioContext){
-   bookingAudioContext = new AudioContextClass();
-  }
+async function login(){
 
-  await bookingAudioContext.resume();
-
-  bookingSoundEnabled = true;
-
-  $("bookingSoundStatus").textContent =
-   "Booking sound enabled.";
-
-  $("enableBookingSoundBtn").textContent =
-   "SOUND ENABLED ✓";
-
-  alertPendingBooking();
-
- }catch(error){
-  showMessage("Sound error: " + error.message);
- }
-
-});
-
-/* GMAIL + PASSWORD LOGIN */
-$("loginForm").addEventListener("submit",async function(e){
- e.preventDefault();
- await driverLogin();
-});
-
-async function driverLogin(){
- clearMessage();
-
- const email = $("email").value.trim().toLowerCase();
- const password = $("password").value;
+ const email = $('email').value.trim();
+ const password = $('password').value;
 
  if(!email || !password){
-  showMessage("Gmail and password required.");
+  message('Enter email and password');
   return;
  }
 
- setButton("loginBtn","LOGGING IN...",true);
+ $('loginBtn').disabled = true;
+ $('loginBtn').textContent = 'PLEASE WAIT...';
 
- try{
-  const {data,error} = await db.auth.signInWithPassword({
-   email:email,
-   password:password
-  });
+ const {data,error} = await db.auth.signInWithPassword({
+  email,
+  password
+ });
 
-  if(error) throw error;
+ $('loginBtn').disabled = false;
+ $('loginBtn').textContent = 'LOGIN';
 
-  user = data.user;
-
-  if(!user){
-   throw new Error("User not found.");
-  }
-
-  await openDashboard();
-
- }catch(error){
-  showMessage("Login failed: " + error.message);
- }finally{
-  setButton("loginBtn","LOGIN",false);
+ if(error){
+  message(error.message);
+  return;
  }
+
+ currentUser = data.user;
+ await loadDriver();
 }
 
-/* SESSION */
-async function init(){
- try{
-  const {data,error} = await db.auth.getSession();
-
-  if(error) throw error;
-
-  if(data.session){
-   user = data.session.user;
-   await openDashboard();
-  }
-
- }catch(error){
-  showMessage("Session error: " + error.message);
- }
-}
-
-/* AUTH STATE */
-db.auth.onAuthStateChange((event,session)=>{
- if(event === "SIGNED_OUT"){
-  user = null;
-  driver = null;
-  stopRefreshTimer();
-  stopGPS();
-  stopCustomerLocationPolling();
-
-  $("dashboard").classList.add("hidden");
-  $("loginSection").classList.remove("hidden");
-  $("logoutBtn").classList.add("hidden");
- }
-});
-
-/* DASHBOARD */
-async function openDashboard(){
- if(dashboardLoading) return;
-
- dashboardLoading = true;
-
- $("loginSection").classList.add("hidden");
- $("dashboard").classList.remove("hidden");
- $("logoutBtn").classList.remove("hidden");
-
- try{
-  await loadDriver();
-
-  if(!driver){
-   showMessage(
-    "Driver profile not found. Complete registration or contact admin."
-   );
-   return;
-  }
-
-  await loadVehicle();
-  await loadActiveRide();
-  await loadPerformance();
-  await loadHistory();
-
-  stopRefreshTimer();
-
-  refreshTimer = setInterval(async()=>{
-   if(busy || !user) return;
-
-   busy = true;
-
-   try{
-    await loadDriver();
-    await loadActiveRide();
-    await loadPerformance();
-   }catch(error){
-    console.error(error);
-   }finally{
-    busy = false;
-   }
-  },10000);
-
- }catch(error){
-  showMessage("Dashboard error: " + error.message);
- }finally{
-  dashboardLoading = false;
- }
-}
-
-/* DRIVER PROFILE */
 async function loadDriver(){
- if(!user) return;
 
- const {data,error} = await db.from("drivers")
-  .select("*")
-  .eq("user_id",user.id)
+ const {data,error} = await db
+  .from('drivers')
+  .select('*')
+  .eq('user_id',currentUser.id)
   .maybeSingle();
 
  if(error){
-  showMessage("Driver profile error: " + error.message);
+  message('Driver profile error: '+error.message);
   return;
  }
 
  if(!data){
-  driver = null;
-  $("approvalStatus").textContent = "Driver profile not found.";
-  $("onlineBtn").disabled = true;
+  message('Driver profile not found. Register first.');
+  await db.auth.signOut();
+  showLogin();
   return;
  }
 
  driver = data;
 
- $("driverName").textContent =
-  "Welcome, " + (
-   user.user_metadata?.full_name ||
-   user.email?.split("@")[0] ||
-   "Driver"
-  );
+ $('driverName').textContent =
+  driver.phone || driver.city || 'SAKTHI Driver';
 
- $("districtInfo").textContent =
-  "Service area: " +
-  (driver.city || "") + ", " +
-  (driver.district || "") +
-  " | State: " + (driver.state || "Tamil Nadu");
+ $('vehicleNumber').textContent =
+  driver.vehicle_number || 'Not available';
 
- if(driver.approved === true){
-  $("approvalStatus").textContent = "APPROVED DRIVER";
-  $("approvalStatus").style.color = "#21c879";
-  $("onlineBtn").disabled = false;
- }else{
-  $("approvalStatus").textContent = "WAITING FOR ADMIN APPROVAL";
-  $("approvalStatus").style.color = "#ffb84d";
-  $("onlineBtn").disabled = true;
-  stopGPS();
- }
-
- updateOnlineUI();
-}
-
-/* VEHICLE */
-async function loadVehicle(){
- if(!driver?.vehicle_id){
-  $("vehicleInfo").textContent = "Vehicle: Not assigned";
+ if(driver.approved !== true){
+  $('approval').textContent = 'NOT APPROVED';
+  $('onlineBtn').disabled = true;
+  $('onlineBtn').textContent = 'WAITING FOR ADMIN APPROVAL';
+  message('Your Driver account is not approved.');
+  showDashboard();
   return;
  }
 
- const {data,error} = await db.from("vehicles")
-  .select("id,name")
-  .eq("id",driver.vehicle_id)
+ $('approval').textContent = 'APPROVED';
+ $('approval').className = 'status online';
+
+ showDashboard();
+ initMap();
+ updateOnlineUI();
+ await refreshRides();
+ await loadActiveRide();
+ setupRealtime();
+}
+
+function updateOnlineUI(){
+
+ const online = driver && driver.is_online === true;
+
+ $('onlineStatus').textContent =
+  online ? 'ONLINE' : 'OFFLINE';
+
+ $('onlineStatus').className =
+  online ? 'status online' : 'status offline';
+
+ $('onlineBtn').textContent =
+  online ? 'GO OFFLINE' : 'GO ONLINE';
+
+ $('onlineBtn').className =
+  online ? 'red full' : 'green full';
+}
+
+async function toggleOnline(){
+
+ if(!driver || !driver.approved){
+  message('Driver not approved');
+  return;
+ }
+
+ const next = !driver.is_online;
+
+ const {data,error} = await db
+  .from('drivers')
+  .update({is_online:next})
+  .eq('id',driver.id)
+  .eq('user_id',currentUser.id)
+  .select()
   .maybeSingle();
 
  if(error){
-  $("vehicleInfo").textContent =
-   "Vehicle error: " + error.message;
+  message('Online status error: '+error.message);
   return;
  }
 
- vehicle = data;
-
- $("vehicleInfo").textContent =
-  "Vehicle: " + (vehicle?.name || "Not assigned") +
-  " | Number: " + (driver.vehicle_number || "Not provided");
-}
-
-/* ONLINE STATUS */
-function updateOnlineUI(){
- if(!driver) return;
-
- const online = !!driver.is_online;
-
- $("onlineStatus").textContent =
-  "Status: " + (online ? "ONLINE" : "OFFLINE");
-
- $("onlineBtn").textContent =
-  online ? "GO OFFLINE" : "GO ONLINE";
-
- $("onlineBtn").className =
-  online ? "danger" : "success";
-}
-
-$("onlineBtn").addEventListener("click",toggleOnline);
-
-async function toggleOnline(){
- if(!driver || !driver.approved){
-  showMessage("Admin approval is required.");
+ if(!data){
+  message('Status update permission failed');
   return;
  }
 
- if(currentBooking &&
-  ["accepted","arrived","started"].includes(currentBooking.status)){
-  showMessage("Complete your active ride first.");
-  return;
- }
+ driver = data;
+ updateOnlineUI();
 
- const newStatus = !driver.is_online;
-
- if(newStatus){
-  if(!navigator.geolocation){
-   showMessage("GPS is not supported.");
-   return;
-  }
-
+ if(next){
   startGPS();
- }
-
- $("onlineBtn").disabled = true;
-
- try{
-  const {data,error} = await db.from("drivers")
-   .update({
-    is_online:newStatus,
-    is_available:newStatus
-   })
-   .eq("id",driver.id)
-   .select()
-   .single();
-
-  if(error) throw error;
-
-  driver = data;
-  updateOnlineUI();
-
-  if(!newStatus) stopGPS();
-
-  showMessage(
-   newStatus ?
-   "You are ONLINE. Keep GPS enabled." :
-   "You are OFFLINE."
-  );
-
- }catch(error){
-  if(newStatus) stopGPS();
-  showMessage("Status update failed: " + error.message);
- }finally{
-  $("onlineBtn").disabled = !driver?.approved;
+  await refreshRides();
+  message('You are ONLINE');
+ }else{
+  stopGPS();
+  message('You are OFFLINE');
  }
 }
 
-/* GPS */
-function startGPS(){
- if(gpsWatch !== null) return;
+async function refreshRides(){
 
- $("gpsStatus").textContent = "GPS: Requesting permission...";
+ if(!driver || !driver.is_online){
+  $('rides').innerHTML =
+   '<p class="small">Go ONLINE to see ride requests.</p>';
+  return;
+ }
 
- gpsWatch = navigator.geolocation.watchPosition(
-  async position=>{
-   $("gpsStatus").textContent = "GPS: Location updated";
+ const {data,error} = await db
+  .from('bookings')
+  .select('*')
+  .eq('status','pending')
+  .is('driver_id',null)
+  .order('created_at',{ascending:false})
+  .limit(30);
 
-   if(!driver || gpsSending) return;
+ if(error){
+  $('rides').innerHTML =
+   '<p class="small">Ride loading error: '+escapeHTML(error.message)+'</p>';
+  return;
+ }
 
-   gpsSending = true;
+ if(!data || data.length===0){
+  $('rides').innerHTML =
+   '<p class="small">No pending rides available.</p>';
+  return;
+ }
 
-   try{
-    const payload = {
-     driver_id:driver.id,
-     latitude:position.coords.latitude,
-     longitude:position.coords.longitude,
-     updated_at:new Date().toISOString()
-    };
+ $('rides').innerHTML = data.map(b=>`
+  <div class="booking">
+   <h3>New Ride Request</h3>
+   <p><b>Pickup:</b> ${escapeHTML(b.pickup_address)}</p>
+   <p><b>Drop:</b> ${escapeHTML(b.drop_address)}</p>
+   <p><b>Fare:</b> ${b.estimated_fare ?? 'Not specified'}</p>
+   <p><b>Payment:</b> ${escapeHTML(b.payment_method || '-')}</p>
+   <button class="primary full"
+    onclick="acceptRide('${b.id}')">
+    ACCEPT RIDE
+   </button>
+  </div>
+ `).join('');
+}
 
-    const {error} = await db.from("driver_locations")
-     .upsert(payload,{onConflict:"driver_id"});
+function escapeHTML(value){
+ return String(value ?? '').replace(/[&<>"']/g,c=>({
+  '&':'&amp;',
+  '<':'&lt;',
+  '>':'&gt;',
+  '"':'&quot;',
+  "'":'&#39;'
+ }[c]));
+}
 
-    if(error){
-     $("gpsStatus").textContent =
-      "GPS error: " + error.message;
-    }
+async function acceptRide(id){
 
-   }catch(error){
-    $("gpsStatus").textContent = error.message;
-   }finally{
-    gpsSending = false;
+ if(!driver || !driver.is_online){
+  message('Go ONLINE first');
+  return;
+ }
+
+ if(!confirm('Accept this customer ride?')) return;
+
+ const {data,error} = await db.rpc(
+  'accept_cab_booking',
+  {p_booking_id:id}
+ );
+
+ if(error){
+  message('Accept failed: '+error.message);
+  await refreshRides();
+  return;
+ }
+
+ message('Ride accepted successfully!');
+ await loadActiveRide();
+ await refreshRides();
+}
+
+async function loadActiveRide(){
+
+ const {data,error} = await db
+  .from('bookings')
+  .select('*')
+  .eq('driver_id',driver.id)
+  .in('status',['accepted','arrived','started'])
+  .order('created_at',{ascending:false})
+  .limit(1);
+
+ if(error){
+  message('Active ride error: '+error.message);
+  return;
+ }
+
+ activeBooking = data && data.length ? data[0] : null;
+
+ if(!activeBooking){
+  $('activeRide').innerHTML =
+   '<p class="small">No active ride.</p>';
+  $('navigateBtn').classList.add('hidden');
+  clearCustomerMarker();
+  return;
+ }
+
+ const b = activeBooking;
+
+ $('activeRide').innerHTML = `
+  <div class="booking">
+   <h3>Active Customer Booking</h3>
+   <p><b>Booking ID:</b> ${escapeHTML(b.id)}</p>
+   <p><b>Pickup:</b> ${escapeHTML(b.pickup_address)}</p>
+   <p><b>Drop:</b> ${escapeHTML(b.drop_address)}</p>
+   <p><b>Status:</b> ${escapeHTML(b.status)}</p>
+   <p><b>Payment:</b> ${escapeHTML(b.payment_method || '-')}</p>
+  </div>
+ `;
+
+ $('navigateBtn').classList.remove('hidden');
+
+ if(b.pickup_lat != null && b.pickup_lng != null){
+  const lat = Number(b.pickup_lat);
+  const lng = Number(b.pickup_lng);
+
+  if(Number.isFinite(lat) && Number.isFinite(lng)){
+   if(pickupMarker) map.removeLayer(pickupMarker);
+
+   pickupMarker = L.marker([lat,lng])
+    .addTo(map)
+    .bindPopup('Customer Pickup');
+
+   map.setView([lat,lng],14);
+  }
+ }
+
+ await loadCustomerLocation();
+ setupCustomerLocationRealtime();
+}
+
+async function loadCustomerLocation(){
+
+ if(!activeBooking) return;
+
+ const {data,error} = await db
+  .from('customer_live_locations')
+  .select('*')
+  .eq('booking_id',activeBooking.id)
+  .maybeSingle();
+
+ if(error){
+  $('gpsStatus').textContent =
+   'Customer GPS: '+error.message;
+  return;
+ }
+
+ if(data){
+  showCustomerLocation(data.latitude,data.longitude);
+ }else{
+  $('gpsStatus').textContent =
+   'Waiting for customer live location...';
+ }
+}
+
+function showCustomerLocation(lat,lng){
+
+ lat = Number(lat);
+ lng = Number(lng);
+
+ if(!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+ if(customerMarker){
+  customerMarker.setLatLng([lat,lng]);
+ }else{
+  customerMarker = L.marker([lat,lng])
+   .addTo(map)
+   .bindPopup('Customer Live Location');
+ }
+
+}
+
+function clearCustomerMarker(){
+ if(customerMarker && map){
+  map.removeLayer(customerMarker);
+  customerMarker = null;
+ }
+ if(pickupMarker && map){
+  map.removeLayer(pickupMarker);
+  pickupMarker = null;
+ }
+}
+
+function setupCustomerLocationRealtime(){
+
+ if(!activeBooking) return;
+
+ if(locationChannel){
+  db.removeChannel(locationChannel);
+ }
+
+ locationChannel = db.channel(
+  'customer-location-'+activeBooking.id
+ )
+ .on(
+  'postgres_changes',
+  {
+   event:'*',
+   schema:'public',
+   table:'customer_live_locations',
+   filter:'booking_id=eq.'+activeBooking.id
+  },
+  payload=>{
+   const row = payload.new;
+   if(row && row.latitude != null){
+    showCustomerLocation(row.latitude,row.longitude);
    }
-  },
+  }
+ )
+ .subscribe();
+}
 
+function setupRealtime(){
+
+ if(bookingChannel){
+  db.removeChannel(bookingChannel);
+ }
+
+ bookingChannel = db.channel('driver-bookings-live')
+ .on(
+  'postgres_changes',
+  {
+   event:'*',
+   schema:'public',
+   table:'bookings'
+  },
+  async ()=>{
+   await refreshRides();
+   await loadActiveRide();
+  }
+ )
+ .subscribe();
+}
+
+function startGPS(){
+
+ if(!navigator.geolocation){
+  message('GPS not supported by this browser');
+  return;
+ }
+
+ if(watchId !== null) return;
+
+ $('gpsStatus').textContent = 'Starting GPS...';
+
+ watchId = navigator.geolocation.watchPosition(
+  async position=>{
+
+   const lat = position.coords.latitude;
+   const lng = position.coords.longitude;
+
+   lastGPS = {lat,lng};
+
+   $('gpsStatus').textContent =
+    'Driver GPS active: '+lat.toFixed(5)+', '+lng.toFixed(5);
+
+   if(driverMarker){
+    driverMarker.setLatLng([lat,lng]);
+   }else{
+    driverMarker = L.marker([lat,lng])
+     .addTo(map)
+     .bindPopup('Your Driver Location');
+   }
+
+   if(!map.getBounds().contains([lat,lng])){
+    map.setView([lat,lng],15);
+   }
+
+   await saveDriverLocation(lat,lng);
+  },
   error=>{
-   $("gpsStatus").textContent = "GPS error: " + error.message;
+   $('gpsStatus').textContent =
+    'GPS Error: '+error.message;
   },
-
   {
    enableHighAccuracy:true,
    maximumAge:5000,
@@ -667,487 +663,118 @@ function startGPS(){
  );
 }
 
-function stopGPS(){
- if(gpsWatch !== null && navigator.geolocation){
-  navigator.geolocation.clearWatch(gpsWatch);
- }
+async function saveDriverLocation(lat,lng){
 
- gpsWatch = null;
- $("gpsStatus").textContent = "GPS: Stopped";
-}
+ if(!driver || !currentUser) return;
 
-/* REFRESH */
-$("refreshBtn").addEventListener("click",async()=>{
- if(!driver) return;
+ const payload = {
+  driver_id:driver.id,
+  latitude:lat,
+  longitude:lng,
+  updated_at:new Date().toISOString()
+ };
 
- setButton("refreshBtn","REFRESHING...",true);
-
- try{
-  await loadDriver();
-  await loadVehicle();
-  await loadActiveRide();
-  await loadPerformance();
-  await loadHistory();
-
-  showMessage("Dashboard refreshed.");
-
- }catch(error){
-  showMessage("Refresh error: " + error.message);
- }finally{
-  setButton("refreshBtn","REFRESH",false);
- }
-});
-
-/* ACTIVE RIDE */
-async function loadActiveRide(){
- if(!driver) return;
-
- const {data,error} = await db.from("bookings")
-  .select("*")
-  .eq("driver_id",driver.id)
-  .in("status",["pending","accepted","arrived","started"])
-  .order("created_at",{ascending:false})
-  .limit(1);
-
- if(error){
-  $("activeRide").textContent =
-   "Ride error: " + error.message;
-  return;
- }
-
- currentBooking = data?.[0] || null;
- checkBookingSound();
-
- if(!currentBooking){
-  $("activeRide").textContent = "No active ride.";
-  stopCustomerLocationPolling();
-  return;
- }
-
- renderActiveRide();
-
- if(["accepted","arrived","started"].includes(currentBooking.status)){
-  startCustomerLocationPolling();
- }else{
-  stopCustomerLocationPolling();
- }
-}
-
-function renderActiveRide(){
- const b = currentBooking;
- if(!b) return;
-
- let buttons = "";
-
- if(b.status === "pending"){
-  buttons = `
-   <button class="success" onclick="acceptRide()">ACCEPT RIDE</button>
-   <button class="danger" onclick="rejectRide()">REJECT RIDE</button>`;
- }
-
- if(b.status === "accepted"){
-  buttons = `
-   <button class="primary" onclick="markArrived()">I HAVE ARRIVED</button>`;
- }
-
- if(b.status === "arrived"){
-  buttons = `
-   <input id="rideOTP" inputmode="numeric" maxlength="4"
-    placeholder="Enter customer ride OTP">
-   <button class="success" onclick="startRide()">START RIDE</button>`;
- }
-
- if(b.status === "started"){
-  buttons = `
-   <button class="success" onclick="completeRide()">COMPLETE RIDE</button>`;
- }
-
- $("activeRide").innerHTML = `
-  <div class="booking">
-   <p><b>Status:</b> <span class="badge">${safe(b.status)}</span></p>
-   <p><b>Pickup:</b> ${safe(b.pickup_address)}</p>
-   <p><b>Drop:</b> ${safe(b.drop_address)}</p>
-   <p><b>Trip:</b> ${safe(b.trip_type)}</p>
-   <p><b>Estimated Fare:</b> ${money(b.estimated_fare)}</p>
-   <p><b>Payment:</b> ${safe(b.payment_method)}</p>
-   <div class="row">${buttons}</div>
-  </div>`;
-}
-
-/* RIDE ACTIONS */
-async function acceptRide(){
- if(!currentBooking) return;
-
- const {error} = await db.rpc("sakthi_accept_booking",{
-  p_booking_id:currentBooking.id
- });
-
- if(error){
-  showMessage("Accept failed: " + error.message);
-  return;
- }
-
- showMessage("Ride accepted.");
- await loadActiveRide();
-}
-
-async function rejectRide(){
- if(!currentBooking) return;
- if(!confirm("Reject this ride?")) return;
-
- const {error} = await db.rpc("sakthi_reject_booking",{
-  p_booking_id:currentBooking.id
- });
-
- if(error){
-  showMessage("Reject failed: " + error.message);
-  return;
- }
-
- showMessage("Ride rejection submitted.");
- await loadActiveRide();
-}
-
-async function markArrived(){
- if(!currentBooking) return;
- if(!confirm("Confirm you reached pickup location?")) return;
-
- const {error} = await db.rpc("sakthi_mark_arrived",{
-  p_booking_id:currentBooking.id
- });
-
- if(error){
-  showMessage("Arrival failed: " + error.message);
-  return;
- }
-
- showMessage("Arrival marked. Ask customer for OTP.");
- await loadActiveRide();
-}
-
-async function startRide(){
- if(!currentBooking) return;
-
- const otp = $("rideOTP")?.value.trim();
-
- if(!otp || otp.length !== 4){
-  showMessage("Enter the 4-digit customer ride OTP.");
-  return;
- }
-
- const {error} = await db.rpc("sakthi_start_ride",{
-  p_booking_id:currentBooking.id,
-  p_otp:otp
- });
-
- if(error){
-  showMessage("Start ride failed: " + error.message);
-  return;
- }
-
- showMessage("Ride started.");
- await loadActiveRide();
-}
-
-async function completeRide(){
- if(!currentBooking) return;
- if(!confirm("Complete this ride?")) return;
-
- const {error} = await db.rpc("sakthi_complete_ride",{
-  p_booking_id:currentBooking.id
- });
-
- if(error){
-  showMessage("Complete failed: " + error.message);
-  return;
- }
-
- showMessage("Ride completed successfully.");
-
- await loadActiveRide();
- await loadPerformance();
- await loadHistory();
-}
-
-/* CUSTOMER MAP */
-function initializeCustomerMap(){
- if(customerMap) return;
-
- customerMap = L.map("customerMap")
-  .setView([11.1271,78.6569],7);
-
- L.tileLayer(
-  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-  {
-   attribution:"© OpenStreetMap contributors"
-  }
- ).addTo(customerMap);
-
- setTimeout(()=>customerMap.invalidateSize(),300);
-}
-
-function startCustomerLocationPolling(){
- if(!currentBooking) return;
-
- const bookingId = currentBooking.id;
-
- if(customerMapBookingId === bookingId && locationTimer){
-  loadCustomerLiveLocation();
-  return;
- }
-
- stopCustomerLocationPolling();
-
- customerMapBookingId = bookingId;
-
- initializeCustomerMap();
- loadCustomerLiveLocation();
-
- locationTimer = setInterval(loadCustomerLiveLocation,5000);
-}
-
-async function loadCustomerLiveLocation(){
- const bookingId = customerMapBookingId;
- if(!bookingId) return;
-
- const {data,error} = await db.from("customer_live_locations")
-  .select("latitude,longitude,updated_at")
-  .eq("booking_id",bookingId)
+ const {data:existing,error:readError} = await db
+  .from('driver_locations')
+  .select('driver_id')
+  .eq('driver_id',driver.id)
   .maybeSingle();
 
- if(error){
-  $("customerLocationStatus").textContent =
-   "Location access error: " + error.message;
+ if(readError){
+  $('gpsStatus').textContent =
+   'Location read error: '+readError.message;
   return;
  }
 
- if(!data){
-  $("customerLocationStatus").textContent =
-   "Waiting for customer location sharing.";
-  return;
- }
+ let result;
 
- const lat = Number(data.latitude);
- const lng = Number(data.longitude);
-
- if(!Number.isFinite(lat) || !Number.isFinite(lng)) return;
-
- latestCustomerLocation = {lat,lng};
-
- const point = [lat,lng];
-
- if(!customerMarker){
-  customerMarker = L.marker(point)
-   .addTo(customerMap)
-   .bindPopup("Customer Location");
-
-  customerMap.setView(point,15);
+ if(existing){
+  result = await db
+   .from('driver_locations')
+   .update(payload)
+   .eq('driver_id',driver.id);
  }else{
-  customerMarker.setLatLng(point);
+  result = await db
+   .from('driver_locations')
+   .insert(payload);
  }
 
- const age = Date.now() - new Date(data.updated_at).getTime();
-
- $("customerLocationStatus").textContent =
-  age > 60000 ?
-  "Location older than 60 seconds." :
-  "Customer location updated: " +
-   new Date(data.updated_at).toLocaleTimeString();
-
- $("navigateBtn").classList.remove("hidden");
+ if(result.error){
+  $('gpsStatus').textContent =
+   'GPS save error: '+result.error.message;
+ }
 }
 
-function stopCustomerLocationPolling(){
- if(locationTimer) clearInterval(locationTimer);
+function stopGPS(){
 
- locationTimer = null;
- customerMapBookingId = null;
- latestCustomerLocation = null;
-
- if(customerMarker && customerMap){
-  customerMap.removeLayer(customerMarker);
+ if(watchId !== null){
+  navigator.geolocation.clearWatch(watchId);
+  watchId = null;
  }
 
- customerMarker = null;
-
- $("customerLocationStatus").textContent =
-  "Waiting for customer location sharing.";
-
- $("navigateBtn").classList.add("hidden");
+ $('gpsStatus').textContent = 'GPS sharing stopped.';
 }
 
-$("navigateBtn").addEventListener("click",()=>{
- if(!latestCustomerLocation) return;
+function navigateToPickup(){
+
+ if(!activeBooking){
+  message('No active ride');
+  return;
+ }
+
+ const b = activeBooking;
+
+ if(b.pickup_lat == null || b.pickup_lng == null){
+  message('Pickup coordinates unavailable');
+  return;
+ }
 
  const url =
-  "https://www.google.com/maps/dir/?api=1&destination=" +
-  latestCustomerLocation.lat + "," +
-  latestCustomerLocation.lng;
+  'https://www.google.com/maps/dir/?api=1&destination='+
+  encodeURIComponent(b.pickup_lat+','+b.pickup_lng)+
+  '&travelmode=driving';
 
- window.open(url,"_blank");
-});
-
-/* PERFORMANCE */
-async function loadPerformance(){
- if(!driver) return;
-
- const now = new Date();
-
- const todayStart = new Date(
-  now.getFullYear(),
-  now.getMonth(),
-  now.getDate()
- ).toISOString();
-
- const monthStart = new Date(
-  now.getFullYear(),
-  now.getMonth(),
-  1
- ).toISOString();
-
- const {data,error} = await db.from("bookings")
-  .select("id,final_fare,estimated_fare,completed_at")
-  .eq("driver_id",driver.id)
-  .eq("status","completed")
-  .gte("completed_at",monthStart);
-
- if(error){
-  console.error(error.message);
-  return;
- }
-
- const rides = data || [];
-
- const todayRides = rides.filter(r=>
-  r.completed_at && r.completed_at >= todayStart
- );
-
- const todayTotal = todayRides.reduce((sum,r)=>
-  sum + Number(r.final_fare ?? r.estimated_fare ?? 0),0);
- const monthTotal = rides.reduce((sum,r)=>
-  sum + Number(r.final_fare ?? r.estimated_fare ?? 0),0);
-
- $("completedCount").textContent = rides.length;
- $("todayCount").textContent = todayRides.length;
- $("todayEarnings").textContent = money(todayTotal);
- $("monthEarnings").textContent = money(monthTotal);
+ window.open(url,'_blank');
 }
 
-/* HISTORY */
-async function loadHistory(){
- if(!driver) return;
+async function logout(){
 
- const {data,error} = await db.from("bookings")
-  .select("id,status,pickup_address,drop_address,final_fare,estimated_fare,completed_at")
-  .eq("driver_id",driver.id)
-  .eq("status","completed")
-  .order("completed_at",{ascending:false})
-  .limit(10);
-
- if(error){
-  $("rideHistory").textContent =
-   "History error: " + error.message;
-  return;
- }
- const rides = data || [];
-
- if(!rides.length){
-  $("rideHistory").textContent = "No completed rides yet.";
-  return;
- }
-
- $("rideHistory").innerHTML = rides.map(r=>`
-  <div class="historyItem">
-   <p><b>Ride ID:</b> ${safe(r.id)}</p>
-   <p><b>Pickup:</b> ${safe(r.pickup_address)}</p>
-   <p><b>Drop:</b> ${safe(r.drop_address)}</p>
-   <p><b>Fare:</b> ${money(r.final_fare ?? r.estimated_fare)}</p>
-   <small>
-    ${r.completed_at ?
-     safe(new Date(r.completed_at).toLocaleString()) :
-     "Date unavailable"}
-   </small>
-  </div>
- `).join("");
-}
-
-/* SOS */
-$("sosBtn").addEventListener("click",()=>{
- if(confirm("Call Indian emergency number 112?")){
-  window.location.href = "tel:112";
- }
-});
- /* SOS */
-$("sosBtn").addEventListener("click",()=>{
- if(confirm("Call Indian emergency number 112?")){
-  window.location.href = "tel:112";
- }
-});
-
-/* SUPPORT */
-$("supportBtn").addEventListener("click",()=>{
- const subject = encodeURIComponent("SAKTHI CABS Driver Support");
- const body = encodeURIComponent(
-  "Hello SAKTHI CABS Support,\n\nI need assistance with my driver account.\n\nDriver Email: " +
-  (user?.email || "Not available") +
-  "\nDriver ID: " +
-  (driver?.id || "Not available")
- );
-
- window.location.href =
-  "mailto:support@sakthicabs.com?subject=" +
-  subject + "&body=" + body;
-});
- /* LOGOUT */
-$("logoutBtn").addEventListener("click",logoutDriver);
-
-async function logoutDriver(){
- if(!confirm("Are you sure you want to logout?")) return;
-
- stopRefreshTimer();
  stopGPS();
- stopCustomerLocationPolling();
 
- if(driver){
-  await db.from("drivers")
-   .update({
-    is_online:false,
-    is_available:false
-   })
-   .eq("id",driver.id);
- }
+ if(bookingChannel) db.removeChannel(bookingChannel);
+ if(locationChannel) db.removeChannel(locationChannel);
 
- const {error} = await db.auth.signOut();
+ await db.auth.signOut();
+
+ currentUser = null;
+ driver = null;
+ activeBooking = null;
+
+ showLogin();
+ message('Logged out');
+}
+
+$('loginBtn').addEventListener('click',login);
+$('onlineBtn').addEventListener('click',toggleOnline);
+$('logoutBtn').addEventListener('click',logout);
+$('refreshBtn').addEventListener('click',refreshRides);
+$('navigateBtn').addEventListener('click',navigateToPickup);
+
+// Restore existing authenticated session
+(async function(){
+ const {data,error} = await db.auth.getSession();
 
  if(error){
-  showMessage("Logout error: " + error.message);
+  message(error.message);
   return;
  }
 
- user = null;
- driver = null;
- vehicle = null;
- currentBooking = null;
- 
- $("dashboard").classList.add("hidden");
- $("loginSection").classList.remove("hidden");
- $("logoutBtn").classList.add("hidden");
-
- $("loginForm").reset();
-
- showMessage("Successfully logged out.");
-}
-
-/* GLOBAL FUNCTIONS FOR RIDE BUTTONS */
-window.acceptRide = acceptRide;
-window.rejectRide = rejectRide;
-window.markArrived = markArrived;
-window.startRide = startRide;
-window.completeRide = completeRide;
-
-/* START APP */
-init();
-
+ if(data.session){
+  currentUser = data.session.user;
+  await loadDriver();
+ }
+})();
 </script>
+
 </body>
 </html>
