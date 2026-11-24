@@ -8,6 +8,7 @@
 <title>SAKTHI CABS | Driver Registration</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
 <style>
 *{box-sizing:border-box}
@@ -27,9 +28,12 @@ button:disabled{opacity:.5}
 .success{background:#168c56;color:white}
 .muted{color:#aaa;font-size:13px;line-height:1.6}
 #message{display:none;background:#292929;padding:13px;border-radius:9px;white-space:pre-wrap;overflow-wrap:anywhere;margin:12px 0}
-.hidden{display:none!important}
-a{color:#f5c542}
 .status{padding:12px;background:#222;border-radius:9px;margin-top:10px}
+#map{height:300px;border-radius:10px;margin-top:12px;border:1px solid #444}
+.result{padding:12px;background:#252525;border:1px solid #444;border-radius:8px;margin-top:8px;cursor:pointer;font-size:14px}
+.result:active{background:#454545}
+.location-info{background:#202820;padding:12px;border-radius:9px;margin-top:10px;line-height:1.6}
+a{color:#f5c542}
 </style>
 </head>
 
@@ -51,19 +55,14 @@ a{color:#f5c542}
 
  <label>Password</label>
  <input id="password" type="password" minlength="6"
-  placeholder="Minimum 6 characters" required>
+ placeholder="Minimum 6 characters" required>
 
- <button id="registerAccountBtn" class="primary">
-  CREATE DRIVER ACCOUNT
- </button>
-
- <button id="loginAccountBtn" class="secondary">
-  ALREADY REGISTERED? LOGIN
- </button>
+ <button id="registerAccountBtn" class="primary">CREATE DRIVER ACCOUNT</button>
+ <button id="loginAccountBtn" class="secondary">ALREADY REGISTERED? LOGIN</button>
 
  <p class="muted">
-  Create an account first. If email confirmation is enabled,
-  verify your Gmail and then return here to login.
+ Create your account first. If email confirmation is enabled,
+ verify your Gmail and then return here to login.
  </p>
 </section>
 
@@ -76,27 +75,25 @@ a{color:#f5c542}
 
  <label>Mobile Number</label>
  <input id="phone" type="tel" required maxlength="10"
-  pattern="[6-9][0-9]{9}" placeholder="10 digit mobile number">
+ pattern="[6-9][0-9]{9}" placeholder="10 digit mobile number">
 
  <label>Driving Licence Number</label>
- <input id="licenseNumber" type="text" required
-  placeholder="Enter driving licence number">
+ <input id="licenseNumber" type="text" required placeholder="Driving licence number">
 
  <label>Vehicle Type</label>
  <select id="vehicleType" required>
   <option value="">Select vehicle type</option>
-  <option value="Bike">Bike</option>
-  <option value="Auto">Auto</option>
-  <option value="Mini">Mini Car</option>
-  <option value="Sedan">Sedan</option>
-  <option value="SUV">SUV</option>
-  <option value="Tempo Traveller">Tempo Traveller</option>
-  <option value="Other">Other</option>
+  <option>Bike</option>
+  <option>Auto</option>
+  <option>Mini</option>
+  <option>Sedan</option>
+  <option>SUV</option>
+  <option>Tempo Traveller</option>
+  <option>Other</option>
  </select>
 
  <label>Vehicle Registration Number</label>
- <input id="vehicleNumber" type="text" required
-  placeholder="TN XX XX XXXX">
+ <input id="vehicleNumber" type="text" required placeholder="TN XX XX XXXX">
 
  <label>State</label>
  <input value="Tamil Nadu" readonly>
@@ -106,27 +103,60 @@ a{color:#f5c542}
   <option value="">Select District</option>
  </select>
 
- <label>Driving Licence Document (PDF/JPG/PNG)</label>
- <input id="licenceFile" type="file"
-  accept=".pdf,.jpg,.jpeg,.png" required>
+ <label>Taluk (Cuddalore district)</label>
+ <select id="taluk">
+  <option value="">Select Taluk (if applicable)</option>
+ </select>
 
- <label>Vehicle RC Document (PDF/JPG/PNG)</label>
- <input id="rcFile" type="file"
-  accept=".pdf,.jpg,.jpeg,.png" required>
+ <h2 style="margin-top:25px">Live Service Location</h2>
+ <p class="muted">
+ Search your village, town or area, or use your current GPS location.
+ Select a search result to save its location.
+ </p>
 
- <label>Vehicle Insurance Document (PDF/JPG/PNG)</label>
- <input id="insuranceFile" type="file"
-  accept=".pdf,.jpg,.jpeg,.png" required>
+ <label>Search Village / Town / Area</label>
+ <input id="locationSearch" type="text"
+ placeholder="Example: Panruti, Cuddalore, Chidambaram">
+
+ <button type="button" id="searchLocationBtn" class="primary">
+  SEARCH LOCATION
+ </button>
+
+ <button type="button" id="gpsBtn" class="secondary">
+  USE MY CURRENT GPS LOCATION
+ </button>
+
+ <div id="locationResults"></div>
+
+ <div id="map"></div>
+
+ <div id="selectedLocation" class="location-info">
+  No location selected yet.
+ </div>
 
  <p class="muted">
-  Maximum file size: 5 MB per document.
-  Documents are uploaded to the private driver-documents bucket.
+ Map data © OpenStreetMap contributors.
+ Location search is provided by OpenStreetMap Nominatim.
  </p>
+
+ <input type="hidden" id="serviceLocation">
+ <input type="hidden" id="latitude">
+ <input type="hidden" id="longitude">
+
+ <label>Driving Licence Document (PDF/JPG/PNG)</label>
+ <input id="licenceFile" type="file" accept=".pdf,.jpg,.jpeg,.png" required>
+
+ <label>Vehicle RC Document (PDF/JPG/PNG)</label>
+ <input id="rcFile" type="file" accept=".pdf,.jpg,.jpeg,.png" required>
+
+ <label>Vehicle Insurance Document (PDF/JPG/PNG)</label>
+ <input id="insuranceFile" type="file" accept=".pdf,.jpg,.jpeg,.png" required>
+
+ <p class="muted">Maximum file size: 5 MB per document.</p>
 
  <button id="submitBtn" class="success" type="submit">
   SUBMIT DRIVER APPLICATION
  </button>
-
 </form>
 
 <section class="card">
@@ -137,78 +167,44 @@ a{color:#f5c542}
 </section>
 
 <p class="muted">
- Already have an account?
- <a href="driver.html">Go to Driver Login</a>
+ Already have an account? <a href="driver.html">Go to Driver Login</a>
 </p>
-
 </div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
 "use strict";
 
-/* SUPABASE CONFIG - SAME AS DRIVER APP */
-const SUPABASE_URL =
- "https://kzcczciqaxawbesgtgcf.supabase.co";
+const SUPABASE_URL = "https://kzcczciqaxawbesgtgcf.supabase.co";
+const SUPABASE_KEY = "sb_publishable_bKS7yIQ01_cOi972JQ7jQw_WjxhbKKb";
 
-const SUPABASE_KEY =
- "sb_publishable_bKS7yIQ01_cOi972JQ7jQw_WjxhbKKb";
-
-const db = window.supabase.createClient(
- SUPABASE_URL,
- SUPABASE_KEY
-);
-
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const $ = id => document.getElementById(id);
 
 let currentUser = null;
 let submitting = false;
+let map = null;
+let marker = null;
+let lastSearchTime = 0;
 
-<label for="district">District *</label>
+const districts = [
+"Ariyalur","Chengalpattu","Chennai","Coimbatore","Cuddalore",
+"Dharmapuri","Dindigul","Erode","Kallakurichi","Kancheepuram",
+"Kanniyakumari","Karur","Krishnagiri","Madurai","Mayiladuthurai",
+"Nagapattinam","Namakkal","Nilgiris","Perambalur","Pudukkottai",
+"Ramanathapuram","Ranipet","Salem","Sivaganga","Tenkasi",
+"Thanjavur","Theni","Thoothukudi","Tiruchirappalli","Tirunelveli",
+"Tirupathur","Tiruppur","Tiruvallur","Tiruvannamalai","Tiruvarur",
+"Vellore","Viluppuram","Virudhunagar"
+];
 
-<select id="district" name="district" required>
-  <option value="">Select district</option>
-  <option value="Ariyalur">Ariyalur</option>
-  <option value="Chengalpattu">Chengalpattu</option>
-  <option value="Chennai">Chennai</option>
-  <option value="Coimbatore">Coimbatore</option>
-  <option value="Cuddalore">Cuddalore</option>
-  <option value="Dharmapuri">Dharmapuri</option>
-  <option value="Dindigul">Dindigul</option>
-  <option value="Erode">Erode</option>
-  <option value="Kallakurichi">Kallakurichi</option>
-  <option value="Kancheepuram">Kancheepuram</option>
-  <option value="Kanniyakumari">Kanniyakumari</option>
-  <option value="Karur">Karur</option>
-  <option value="Krishnagiri">Krishnagiri</option>
-  <option value="Madurai">Madurai</option>
-  <option value="Mayiladuthurai">Mayiladuthurai</option>
-  <option value="Nagapattinam">Nagapattinam</option>
-  <option value="Namakkal">Namakkal</option>
-  <option value="Nilgiris">Nilgiris</option>
-  <option value="Perambalur">Perambalur</option>
-  <option value="Pudukkottai">Pudukkottai</option>
-  <option value="Ramanathapuram">Ramanathapuram</option>
-  <option value="Ranipet">Ranipet</option>
-  <option value="Salem">Salem</option>
-  <option value="Sivaganga">Sivaganga</option>
-  <option value="Tenkasi">Tenkasi</option>
-  <option value="Thanjavur">Thanjavur</option>
-  <option value="Theni">Theni</option>
-  <option value="Thoothukudi">Thoothukudi</option>
-  <option value="Tiruchirappalli">Tiruchirappalli</option>
-  <option value="Tirunelveli">Tirunelveli</option>
-  <option value="Tirupathur">Tirupathur</option>
-  <option value="Tiruppur">Tiruppur</option>
-  <option value="Tiruvallur">Tiruvallur</option>
-  <option value="Tiruvannamalai">Tiruvannamalai</option>
-  <option value="Tiruvarur">Tiruvarur</option>
-  <option value="Vellore">Vellore</option>
-  <option value="Viluppuram">Viluppuram</option>
-  <option value="Virudhunagar">Virudhunagar</option>
-</select>
- 
+const cuddaloreTaluks = [
+"Cuddalore","Panruti","Chidambaram","Kattumannarkoil",
+"Virudhachalam","Thittakudi","Kurinjipadi","Bhuvanagiri",
+"Veppur","Srimushnam"
+];
 
-/* DISTRICT OPTIONS */
 districts.forEach(name => {
  const option = document.createElement("option");
  option.value = name;
@@ -216,15 +212,205 @@ districts.forEach(name => {
  $("district").appendChild(option);
 });
 
+$("district").addEventListener("change", () => {
+ $("taluk").innerHTML = '<option value="">Select Taluk (if applicable)</option>';
+
+ if($("district").value === "Cuddalore"){
+  cuddaloreTaluks.forEach(name => {
+   const option = document.createElement("option");
+   option.value = name;
+   option.textContent = name;
+   $("taluk").appendChild(option);
+  });
+ }
+});
+
 /* MESSAGE */
 function message(text){
  $("message").style.display = "block";
  $("message").textContent = text;
 }
-
 function clearMessage(){
  $("message").style.display = "none";
  $("message").textContent = "";
+}
+
+/* MAP */
+function initMap(){
+ map = L.map("map").setView([11.7480,79.7714],9);
+
+ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+  maxZoom:19,
+  attribution:'&copy; OpenStreetMap contributors'
+ }).addTo(map);
+
+ map.on("click", async e => {
+  await reverseGeocode(e.latlng.lat,e.latlng.lng);
+ });
+
+ setTimeout(() => map.invalidateSize(),300);
+}
+
+function setSelectedLocation(name,lat,lng){
+ lat = Number(lat);
+ lng = Number(lng);
+
+ if(!name || !Number.isFinite(lat) || !Number.isFinite(lng)){
+  message("Invalid location. Please select another place.");
+  return;
+ }
+
+ $("serviceLocation").value = name;
+ $("latitude").value = lat;
+ $("longitude").value = lng;
+
+ $("selectedLocation").textContent =
+  "Selected: " + name +
+  "\nLatitude: " + lat.toFixed(6) +
+  "\nLongitude: " + lng.toFixed(6);
+
+ if(marker) marker.remove();
+
+ marker = L.marker([lat,lng]).addTo(map)
+  .bindPopup(name).openPopup();
+
+ map.setView([lat,lng],15);
+}
+
+/* LIVE PLACE SEARCH - USER TRIGGERED */
+async function searchLocation(){
+ clearMessage();
+
+ const query = $("locationSearch").value.trim();
+
+ if(query.length < 3){
+  message("Enter at least 3 characters to search.");
+  return;
+ }
+
+ const now = Date.now();
+ if(now - lastSearchTime < 1100){
+  message("Please wait a moment before searching again.");
+  return;
+ }
+ lastSearchTime = now;
+
+ $("searchLocationBtn").disabled = true;
+ $("searchLocationBtn").textContent = "SEARCHING...";
+ $("locationResults").innerHTML = "";
+
+ try{
+  let searchText = query + ", Tamil Nadu, India";
+
+  if($("district").value){
+   searchText = query + ", " + $("district").value + ", Tamil Nadu, India";
+  }
+
+  const url = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&q=" +
+   encodeURIComponent(searchText);
+
+  const response = await fetch(url,{
+   headers:{"Accept":"application/json"}
+  });
+
+  if(!response.ok) throw new Error("Location search service unavailable.");
+
+  const results = await response.json();
+
+  if(!results.length){
+   $("locationResults").textContent = "No results found. Try another spelling or nearby town.";
+   return;
+  }
+
+  results.forEach(place => {
+   const item = document.createElement("div");
+   item.className = "result";
+   item.textContent = place.display_name;
+
+   item.addEventListener("click",() => {
+    setSelectedLocation(
+     place.display_name,
+     place.lat,
+     place.lon
+    );
+    $("locationResults").innerHTML = "";
+    clearMessage();
+   });
+
+   $("locationResults").appendChild(item);
+  });
+
+ }catch(error){
+  message("Location search error: " + error.message);
+ }finally{
+  $("searchLocationBtn").disabled = false;
+  $("searchLocationBtn").textContent = "SEARCH LOCATION";
+ }
+}
+
+$("searchLocationBtn").addEventListener("click",searchLocation);
+
+/* GPS LOCATION */
+$("gpsBtn").addEventListener("click",() => {
+ clearMessage();
+
+ if(!navigator.geolocation){
+  message("GPS is not supported by this browser.");
+  return;
+ }
+
+ $("gpsBtn").disabled = true;
+ $("gpsBtn").textContent = "GETTING LOCATION...";
+
+ navigator.geolocation.getCurrentPosition(
+  async position => {
+   const lat = position.coords.latitude;
+   const lng = position.coords.longitude;
+
+   await reverseGeocode(lat,lng);
+
+   $("gpsBtn").disabled = false;
+   $("gpsBtn").textContent = "USE MY CURRENT GPS LOCATION";
+  },
+  error => {
+   let msg = "Unable to get GPS location.";
+
+   if(error.code === 1) msg = "Location permission denied. Allow location access in browser settings.";
+   if(error.code === 2) msg = "GPS location unavailable.";
+   if(error.code === 3) msg = "GPS request timed out.";
+
+   message(msg);
+   $("gpsBtn").disabled = false;
+   $("gpsBtn").textContent = "USE MY CURRENT GPS LOCATION";
+  },
+  {enableHighAccuracy:true,timeout:20000,maximumAge:10000}
+ );
+});
+
+/* REVERSE GEOCODING */
+async function reverseGeocode(lat,lng){
+ try{
+  const url =
+   "https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=" +
+   encodeURIComponent(lat) + "&lon=" + encodeURIComponent(lng);
+
+  const response = await fetch(url,{
+   headers:{"Accept":"application/json"}
+  });
+
+  if(!response.ok) throw new Error("Address lookup failed.");
+
+  const data = await response.json();
+
+  setSelectedLocation(
+   data.display_name || "Selected GPS Location",
+   lat,lng
+  );
+
+ }catch(error){
+  setSelectedLocation("GPS Location",lat,lng);
+  message("GPS coordinates selected. Address lookup unavailable.");
+ }
 }
 
 /* ACCOUNT CREATION */
@@ -236,13 +422,8 @@ async function createAccount(){
  const email = $("email").value.trim().toLowerCase();
  const password = $("password").value;
 
- if(!email || !password){
-  message("Enter Gmail and password.");
-  return;
- }
-
- if(password.length < 6){
-  message("Password must contain at least 6 characters.");
+ if(!email || password.length < 6){
+  message("Enter Gmail and a password with at least 6 characters.");
   return;
  }
 
@@ -251,8 +432,7 @@ async function createAccount(){
 
  try{
   const {data,error} = await db.auth.signUp({
-   email,
-   password,
+   email,password,
    options:{
     emailRedirectTo:
      "https://vsakthivel2882005-collab.github.io/sakthi-cabs/driver-register.html"
@@ -265,10 +445,7 @@ async function createAccount(){
    currentUser = data.user;
    message("Account created successfully. Complete your driver application.");
   }else{
-   message(
-    "Account created. Check your Gmail and confirm your email. " +
-    "After confirmation, return here and click ALREADY REGISTERED? LOGIN."
-   );
+   message("Account created. Verify your Gmail, then return here and login.");
   }
 
  }catch(error){
@@ -279,7 +456,7 @@ async function createAccount(){
  }
 }
 
-/* EXISTING ACCOUNT LOGIN */
+/* LOGIN */
 $("loginAccountBtn").addEventListener("click",loginAccount);
 
 async function loginAccount(){
@@ -297,17 +474,11 @@ async function loginAccount(){
  $("loginAccountBtn").textContent = "LOGGING IN...";
 
  try{
-  const {data,error} = await db.auth.signInWithPassword({
-   email,
-   password
-  });
-
+  const {data,error} = await db.auth.signInWithPassword({email,password});
   if(error) throw error;
 
   currentUser = data.user;
-
-  message("Login successful. You can submit your driver application.");
-
+  message("Login successful.");
   await checkApplication();
 
  }catch(error){
@@ -318,7 +489,7 @@ async function loginAccount(){
  }
 }
 
-/* SESSION CHECK */
+/* SESSION */
 async function checkSession(){
  const {data,error} = await db.auth.getSession();
 
@@ -343,47 +514,30 @@ async function checkApplication(){
   .maybeSingle();
 
  if(error){
-  $("applicationStatus").textContent =
-   "Status check error: " + error.message;
+  $("applicationStatus").textContent = "Status error: " + error.message;
   return;
  }
 
  if(!data){
-  $("applicationStatus").textContent =
-   "No application submitted yet.";
+  $("applicationStatus").textContent = "No application submitted yet.";
   return;
  }
 
  $("applicationStatus").textContent =
   "Name: " + data.full_name +
   " | Status: " + String(data.status).toUpperCase() +
-  " | Submitted: " +
-  new Date(data.created_at).toLocaleString();
-
- if(data.status === "approved"){
-  $("applicationStatus").textContent +=
-   " | Your application is approved. Contact support if driver profile is not available.";
- }
-
- if(data.status === "rejected"){
-  $("applicationStatus").textContent +=
-   " | Please contact SAKTHI CABS admin.";
- }
+  " | Submitted: " + new Date(data.created_at).toLocaleString();
 }
 
 /* FILE VALIDATION */
 function validateFile(file){
  if(!file) throw new Error("Please select all three documents.");
 
- if(file.size > 5 * 1024 * 1024){
+ if(file.size > 5*1024*1024){
   throw new Error(file.name + " exceeds 5 MB.");
  }
 
- const allowed = [
-  "application/pdf",
-  "image/jpeg",
-  "image/png"
- ];
+ const allowed = ["application/pdf","image/jpeg","image/png"];
 
  if(!allowed.includes(file.type)){
   throw new Error("Only PDF, JPG and PNG files are allowed.");
@@ -394,13 +548,8 @@ function validateFile(file){
 async function uploadDocument(file,userId,applicationId,type){
  validateFile(file);
 
- const extension =
-  file.name.split(".").pop().toLowerCase();
-
- const path =
-  userId + "/" +
-  applicationId + "/" +
-  type + "." + extension;
+ const extension = file.name.split(".").pop().toLowerCase();
+ const path = userId + "/" + applicationId + "/" + type + "." + extension;
 
  const {error:uploadError} = await db.storage
   .from("driver-documents")
@@ -411,29 +560,25 @@ async function uploadDocument(file,userId,applicationId,type){
 
  if(uploadError) throw uploadError;
 
- const {error:insertError} = await db
-  .from("driver_documents")
-  .insert({
-   application_id:applicationId,
-   user_id:userId,
-   document_type:type,
-   storage_path:path
-  });
+ const {error:insertError} = await db.from("driver_documents").insert({
+  application_id:applicationId,
+  user_id:userId,
+  document_type:type,
+  storage_path:path
+ });
 
  if(insertError) throw insertError;
-
- return path;
 }
 
 /* SUBMIT APPLICATION */
-$("applicationForm").addEventListener("submit",async function(e){
+$("applicationForm").addEventListener("submit",async e => {
  e.preventDefault();
 
  if(submitting) return;
  clearMessage();
 
  if(!currentUser){
-  message("First create account or login with Gmail and password.");
+  message("First create account or login.");
   return;
  }
 
@@ -443,6 +588,11 @@ $("applicationForm").addEventListener("submit",async function(e){
  const vehicleType = $("vehicleType").value;
  const vehicleNumber = $("vehicleNumber").value.trim().toUpperCase();
  const district = $("district").value;
+ const taluk = $("taluk").value || null;
+
+ const location = $("serviceLocation").value;
+ const latitude = $("latitude").value;
+ const longitude = $("longitude").value;
 
  const licenceFile = $("licenceFile").files[0];
  const rcFile = $("rcFile").files[0];
@@ -453,9 +603,13 @@ $("applicationForm").addEventListener("submit",async function(e){
   return;
  }
 
- if(!fullName || !licenseNumber || !vehicleType ||
-    !vehicleNumber || !district){
+ if(!fullName || !licenseNumber || !vehicleType || !vehicleNumber || !district){
   message("Please complete all required fields.");
+  return;
+ }
+
+ if(!location || latitude === "" || longitude === ""){
+  message("Please search and select your service location or use GPS.");
   return;
  }
 
@@ -472,11 +626,7 @@ $("applicationForm").addEventListener("submit",async function(e){
  $("submitBtn").disabled = true;
  $("submitBtn").textContent = "SUBMITTING...";
 
- let applicationId = null;
-
  try{
-
-  /* CHECK EXISTING APPLICATION */
   const {data:existing,error:checkError} = await db
    .from("driver_applications")
    .select("id,status")
@@ -486,75 +636,68 @@ $("applicationForm").addEventListener("submit",async function(e){
   if(checkError) throw checkError;
 
   if(existing){
-   message(
-    "You already have an application. Current status: " +
-    existing.status +
-    ". Please contact admin for assistance."
-   );
+   message("You already have an application. Status: " + existing.status);
    return;
   }
 
-  /* CREATE APPLICATION */
-  const {data:application,error:applicationError} =
-   await db.from("driver_applications")
-    .insert({
-     user_id:currentUser.id,
-     full_name:fullName,
-     phone:phone,
-     vehicle_type:vehicleType,
-     vehicle_number:vehicleNumber,
-     district:district,
-     state:"Tamil Nadu",
-     license_number:licenseNumber,
-     status:"pending"
-    })
-    .select("id")
-    .single();
+  const {data:application,error:applicationError} = await db
+   .from("driver_applications")
+   .insert({
+    user_id:currentUser.id,
+    full_name:fullName,
+    phone:phone,
+    vehicle_type:vehicleType,
+    vehicle_number:vehicleNumber,
+    district:district,
+    state:"Tamil Nadu",
+    license_number:licenseNumber,
+    status:"pending",
+    taluk:taluk,
+    service_location:location,
+    latitude:Number(latitude),
+    longitude:Number(longitude)
+   })
+   .select("id")
+   .single();
 
   if(applicationError) throw applicationError;
 
-  applicationId = application.id;
-
-  /* UPLOAD DOCUMENTS */
-  await uploadDocument(
-   licenceFile,currentUser.id,applicationId,"driving_license"
-  );
-
-  await uploadDocument(
-   rcFile,currentUser.id,applicationId,"vehicle_rc"
-  );
-
-  await uploadDocument(
-   insuranceFile,currentUser.id,applicationId,"insurance"
-  );
+  await uploadDocument(licenceFile,currentUser.id,application.id,"driving_license");
+  await uploadDocument(rcFile,currentUser.id,application.id,"vehicle_rc");
+  await uploadDocument(insuranceFile,currentUser.id,application.id,"insurance");
 
   $("applicationStatus").textContent =
-   "Application submitted successfully. Status: PENDING ADMIN APPROVAL.";
+   "Application submitted successfully. PENDING ADMIN APPROVAL.";
 
-  message(
-   "SUCCESS! Your driver application and documents were submitted. " +
-   "Wait for admin verification."
-  );
+  message("SUCCESS! Your driver application and documents were submitted.");
 
   $("applicationForm").reset();
+  $("serviceLocation").value = "";
+  $("latitude").value = "";
+  $("longitude").value = "";
+  $("selectedLocation").textContent = "No location selected yet.";
+
+  if(marker){
+   marker.remove();
+   marker = null;
+  }
 
   await checkApplication();
 
  }catch(error){
-
   message(
    "Submission error: " + error.message +
-   "\n\nIf an application was created before an upload failed, contact admin before submitting again."
+   "\nIf an application was created before document upload failed, contact admin before trying again."
   );
-
  }finally{
   submitting = false;
   $("submitBtn").disabled = false;
   $("submitBtn").textContent = "SUBMIT DRIVER APPLICATION";
  }
-}
+});
 
 /* START */
+initMap();
 checkSession();
 
 </script>
