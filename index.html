@@ -1,998 +1,486 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ta">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#063b91">
-<title>SAKTHI CABS | Customer App</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#1455d9">
+<title>SAKTHI CABS | Customer</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
+:root{
+ --blue:#1455d9;--dark:#103b9d;--yellow:#ffc928;
+ --bg:#f3f6fc;--white:#fff;--text:#17233c;
+ --muted:#71809a;--green:#13a66b;--red:#e44848;
+}
 *{box-sizing:border-box}
-body{margin:0;background:#f1f4fa;color:#17233d;font-family:Arial,sans-serif}
-header{background:#073b91;color:white;padding:17px;position:sticky;top:0;z-index:500}
-header h2{margin:0;color:#ffc400}
-header small{color:#dbe9ff}
-.container{max-width:650px;margin:auto;padding:14px}
-.card{background:white;padding:17px;border-radius:17px;margin-bottom:15px;box-shadow:0 3px 15px #0000000c}
-h3{color:#073b91;margin:0 0 15px}
-input,select{width:100%;padding:14px;margin:7px 0 13px;border:1px solid #d6deeb;border-radius:10px;font-size:15px}
-button{border:0;border-radius:11px;padding:14px;background:#0745b5;color:white;font-weight:bold;font-size:15px;cursor:pointer}
-button:disabled{opacity:.5}
-.full{width:100%;margin-top:9px}
-.yellow{background:#ffc400;color:#17233d}
-.outline{background:white;color:#0745b5;border:1px solid #0745b5}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.vehicle{border:2px solid #e0e7f1;padding:14px;border-radius:13px;text-align:center;cursor:pointer}
-.vehicle.active{border-color:#0750c7;background:#edf4ff}
-.vehicle strong{display:block;margin:7px}
-.muted{color:#758197;font-size:13px}
-.status{padding:12px;background:#eaf3ff;color:#0645b5;border-radius:10px;font-weight:bold}
-#map{height:300px;border-radius:13px}
+body{margin:0;background:var(--bg);font-family:Arial,sans-serif;color:var(--text)}
+button,input{font:inherit}
+button{cursor:pointer;border:0}
+.app{max-width:520px;margin:auto;min-height:100vh;background:var(--bg);padding-bottom:85px}
+.header{background:linear-gradient(130deg,var(--blue),var(--dark));color:white;padding:19px 18px 23px;border-radius:0 0 25px 25px}
+.top{display:flex;justify-content:space-between;align-items:center}
+.brand{font-size:21px;font-weight:900;letter-spacing:1px}
+.brand span{color:var(--yellow)}
+.tagline{font-size:11px;color:#dce7ff;margin-top:4px}
+.profile-btn{width:42px;height:42px;border-radius:50%;background:#ffffff25;color:white;font-size:20px}
+.welcome{margin-top:22px;font-size:22px;font-weight:800}
+.welcome small{display:block;font-size:12px;font-weight:400;color:#dce7ff;margin-top:6px}
+.content{padding:15px}
+.card{background:white;border-radius:17px;padding:16px;margin-bottom:14px;box-shadow:0 5px 18px #152d5810}
+.section-title{font-weight:800;font-size:16px;margin-bottom:13px}
+.field{display:flex;align-items:center;gap:10px;border:1px solid #e6eaf2;border-radius:12px;padding:11px;margin-bottom:10px;background:#fbfcff}
+.dot{width:11px;height:11px;border-radius:50%;background:var(--green);flex-shrink:0}
+.dot.drop{background:var(--red)}
+.field input{border:0;outline:0;background:transparent;width:100%;min-width:0;color:var(--text);font-size:14px}
+.location-btn{background:#eaf1ff;color:var(--blue);padding:10px 12px;border-radius:10px;font-size:12px;font-weight:700;white-space:nowrap}
+.vehicle-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.vehicle{border:2px solid #edf0f6;border-radius:13px;padding:12px 3px;text-align:center;background:white;color:var(--text)}
+.vehicle.active{border-color:var(--blue);background:#edf3ff}
+.vehicle .emoji{font-size:26px;display:block;margin-bottom:7px}
+.vehicle b{font-size:11px}
+.vehicle small{display:block;color:var(--muted);font-size:10px;margin-top:4px}
+.primary{width:100%;background:var(--yellow);color:#19243b;font-weight:900;padding:16px;border-radius:13px;font-size:15px;box-shadow:0 4px 10px #e9b52230}
+.primary:disabled{opacity:.5;cursor:not-allowed}
+.secondary{background:#eaf1ff;color:var(--blue);padding:11px 14px;border-radius:10px;font-weight:700}
+#map{height:245px;border-radius:15px;overflow:hidden;z-index:1}
+.map-note{font-size:11px;color:var(--muted);margin-top:8px}
+.status{padding:12px;border-radius:12px;background:#eef4ff;color:var(--blue);font-size:13px;font-weight:700;margin-bottom:12px}
+.status.success{background:#e8f8f0;color:#087d4d}
+.status.error{background:#fff0f0;color:var(--red)}
+.ride-row{border-bottom:1px solid #edf0f5;padding:12px 0;font-size:13px}
+.ride-row:last-child{border:0}
+.muted{color:var(--muted);font-size:12px}
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;background:white;display:flex;justify-content:space-around;padding:10px 5px calc(10px + env(safe-area-inset-bottom));box-shadow:0 -4px 20px #1a315010;z-index:1000}
+.nav-btn{background:white;color:#8994a8;font-size:11px;padding:5px 12px;font-weight:700}
+.nav-btn span{display:block;font-size:21px;margin-bottom:3px}
+.nav-btn.active{color:var(--blue)}
+.page{display:none}.page.active{display:block}
+.auth-wrap{padding:25px 18px}
+.auth-card{background:white;padding:22px;border-radius:20px;margin-top:35px;box-shadow:0 8px 30px #1a315015}
+.auth-card h2{margin:0 0 8px;color:var(--blue)}
+.auth-card input{width:100%;padding:14px;border:1px solid #dce3ef;border-radius:11px;margin:8px 0;outline-color:var(--blue)}
+.auth-actions{display:flex;gap:9px;margin-top:10px}
+.auth-actions button{flex:1;padding:14px;border-radius:11px;font-weight:800}
+#message{font-size:13px;margin:10px 0;white-space:pre-wrap}
 .hidden{display:none!important}
-.row{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.nav{position:sticky;bottom:0;background:white;display:flex;justify-content:space-around;padding:9px;box-shadow:0 -3px 15px #0001;z-index:400}
-.nav button{background:white;color:#0645b5;font-size:13px;padding:10px}
-#message{white-space:pre-wrap;font-size:14px;color:#0645b5;margin-top:12px}
-.history-item{border-bottom:1px solid #e7ebf1;padding:12px 0}
+.driver-box{display:flex;align-items:center;gap:12px}
+.avatar{width:48px;height:48px;border-radius:50%;background:#eaf1ff;display:grid;place-items:center;font-size:25px}
+@media(max-width:360px){.vehicle-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 
 <body>
-
-<header>
-  <div class="row">
-    <div>
-      <h2>🚕 SAKTHI CABS</h2>
-      <small>Ride Safe • Travel Smart</small>
-    </div>
-    <button id="logoutBtn" class="outline hidden">Logout</button>
-  </div>
-</header>
-
-<main class="container">
+<div class="app">
 
 <!-- LOGIN -->
-
-<section id="authSection" class="card">
-  <h3>Welcome to SAKTHI CABS</h3>
-  <p class="muted">Login or create your customer account</p>
-
+<section id="authPage" class="auth-wrap">
+ <div class="header" style="border-radius:20px">
+  <div class="brand">SAKTHI <span>CABS</span></div>
+  <div class="tagline">YOUR RIDE. YOUR WAY.</div>
+  <div class="welcome">Welcome aboard!<small>Book your ride across Tamil Nadu</small></div>
+ </div>
+ <div class="auth-card">
+  <h2>Customer Login</h2>
+  <p class="muted">Login or create your account to book a ride.</p>
   <input id="email" type="email" placeholder="Email address" autocomplete="email">
   <input id="password" type="password" placeholder="Password" autocomplete="current-password">
-
-  <button class="full" onclick="login()">Login</button>
-  <button class="yellow full" onclick="signup()">Create Account</button>
-
-  <p id="authMessage" class="muted"></p>
+  <div id="authMessage"></div>
+  <div class="auth-actions">
+   <button class="primary" onclick="login()">LOGIN</button>
+   <button class="secondary" onclick="signup()">SIGN UP</button>
+  </div>
+ </div>
 </section>
 
 <!-- MAIN APP -->
-
-<section id="appSection" class="hidden">
-
-  <!-- BOOKING -->
-
-  <div id="bookingSection" class="card">
-    <div class="row">
-      <h3>Book Your Ride</h3>
-      <span id="gpsStatus" class="muted">GPS Off</span>
-    </div>
-
-    <button class="outline full" onclick="getGPS()">
-      📍 Use Current Location
-    </button>
-
-    <label>Pickup Address</label>
-    <input id="pickup" placeholder="Enter pickup address">
-
-    <label>Drop Address</label>
-    <input id="drop" placeholder="Enter destination">
-
-    <h3>Select Vehicle</h3>
-
-    <div class="grid">
-      <div class="vehicle active" data-type="car" onclick="chooseVehicle(this)">
-        🚗 <strong>Car</strong>
-        <small class="muted">4 Seater</small>
-      </div>
-
-      <div class="vehicle" data-type="auto" onclick="chooseVehicle(this)">
-        🛺 <strong>Auto</strong>
-        <small class="muted">3 Seater</small>
-      </div>
-
-      <div class="vehicle" data-type="bike" onclick="chooseVehicle(this)">
-        🏍️ <strong>Bike</strong>
-        <small class="muted">Bike Taxi</small>
-      </div>
-
-      <div class="vehicle" data-type="parcel" onclick="chooseVehicle(this)">
-        📦 <strong>Parcel</strong>
-        <small class="muted">Delivery</small>
-      </div>
-    </div>
-
-    <label>Payment Method</label>
-    <select id="payment">
-      <option value="cash">Cash</option>
-      <option value="upi">UPI</option>
-    </select>
-
-    <button id="bookBtn" class="yellow full" onclick="bookRide()">
-      🚕 BOOK RIDE
-    </button>
-
-    <div id="message"></div>
+<section id="mainPage" class="hidden">
+ <header class="header">
+  <div class="top">
+   <div>
+    <div class="brand">SAKTHI <span>CABS</span></div>
+    <div class="tagline">YOUR RIDE. YOUR WAY.</div>
+   </div>
+   <button class="profile-btn" onclick="logout()" title="Logout">↪</button>
   </div>
+  <div class="welcome">Where are you going?<small>Safe, simple and comfortable rides</small></div>
+ </header>
+
+ <main class="content">
+
+  <!-- HOME -->
+  <section id="homePage" class="page active">
+   <div class="card">
+    <div class="section-title">Book your ride</div>
+    <div class="field">
+     <span class="dot"></span>
+     <input id="pickup" placeholder="Pickup location">
+     <button class="location-btn" onclick="getCurrentLocation()">◎ GPS</button>
+    </div>
+    <div class="field">
+     <span class="dot drop"></span>
+     <input id="drop" placeholder="Where to? (Drop location)">
+    </div>
+    <button class="secondary" style="width:100%;margin-bottom:12px" onclick="searchDrop()">Search drop on map</button>
+    <div class="section-title" style="margin-top:15px">Choose your ride</div>
+    <div class="vehicle-grid">
+     <button class="vehicle active" data-type="car" onclick="chooseVehicle(this)">
+      <span class="emoji">🚗</span><b>Car</b><small>4 seats</small>
+     </button>
+     <button class="vehicle" data-type="auto" onclick="chooseVehicle(this)">
+      <span class="emoji">🛺</span><b>Auto</b><small>3 seats</small>
+     </button>
+     <button class="vehicle" data-type="bike" onclick="chooseVehicle(this)">
+      <span class="emoji">🏍️</span><b>Bike</b><small>1 seat</small>
+     </button>
+     <button class="vehicle" data-type="parcel" onclick="chooseVehicle(this)">
+      <span class="emoji">📦</span><b>Parcel</b><small>Delivery</small>
+     </button>
+    </div>
+   </div>
+
+   <div class="card">
+    <div class="section-title">Pickup & Drop Map</div>
+    <div id="map"></div>
+    <div class="map-note">Map-ல் ஒரு இடத்தைத் தேர்வு செய்தால் அது Drop Location ஆகும்.</div>
+   </div>
+
+   <div class="card">
+    <div class="section-title">Payment method</div>
+    <select id="payment" style="width:100%;padding:13px;border:1px solid #e6eaf2;border-radius:11px;background:white">
+     <option value="cash">Cash</option>
+     <option value="upi">UPI</option>
+    </select>
+   </div>
+
+   <div class="card">
+    <div id="bookingMessage"></div>
+    <button class="primary" id="bookBtn" onclick="bookRide()">BOOK RIDE →</button>
+   </div>
+  </section>
 
   <!-- TRACKING -->
+  <section id="trackingPage" class="page">
+   <div class="card">
+    <div class="section-title">Live Ride Tracking</div>
+    <div id="rideStatus" class="status">No active booking yet.</div>
+    <div id="trackingMap" style="height:280px;border-radius:14px"></div>
+    <p class="map-note">Driver location updates will appear here after a driver accepts your booking.</p>
+   </div>
+   <div class="card" id="driverCard">
+    <div class="section-title">Driver details</div>
+    <p class="muted">Driver details will appear after your ride is accepted.</p>
+   </div>
+  </section>
 
-  <div id="trackingSection" class="card">
-    <h3>Live Ride Tracking</h3>
+  <!-- BOOKINGS -->
+  <section id="bookingsPage" class="page">
+   <div class="card">
+    <div class="section-title">My Bookings</div>
+    <div id="bookingHistory" class="muted">Loading bookings...</div>
+    <button class="secondary" style="margin-top:12px" onclick="loadBookings()">Refresh</button>
+   </div>
+  </section>
 
-    <div id="map"></div>
+  <!-- PROFILE -->
+  <section id="profilePage" class="page">
+   <div class="card">
+    <div class="section-title">My Profile</div>
+    <p id="profileEmail"></p>
+    <button class="secondary" onclick="logout()">Logout</button>
+   </div>
+  </section>
 
-    <p class="muted">
-      Your assigned driver location will appear here.
-    </p>
+ </main>
 
-    <div id="rideStatus" class="status">
-      No active booking
-    </div>
-
-    <p id="driverInfo" class="muted"></p>
-    <p id="customerInfo" class="muted"></p>
-  </div>
-
-  <!-- HISTORY -->
-
-  <div id="historySection" class="card">
-    <div class="row">
-      <h3>My Bookings</h3>
-      <button class="outline" onclick="loadHistory()">Refresh</button>
-    </div>
-    <div id="history">No bookings loaded.</div>
-  </div>
-
+ <nav class="bottom-nav">
+  <button class="nav-btn active" data-page="homePage" onclick="showPage('homePage',this)"><span>⌂</span>Home</button>
+  <button class="nav-btn" data-page="trackingPage" onclick="showPage('trackingPage',this)"><span>⌖</span>Tracking</button>
+  <button class="nav-btn" data-page="bookingsPage" onclick="showPage('bookingsPage',this)"><span>▤</span>Bookings</button>
+  <button class="nav-btn" data-page="profilePage" onclick="showPage('profilePage',this)"><span>●</span>Profile</button>
+ </nav>
 </section>
-
-</main>
-
-<div id="bottomNav" class="nav hidden">
-  <button onclick="showSection('bookingSection')">🏠 Home</button>
-  <button onclick="showSection('trackingSection')">📍 Tracking</button>
-  <button onclick="showSection('historySection')">📋 History</button>
 </div>
 
 <script>
+/* SUPABASE CONNECTION */
+const SUPABASE_URL = "https://kzcczciqaxawbesgtgcf.supabase.co";
+const SUPABASE_KEY = "sb_publishable_bKS7yIQ01_cOi972JQ7jQw_WjxhbKKb";
+const db = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-// =======================================
-// 1. SUPABASE CONNECTION
-// =======================================
+let currentUser=null;
+let selectedVehicle="car";
+let pickupLat=null,pickupLng=null,dropLat=null,dropLng=null;
+let map=null,trackingMap=null,pickupMarker=null,dropMarker=null,driverMarker=null;
+let activeBooking=null,bookingChannel=null,driverChannel=null;
+let gpsWatch=null;
+let lastLocationWrite=0;
 
-const SUPABASE_URL =
-"https://kzcczciqaxawbesgtgcf.supabase.co";
-
-const SUPABASE_ANON_KEY =
-"sb_publishable_bKS7yIQ01_cOi972JQ7jQw_WjxhbKKb";
-
-const db = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
-
-// =======================================
-// 2. VARIABLES
-// =======================================
-
-let user = null;
-let currentBooking = null;
-let selectedVehicle = "car";
-
-let pickupLat = null;
-let pickupLng = null;
-
-let gpsWatch = null;
-let map = null;
-
-let customerMarker = null;
-let driverMarker = null;
-
-let bookingChannel = null;
-let driverChannel = null;
-
-let locationRowExists = false;
-let gpsUploadBusy = false;
-
-// =======================================
-// 3. MAP
-// =======================================
-
-function initMap(){
-
-  if(map) return;
-
-  map = L.map("map").setView(
-    [11.0168,76.9558],11
-  );
-
-  L.tileLayer(
-    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    {
-      attribution:"© OpenStreetMap"
-    }
-  ).addTo(map);
-}
-
-function updateCustomerMarker(lat,lng){
-
-  if(!map) initMap();
-
-  if(!customerMarker){
-
-    customerMarker = L.marker([lat,lng])
-      .addTo(map)
-      .bindPopup("Customer Location");
-
-  }else{
-
-    customerMarker.setLatLng([lat,lng]);
-
-  }
-}
-
-function updateDriverMarker(lat,lng){
-
-  if(!map) initMap();
-
-  if(!driverMarker){
-
-    driverMarker = L.marker([lat,lng])
-      .addTo(map)
-      .bindPopup("Driver Location");
-
-  }else{
-
-    driverMarker.setLatLng([lat,lng]);
-
-  }
-}
-
-// =======================================
-// 4. SIGNUP
-// =======================================
-
-async function signup(){
-
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value;
-
-  if(!email || password.length < 6){
-
-    alert("Enter valid email and password. Minimum 6 characters.");
-    return;
-  }
-
-  const {data,error} = await db.auth.signUp({
-    email,
-    password
-  });
-
-  if(error){
-
-    alert(error.message);
-    return;
-
-  }
-
-  if(data.session){
-
-    user = data.user;
-    await startApp();
-
-  }else{
-
-    document.getElementById("authMessage").textContent =
-      "Account created. Verify your email, then login.";
-
-  }
-}
-
-// =======================================
-// 5. LOGIN
-// =======================================
-
+/* AUTH */
 async function login(){
-
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value;
-
-  const {data,error} = await db.auth.signInWithPassword({
-    email,
-    password
-  });
-
-  if(error){
-
-    alert(error.message);
-    return;
-
-  }
-
-  user = data.user;
-
-  await startApp();
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
+ if(!email||!password){authMsg("Email மற்றும் Password உள்ளிடுங்கள்");return}
+ authMsg("Logging in...");
+ const {data,error}=await db.auth.signInWithPassword({email,password});
+ if(error){authMsg(error.message);return}
+ currentUser=data.user;enterApp();
 }
-
-// =======================================
-// 6. LOGOUT
-// =======================================
-
+async function signup(){
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
+ if(!email||password.length<6){authMsg("Email உள்ளிடவும். Password குறைந்தது 6 characters இருக்க வேண்டும்.");return}
+ authMsg("Creating account...");
+ const {data,error}=await db.auth.signUp({email,password});
+ if(error){authMsg(error.message);return}
+ if(data.session){currentUser=data.user;enterApp()}
+ else authMsg("Signup வெற்றி. Email confirmation தேவைப்பட்டால் email-ஐ verify செய்து Login செய்யுங்கள்.");
+}
+function authMsg(t){document.getElementById("authMessage").textContent=t}
 async function logout(){
-
-  stopGPS();
-  cleanupChannels();
-
-  await db.auth.signOut();
-
-  user = null;
-  currentBooking = null;
-
-  document.getElementById("authSection").classList.remove("hidden");
-  document.getElementById("appSection").classList.add("hidden");
-  document.getElementById("bottomNav").classList.add("hidden");
-  document.getElementById("logoutBtn").classList.add("hidden");
+ stopGps();
+ await db.auth.signOut();
+ currentUser=null;activeBooking=null;
+ document.getElementById("mainPage").classList.add("hidden");
+ document.getElementById("authPage").classList.remove("hidden");
+}
+async function enterApp(){
+ document.getElementById("authPage").classList.add("hidden");
+ document.getElementById("mainPage").classList.remove("hidden");
+ document.getElementById("profileEmail").textContent=currentUser.email||"Customer";
+ initMap();initTrackingMap();loadBookings();subscribeBookings();
 }
 
-document.getElementById("logoutBtn").onclick = logout;
-
-// =======================================
-// 7. START APP
-// =======================================
-
-async function startApp(){
-
-  document.getElementById("authSection").classList.add("hidden");
-  document.getElementById("appSection").classList.remove("hidden");
-  document.getElementById("bottomNav").classList.remove("hidden");
-  document.getElementById("logoutBtn").classList.remove("hidden");
-
-  initMap();
-
-  setTimeout(()=>{
-    map.invalidateSize();
-  },300);
-
-  await loadLatestBooking();
-  await loadHistory();
-
-  subscribeBookings();
+/* MAP */
+function initMap(){
+ if(map)return;
+ map=L.map("map").setView([11.1271,78.6569],7);
+ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+  maxZoom:19,attribution:"© OpenStreetMap"
+ }).addTo(map);
+ map.on("click",async e=>{
+  dropLat=e.latlng.lat;dropLng=e.latlng.lng;
+  if(dropMarker)map.removeLayer(dropMarker);
+  dropMarker=L.marker(e.latlng).addTo(map).bindPopup("Drop location").openPopup();
+  document.getElementById("drop").value=await reverseGeocode(dropLat,dropLng);
+ });
+ setTimeout(()=>map.invalidateSize(),300);
+}
+function initTrackingMap(){
+ if(trackingMap)return;
+ trackingMap=L.map("trackingMap").setView([11.1271,78.6569],7);
+ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+  maxZoom:19,attribution:"© OpenStreetMap"
+ }).addTo(trackingMap);
+ setTimeout(()=>trackingMap.invalidateSize(),300);
+}
+async function reverseGeocode(lat,lng){
+ try{
+  const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
+  const j=await r.json();return j.display_name||`${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+ }catch(e){return `${lat.toFixed(5)}, ${lng.toFixed(5)}`}
+}
+async function searchDrop(){
+ const q=document.getElementById("drop").value.trim();
+ if(!q){alert("Drop location உள்ளிடுங்கள்");return}
+ try{
+  const r=await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&q="+encodeURIComponent(q));
+  const a=await r.json();
+  if(!a.length){alert("Location கிடைக்கவில்லை");return}
+  dropLat=Number(a[0].lat);dropLng=Number(a[0].lon);
+  map.setView([dropLat,dropLng],15);
+  if(dropMarker)map.removeLayer(dropMarker);
+  dropMarker=L.marker([dropLat,dropLng]).addTo(map).bindPopup("Drop location").openPopup();
+  document.getElementById("drop").value=a[0].display_name;
+ }catch(e){alert("Location search failed")}
+}
+async function getCurrentLocation(){
+ if(!navigator.geolocation){alert("இந்த browser GPS support செய்யவில்லை");return}
+ const btn=document.querySelector(".location-btn");btn.textContent="Loading...";
+ navigator.geolocation.getCurrentPosition(async pos=>{
+  pickupLat=pos.coords.latitude;pickupLng=pos.coords.longitude;
+  document.getElementById("pickup").value=await reverseGeocode(pickupLat,pickupLng);
+  map.setView([pickupLat,pickupLng],16);
+  if(pickupMarker)map.removeLayer(pickupMarker);
+  pickupMarker=L.marker([pickupLat,pickupLng]).addTo(map).bindPopup("Your pickup").openPopup();
+  btn.textContent="✓ Located";
+ },err=>{
+  btn.textContent="◎ GPS";
+  alert("GPS location கிடைக்கவில்லை. Location permission Allow செய்து மீண்டும் முயற்சி செய்யுங்கள்.");
+ },{enableHighAccuracy:true,timeout:15000});
+}
+function chooseVehicle(btn){
+ document.querySelectorAll(".vehicle").forEach(v=>v.classList.remove("active"));
+ btn.classList.add("active");selectedVehicle=btn.dataset.type;
 }
 
-// =======================================
-// 8. SESSION RESTORE
-// =======================================
-
-async function checkSession(){
-
-  const {data} = await db.auth.getSession();
-
-  if(data.session){
-
-    user = data.session.user;
-    await startApp();
-
-  }
-}
-
-checkSession();
-
-db.auth.onAuthStateChange((event,session)=>{
-
-  if(event === "SIGNED_OUT"){
-    user = null;
-  }
-
-});
-
-// =======================================
-// 9. GPS
-// =======================================
-
-function getGPS(){
-
-  if(!navigator.geolocation){
-
-    alert("GPS not supported.");
-    return;
-
-  }
-
-  navigator.geolocation.getCurrentPosition(
-
-    position=>{
-
-      pickupLat = position.coords.latitude;
-      pickupLng = position.coords.longitude;
-
-      updateCustomerMarker(pickupLat,pickupLng);
-
-      map.setView([pickupLat,pickupLng],16);
-
-      document.getElementById("pickup").value =
-        `Current Location (${pickupLat.toFixed(5)}, ${pickupLng.toFixed(5)})`;
-
-      document.getElementById("gpsStatus").textContent =
-        "GPS Ready";
-
-    },
-
-    error=>{
-
-      alert("GPS Error: " + error.message);
-
-    },
-
-    {
-      enableHighAccuracy:true,
-      timeout:20000,
-      maximumAge:3000
-    }
-
-  );
-}
-
-function stopGPS(){
-
-  if(gpsWatch !== null){
-
-    navigator.geolocation.clearWatch(gpsWatch);
-    gpsWatch = null;
-
-  }
-
-}
-
-// =======================================
-// 10. VEHICLE
-// =======================================
-
-function chooseVehicle(element){
-
-  document.querySelectorAll(".vehicle").forEach(v=>{
-    v.classList.remove("active");
-  });
-
-  element.classList.add("active");
-
-  selectedVehicle = element.dataset.type;
-
-}
-
-// =======================================
-// 11. CREATE BOOKING
-// =======================================
-
+/* BOOKING */
 async function bookRide(){
-
-  if(!user){
-
-    alert("Please login first.");
-    return;
-
-  }
-
-  if(currentBooking &&
-    !["completed","cancelled","rejected"].includes(currentBooking.status)){
-
-    alert("You already have an active booking.");
-    return;
-
-  }
-
-  const pickup = document.getElementById("pickup").value.trim();
-  const drop = document.getElementById("drop").value.trim();
-  const payment = document.getElementById("payment").value;
-
-  if(!pickup || !drop){
-
-    alert("Enter pickup and drop address.");
-    return;
-
-  }
-
-  const button = document.getElementById("bookBtn");
-
-  button.disabled = true;
-
-  try{
-
-    const {data,error} = await db.from("bookings")
-      .insert({
-
-        customer_id:user.id,
-        pickup_address:pickup,
-        drop_address:drop,
-
-        pickup_lat:pickupLat,
-        pickup_lng:pickupLng,
-
-        status:"pending",
-        driver_id:null,
-
-        payment_method:payment,
-        trip_type:selectedVehicle
-
-      })
-      .select()
-      .single();
-
-    if(error) throw error;
-
-    currentBooking = data;
-
-    document.getElementById("message").textContent =
-      "Booking created successfully!\nBooking ID: " + data.id;
-
-    showBookingStatus(data);
-
-    await loadHistory();
-
-    subscribeBookings();
-
-  }catch(error){
-
-    alert("Booking Error: " + error.message);
-
-  }finally{
-
-    button.disabled = false;
-
-  }
-
+ if(!currentUser){alert("முதலில் Login செய்யுங்கள்");return}
+ const pickup=document.getElementById("pickup").value.trim();
+ const drop=document.getElementById("drop").value.trim();
+ const msg=document.getElementById("bookingMessage");
+ if(!pickup||!drop){showMessage(msg,"Pickup மற்றும் Drop location உள்ளிடுங்கள்","error");return}
+ if(pickupLat===null||pickupLng===null){showMessage(msg,"முதலில் GPS மூலம் Pickup location தேர்வு செய்யுங்கள்","error");return}
+ if(dropLat===null||dropLng===null){showMessage(msg,"Drop location-ஐ map-ல் தேர்வு செய்யவும் அல்லது Search drop on map அழுத்தவும்","error");return}
+ const btn=document.getElementById("bookBtn");btn.disabled=true;btn.textContent="BOOKING...";
+ const payload={
+  customer_id:currentUser.id,
+  pickup_address:pickup,
+  drop_address:drop,
+  pickup_lat:pickupLat,
+  pickup_lng:pickupLng,
+  drop_lat:dropLat,
+  drop_lng:dropLng,
+  status:"pending",
+  driver_id:null,
+  payment_method:document.getElementById("payment").value
+ };
+ const {data,error}=await db.from("bookings").insert(payload).select().single();
+ btn.disabled=false;btn.textContent="BOOK RIDE →";
+ if(error){
+  showMessage(msg,"Booking failed: "+error.message,"error");return;
+ }
+ activeBooking=data;
+ showMessage(msg,"Booking successfully created! Driver confirmation காத்திருக்கவும்.","success");
+ await loadBookings();subscribeActiveBooking();
+ showPage("trackingPage",document.querySelector('[data-page="trackingPage"]'));
 }
 
-// =======================================
-// 12. LOAD LATEST BOOKING
-// =======================================
-
-async function loadLatestBooking(){
-
-  const {data,error} = await db.from("bookings")
-    .select("*")
-    .eq("customer_id",user.id)
-    .order("created_at",{ascending:false})
-    .limit(1);
-
-  if(error){
-
-    console.error(error.message);
-    return;
-
-  }
-
-  if(data && data.length){
-
-    currentBooking = data[0];
-
-    showBookingStatus(currentBooking);
-
-  }
-
+/* BOOKING HISTORY */
+async function loadBookings(){
+ if(!currentUser)return;
+ const box=document.getElementById("bookingHistory");
+ box.textContent="Loading...";
+ const {data,error}=await db.from("bookings").select("*")
+  .eq("customer_id",currentUser.id).order("created_at",{ascending:false}).limit(20);
+ if(error){box.textContent="Error: "+error.message;return}
+ if(!data.length){box.textContent="இதுவரை Booking எதுவும் இல்லை.";return}
+ box.innerHTML="";
+ data.forEach(b=>{
+  const el=document.createElement("div");el.className="ride-row";
+  const title=document.createElement("b");title.textContent=(b.pickup_address||"Pickup")+" → "+(b.drop_address||"Drop");
+  const details=document.createElement("div");details.className="muted";
+  details.textContent="Status: "+(b.status||"pending")+" | "+(b.created_at?new Date(b.created_at).toLocaleString():"");
+  el.append(title,details);
+  const view=document.createElement("button");view.className="secondary";view.style.marginTop="8px";view.textContent="Track this ride";
+  view.onclick=()=>{activeBooking=b;subscribeActiveBooking();showPage("trackingPage",document.querySelector('[data-page="trackingPage"]'))};
+  el.append(view);box.append(el);
+ });
 }
 
-// =======================================
-// 13. BOOKING STATUS
-// =======================================
-
-function showBookingStatus(booking){
-
-  document.getElementById("rideStatus").textContent =
-    "Booking Status: " + String(booking.status).toUpperCase();
-
-  if(["accepted","arrived","started"].includes(booking.status)){
-
-    startGPSSharing();
-
-  }else{
-
-    stopGPS();
-
-  }
-
-  if(booking.driver_id){
-
-    subscribeDriverLocation();
-
-  }else{
-
-    if(driverChannel){
-
-      db.removeChannel(driverChannel);
-      driverChannel = null;
-
-    }
-
-  }
-
-  if(["completed","cancelled","rejected"].includes(booking.status)){
-
-    stopGPS();
-
-  }
-
-}
-
-// =======================================
-// 14. BOOKING REALTIME
-// =======================================
-
+/* REALTIME BOOKING UPDATES */
 function subscribeBookings(){
-
-  if(!user) return;
-
-  if(bookingChannel){
-
-    db.removeChannel(bookingChannel);
-
+ if(bookingChannel)db.removeChannel(bookingChannel);
+ bookingChannel=db.channel("customer-bookings-"+currentUser.id)
+ .on("postgres_changes",{event:"UPDATE",schema:"public",table:"bookings",filter:"customer_id=eq."+currentUser.id},payload=>{
+  if(activeBooking&&payload.new.id===activeBooking.id){
+   activeBooking=payload.new;renderRideStatus();handleRideState();
   }
-
-  bookingChannel = db.channel("customer-bookings-" + user.id)
-
-    .on(
-      "postgres_changes",
-      {
-        event:"UPDATE",
-        schema:"public",
-        table:"bookings",
-        filter:"customer_id=eq." + user.id
-      },
-
-      payload=>{
-
-        if(currentBooking &&
-          payload.new.id === currentBooking.id){
-
-          currentBooking = payload.new;
-
-          showBookingStatus(currentBooking);
-
-          document.getElementById("message").textContent =
-            "Ride updated: " + currentBooking.status;
-
-          loadHistory();
-
-        }
-
-      }
-    )
-
-    .subscribe();
-
+  loadBookings();
+ }).subscribe();
+}
+function subscribeActiveBooking(){
+ if(!activeBooking)return;
+ renderRideStatus();handleRideState();loadDriverLocation();
+ if(driverChannel)db.removeChannel(driverChannel);
+ if(activeBooking.driver_id){
+  driverChannel=db.channel("customer-driver-location-"+activeBooking.driver_id)
+  .on("postgres_changes",{event:"*",schema:"public",table:"driver_locations",filter:"driver_id=eq."+activeBooking.driver_id},payload=>{
+   const row=payload.new;if(row)showDriverOnMap(row);
+  }).subscribe();
+ }
+}
+function renderRideStatus(){
+ const box=document.getElementById("rideStatus");
+ if(!activeBooking){box.textContent="No active booking yet.";return}
+ box.textContent="Booking: "+activeBooking.status+" | "+(activeBooking.pickup_address||"")+" → "+(activeBooking.drop_address||"");
+ if(activeBooking.status==="completed")box.textContent+=" — Trip completed";
+ if(activeBooking.status==="cancelled")box.textContent+=" — Booking cancelled";
+}
+function handleRideState(){
+ if(!activeBooking)return;
+ const s=activeBooking.status;
+ if(["accepted","arrived","started"].includes(s))startGps();
+ else stopGps();
+ if(activeBooking.driver_id)loadDriverLocation();
 }
 
-// =======================================
-// 15. CUSTOMER LIVE GPS SHARING
-// =======================================
-
-function startGPSSharing(){
-
-  if(!currentBooking || !navigator.geolocation || gpsWatch !== null){
-    return;
+/* CUSTOMER LIVE GPS SHARING */
+function startGps(){
+ if(gpsWatch!==null||!navigator.geolocation||!activeBooking)return;
+ gpsWatch=navigator.geolocation.watchPosition(async pos=>{
+  const now=Date.now();if(now-lastLocationWrite<4000)return;lastLocationWrite=now;
+  const row={
+   booking_id:activeBooking.id,
+   customer_id:currentUser.id,
+   latitude:pos.coords.latitude,
+   longitude:pos.coords.longitude,
+   updated_at:new Date().toISOString()
+  };
+  const {data:existing}=await db.from("customer_live_locations").select("booking_id").eq("booking_id",activeBooking.id).maybeSingle();
+  let result;
+  if(existing){
+   result=await db.from("customer_live_locations").update(row).eq("booking_id",activeBooking.id);
+  }else{
+   result=await db.from("customer_live_locations").insert(row);
   }
-
-  if(!["accepted","arrived","started"].includes(currentBooking.status)){
-    return;
-  }
-
-  gpsWatch = navigator.geolocation.watchPosition(
-
-    async position=>{
-
-      const lat = position.coords.latitude;
-      const lng = position.coords.longitude;
-
-      pickupLat = lat;
-      pickupLng = lng;
-
-      updateCustomerMarker(lat,lng);
-
-      if(gpsUploadBusy) return;
-
-      gpsUploadBusy = true;
-
-      try{
-
-        const row = {
-          booking_id:currentBooking.id,
-          customer_id:user.id,
-          latitude:lat,
-          longitude:lng,
-          updated_at:new Date().toISOString()
-        };
-
-        let result;
-
-        if(!locationRowExists){
-
-          result = await db.from("customer_live_locations")
-            .insert(row);
-
-          if(result.error && result.error.code === "23505"){
-
-            result = await db.from("customer_live_locations")
-              .update({
-                latitude:lat,
-                longitude:lng,
-                updated_at:row.updated_at
-              })
-              .eq("booking_id",currentBooking.id)
-              .eq("customer_id",user.id);
-
-          }
-
-          if(!result.error){
-
-            locationRowExists = true;
-
-          }
-
-        }else{
-
-          result = await db.from("customer_live_locations")
-            .update({
-              latitude:lat,
-              longitude:lng,
-              updated_at:row.updated_at
-            })
-            .eq("booking_id",currentBooking.id)
-            .eq("customer_id",user.id);
-
-        }
-
-        if(result.error){
-
-          console.error("GPS upload:",result.error.message);
-
-          document.getElementById("customerInfo").textContent =
-            "GPS upload failed: " + result.error.message;
-
-        }else{
-
-          document.getElementById("customerInfo").textContent =
-            "Customer GPS sharing active";
-
-        }
-
-      }finally{
-
-        gpsUploadBusy = false;
-
-      }
-
-    },
-
-    error=>{
-
-      document.getElementById("customerInfo").textContent =
-        "GPS error: " + error.message;
-
-    },
-
-    {
-      enableHighAccuracy:true,
-      maximumAge:3000,
-      timeout:20000
-    }
-
-  );
-
+  if(result.error)console.warn("Customer GPS update:",result.error.message);
+ },err=>console.warn("GPS:",err.message),{enableHighAccuracy:true,maximumAge:3000,timeout:15000});
+}
+function stopGps(){
+ if(gpsWatch!==null){navigator.geolocation.clearWatch(gpsWatch);gpsWatch=null}
 }
 
-// =======================================
-// 16. DRIVER LIVE LOCATION
-// =======================================
-
-function subscribeDriverLocation(){
-
-  if(!currentBooking || !currentBooking.driver_id){
-    return;
-  }
-
-  if(driverChannel){
-
-    db.removeChannel(driverChannel);
-    driverChannel = null;
-
-  }
-
-  const driverId = currentBooking.driver_id;
-
-  driverChannel = db.channel("driver-location-" + driverId)
-
-    .on(
-      "postgres_changes",
-      {
-        event:"*",
-        schema:"public",
-        table:"driver_locations",
-        filter:"driver_id=eq." + driverId
-      },
-
-      payload=>{
-
-        const location = payload.new;
-
-        if(location && location.latitude != null){
-
-          updateDriverMarker(
-            location.latitude,
-            location.longitude
-          );
-
-          document.getElementById("driverInfo").textContent =
-            "Driver location updated: " +
-            new Date(location.updated_at || Date.now()).toLocaleTimeString();
-
-        }
-
-      }
-    )
-
-    .subscribe();
-
-  loadDriverLocation();
-
-}
-
-// =======================================
-// 17. LOAD DRIVER LOCATION
-// =======================================
-
+/* DRIVER LIVE LOCATION */
 async function loadDriverLocation(){
-
-  if(!currentBooking || !currentBooking.driver_id){
-    return;
-  }
-
-  const {data,error} = await db.from("driver_locations")
-    .select("latitude,longitude,updated_at")
-    .eq("driver_id",currentBooking.driver_id)
-    .maybeSingle();
-
-  if(error){
-
-    console.error("Driver location error:",error.message);
-    return;
-
-  }
-
-  if(data){
-
-    updateDriverMarker(data.latitude,data.longitude);
-
-    document.getElementById("driverInfo").textContent =
-      "Driver last update: " +
-      new Date(data.updated_at || Date.now()).toLocaleTimeString();
-
-  }
-
+ if(!activeBooking||!activeBooking.driver_id)return;
+ const {data,error}=await db.from("driver_locations").select("*")
+  .eq("driver_id",activeBooking.driver_id).maybeSingle();
+ if(!error&&data)showDriverOnMap(data);
+}
+function showDriverOnMap(row){
+ if(!row||!trackingMap)return;
+ const lat=Number(row.latitude),lng=Number(row.longitude);
+ if(!Number.isFinite(lat)||!Number.isFinite(lng))return;
+ if(driverMarker)driverMarker.setLatLng([lat,lng]);
+ else driverMarker=L.marker([lat,lng]).addTo(trackingMap).bindPopup("Your Driver");
+ trackingMap.setView([lat,lng],15);
+ const driver=document.getElementById("driverCard");
+  driver.innerHTML='<div class="section-title">Driver location</div><div class="driver-box"><div class="avatar">🚕</div><div><b>Driver assigned</b><div class="muted">Live location received</div></div></div>';
 }
 
-// =======================================
-// 18. BOOKING HISTORY
-// =======================================
-
-async function loadHistory(){
-
-  if(!user) return;
-
-  const history = document.getElementById("history");
-
-  const {data,error} = await db.from("bookings")
-
-    .select(
-      "id,pickup_address,drop_address,status,created_at,estimated_fare"
-    )
-
-    .eq("customer_id",user.id)
-
-    .order("created_at",{ascending:false})
-
-    .limit(30);
-
-  if(error){
-
-    history.textContent = "History Error: " + error.message;
-    return;
-
-  }
-
-  history.innerHTML = "";
-
-  if(!data || !data.length){
-
-    history.textContent = "No bookings found.";
-    return;
-
-  }
-
-  data.forEach(item=>{
-
-    const box = document.createElement("div");
-    box.className = "history-item";
-
-    const title = document.createElement("strong");
-    title.textContent = item.status.toUpperCase();
-
-    const route = document.createElement("p");
-    route.textContent = item.pickup_address + " → " + item.drop_address;
-
-    const fare = document.createElement("p");
-    fare.textContent = "Fare: ₹" + (item.estimated_fare ?? "Not calculated");
-
-    const date = document.createElement("small");
-    date.textContent = new Date(item.created_at).toLocaleString();
-
-    box.append(title,route,fare,date);
-
-    history.appendChild(box);
-
-  });
-
+/* NAVIGATION */
+function showPage(id,btn){
+ document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+ document.getElementById(id).classList.add("active");
+ document.querySelectorAll(".nav-btn").forEach(n=>n.classList.remove("active"));
+ if(btn)btn.classList.add("active");
+ if(id==="trackingPage"&&trackingMap)setTimeout(()=>trackingMap.invalidateSize(),200);
+ if(id==="homePage"&&map)setTimeout(()=>map.invalidateSize(),200);
+ if(id==="bookingsPage")loadBookings();
+}
+  function showMessage(el,text,type){
+ el.className="status "+(type==="error"?"error":type==="success"?"success":"");
+ el.textContent=text;
 }
 
-// =======================================
-// 19. NAVIGATION
-// =======================================
-
-function showSection(section){
-
-  document.getElementById(section).scrollIntoView({
-    behavior:"smooth"
-  });
-
-  setTimeout(()=>{
-
-    if(map) map.invalidateSize();
-
-  },300);
-
-}
-
-// =======================================
-// 20. CLEANUP
-// =======================================
-
-function cleanupChannels(){
-
-  if(bookingChannel){
-
-    db.removeChannel(bookingChannel);
-    bookingChannel = null;
-
-  }
-
-  if(driverChannel){
-    db.removeChannel(driverChannel);
-    driverChannel = null;
-
-  }
-
-}
-
-window.addEventListener("beforeunload",()=>{
-
-  stopGPS();
-  cleanupChannels();
-
+/* RESTORE LOGIN SESSION */
+(async()=>{
+ const {data}=await db.auth.getSession();
+ if(data.session){currentUser=data.session.user;enterApp()}
+})();
+db.auth.onAuthStateChange((event,session)=>{
+ if(event==="SIGNED_OUT"){
+  stopGps();currentUser=null;
+  document.getElementById("mainPage").classList.add("hidden");
+  document.getElementById("authPage").classList.remove("hidden");
+ }
 });
-
 </script>
 </body>
 </html>
