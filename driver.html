@@ -147,7 +147,14 @@ small{color:#aaa}
  </section>
 
  <section class="card">
-  <h2>Assigned Ride</h2>
+  <h2>Assigned Ride</h2> 
+  <button id="enableBookingSoundBtn" class="primary">
+🔔 ENABLE BOOKING SOUND
+</button>
+
+<p id="bookingSoundStatus" class="muted">
+Sound is not enabled
+</p>
   <div id="activeRide">No active ride.</div>
  </section>
 
@@ -217,6 +224,10 @@ let latestCustomerLocation = null;
 let gpsSending = false;
 let busy = false;
 let dashboardLoading = false;
+ let bookingAudioContext = null;
+let bookingSoundEnabled = false;
+let lastAlertedBookingId = null;
+let bookingAlertTimer = null;
 
 const $ = id => document.getElementById(id);
 
@@ -256,6 +267,83 @@ function stopRefreshTimer(){
   refreshTimer = null;
  }
 }
+ function playBookingAlert(){
+
+ if(!bookingSoundEnabled || !bookingAudioContext) return;
+
+ const ctx = bookingAudioContext;
+
+ [880,660,880].forEach((frequency,index)=>{
+
+  const oscillator = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  const start = ctx.currentTime + index * 0.28;
+
+  oscillator.type = "sine";
+  oscillator.frequency.setValueAtTime(frequency,start);
+
+  gain.gain.setValueAtTime(0.0001,start);
+  gain.gain.linearRampToValueAtTime(0.25,start+0.03);
+  gain.gain.exponentialRampToValueAtTime(0.0001,start+0.22);
+
+  oscillator.connect(gain);
+  gain.connect(ctx.destination);
+
+  oscillator.start(start);
+  oscillator.stop(start+0.24);
+
+ });
+}
+
+function alertPendingBooking(){
+
+ if(!bookingSoundEnabled) return;
+
+ if(!currentBooking || currentBooking.status !== "pending") return;
+
+ if(lastAlertedBookingId === currentBooking.id) return;
+
+ lastAlertedBookingId = currentBooking.id;
+
+ playBookingAlert();
+
+ showMessage("NEW RIDE BOOKING! Please accept or reject.");
+}
+
+$("enableBookingSoundBtn").addEventListener("click",async()=>{
+
+ try{
+
+  const AudioContextClass =
+   window.AudioContext || window.webkitAudioContext;
+
+  if(!AudioContextClass){
+   showMessage("Audio is not supported in this browser.");
+   return;
+  }
+
+  if(!bookingAudioContext){
+   bookingAudioContext = new AudioContextClass();
+  }
+
+  await bookingAudioContext.resume();
+
+  bookingSoundEnabled = true;
+
+  $("bookingSoundStatus").textContent =
+   "Booking sound enabled.";
+
+  $("enableBookingSoundBtn").textContent =
+   "SOUND ENABLED ✓";
+
+  alertPendingBooking();
+
+ }catch(error){
+  showMessage("Sound error: " + error.message);
+ }
+
+});
 
 /* GMAIL + PASSWORD LOGIN */
 $("loginForm").addEventListener("submit",async function(e){
