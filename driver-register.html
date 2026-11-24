@@ -11,460 +11,548 @@
 
 <style>
 *{box-sizing:border-box}
-body{
- margin:0;
- background:#080808;
- color:#fff;
- font-family:Arial,sans-serif;
-}
-header{
- background:#111;
- padding:20px;
- border-bottom:1px solid #c99b36;
- text-align:center;
-}
-.logo{
- color:#e5b84b;
- font-size:25px;
- font-weight:bold;
- letter-spacing:2px;
-}
-.container{
- max-width:650px;
- margin:25px auto;
- padding:15px;
-}
-.card{
- background:#151515;
- border:1px solid #333;
- border-radius:15px;
- padding:22px;
- margin-bottom:18px;
-}
-h2{color:#e5b84b;font-size:20px}
-label{
- display:block;
- margin:15px 0 7px;
- color:#ddd;
- font-size:14px;
-}
-input,select,textarea{
- width:100%;
- padding:14px;
- background:#080808;
- border:1px solid #444;
- border-radius:8px;
- color:white;
- font-size:15px;
-}
-input[type=file]{padding:10px}
-button{
- width:100%;
- padding:15px;
- background:#d6a638;
- color:#080808;
- border:0;
- border-radius:9px;
- font-size:16px;
- font-weight:bold;
- margin-top:18px;
- cursor:pointer;
-}
+body{margin:0;background:#080808;color:white;font-family:Arial,sans-serif}
+header{background:#111;padding:17px;border-bottom:1px solid #333}
+.logo{font-size:21px;font-weight:900;color:#f5c542}
+.container{max-width:650px;margin:auto;padding:14px}
+.card{background:#151515;border:1px solid #333;border-radius:15px;padding:17px;margin:14px 0}
+h2{font-size:20px}
+label{display:block;margin-top:13px;font-size:14px;color:#ddd}
+input,select{width:100%;padding:13px;margin-top:7px;background:#222;color:white;border:1px solid #444;border-radius:9px;font-size:15px}
+input[type=file]{font-size:13px}
+button{width:100%;padding:14px;border:0;border-radius:9px;margin-top:12px;font-weight:bold;font-size:15px;cursor:pointer}
 button:disabled{opacity:.5}
-.status{
- padding:13px;
- background:#202020;
- border-radius:8px;
- margin-top:15px;
- line-height:1.5;
-}
-.small{color:#aaa;font-size:12px}
-.hidden{display:none}
-#message{white-space:pre-wrap}
+.primary{background:#f5c542;color:#111}
+.secondary{background:#333;color:white}
+.success{background:#168c56;color:white}
+.muted{color:#aaa;font-size:13px;line-height:1.6}
+#message{display:none;background:#292929;padding:13px;border-radius:9px;white-space:pre-wrap;overflow-wrap:anywhere;margin:12px 0}
+.hidden{display:none!important}
+a{color:#f5c542}
+.status{padding:12px;background:#222;border-radius:9px;margin-top:10px}
 </style>
 </head>
 
 <body>
-
 <header>
  <div class="logo">SAKTHI CABS</div>
- <div class="small">DRIVER REGISTRATION PORTAL</div>
+ <div class="muted">DRIVER PARTNER REGISTRATION</div>
 </header>
 
 <div class="container">
 
-<div class="card">
- <h2>Driver Registration</h2>
- <p class="small">Register as a SAKTHI CABS driver in Tamil Nadu.</p>
- <div id="loginStatus" class="status">Checking login...</div>
-</div>
+<div id="message"></div>
 
-<div id="registration" class="card hidden">
+<section class="card">
+ <h2>Driver Account</h2>
 
-<h2>Personal Information</h2>
+ <label>Gmail Address</label>
+ <input id="email" type="email" placeholder="example@gmail.com" required>
 
-<form id="driverForm">
+ <label>Password</label>
+ <input id="password" type="password" minlength="6"
+  placeholder="Minimum 6 characters" required>
 
-<label>Full Name *</label>
-<input id="fullName" required maxlength="100"
- placeholder="Enter your full name">
+ <button id="registerAccountBtn" class="primary">
+  CREATE DRIVER ACCOUNT
+ </button>
 
-<label>Mobile Number *</label>
-<input id="phone" required type="tel"
- pattern="[0-9]{10}" maxlength="10"
- placeholder="10 digit mobile number">
+ <button id="loginAccountBtn" class="secondary">
+  ALREADY REGISTERED? LOGIN
+ </button>
 
-<label>District *</label>
-<select id="district" required>
- <option value="">Loading districts...</option>
-</select>
+ <p class="muted">
+  Create an account first. If email confirmation is enabled,
+  verify your Gmail and then return here to login.
+ </p>
+</section>
 
-<label>City / Town</label>
-<input id="city" placeholder="Enter your city">
+<form id="applicationForm" class="card">
 
-<label>Address</label>
-<textarea id="address" rows="3"
- placeholder="Enter your address"></textarea>
+ <h2>Driver Registration Form</h2>
 
-<h2>Vehicle Information</h2>
+ <label>Full Name</label>
+ <input id="fullName" type="text" required placeholder="Driver full name">
 
-<label>Vehicle Type *</label>
-<select id="vehicleType" required>
- <option value="">Select vehicle</option>
- <option value="bike">Bike</option>
- <option value="auto">Auto</option>
- <option value="mini">Mini</option>
- <option value="sedan">Sedan</option>
- <option value="suv">SUV</option>
- <option value="premium">Premium</option>
-</select>
+ <label>Mobile Number</label>
+ <input id="phone" type="tel" required maxlength="10"
+  pattern="[6-9][0-9]{9}" placeholder="10 digit mobile number">
 
-<label>Vehicle Model *</label>
-<input id="vehicleModel" required
- placeholder="Example: Swift Dzire">
+ <label>Driving Licence Number</label>
+ <input id="licenseNumber" type="text" required
+  placeholder="Enter driving licence number">
 
-<label>Vehicle Registration Number *</label>
-<input id="vehicleNumber" required
- placeholder="TN 00 AB 0000">
+ <label>Vehicle Type</label>
+ <select id="vehicleType" required>
+  <option value="">Select vehicle type</option>
+  <option value="Bike">Bike</option>
+  <option value="Auto">Auto</option>
+  <option value="Mini">Mini Car</option>
+  <option value="Sedan">Sedan</option>
+  <option value="SUV">SUV</option>
+  <option value="Tempo Traveller">Tempo Traveller</option>
+  <option value="Other">Other</option>
+ </select>
 
-<h2>Documents Upload</h2>
-<p class="small">PDF, JPG or PNG. Maximum 5 MB per document.</p>
+ <label>Vehicle Registration Number</label>
+ <input id="vehicleNumber" type="text" required
+  placeholder="TN XX XX XXXX">
 
-<div id="documents"></div>
+ <label>State</label>
+ <input value="Tamil Nadu" readonly>
 
-<button type="submit" id="submitBtn">
-SUBMIT DRIVER APPLICATION
-</button>
+ <label>District</label>
+ <select id="district" required>
+  <option value="">Select District</option>
+ </select>
+
+ <label>Driving Licence Document (PDF/JPG/PNG)</label>
+ <input id="licenceFile" type="file"
+  accept=".pdf,.jpg,.jpeg,.png" required>
+
+ <label>Vehicle RC Document (PDF/JPG/PNG)</label>
+ <input id="rcFile" type="file"
+  accept=".pdf,.jpg,.jpeg,.png" required>
+
+ <label>Vehicle Insurance Document (PDF/JPG/PNG)</label>
+ <input id="insuranceFile" type="file"
+  accept=".pdf,.jpg,.jpeg,.png" required>
+
+ <p class="muted">
+  Maximum file size: 5 MB per document.
+  Documents are uploaded to the private driver-documents bucket.
+ </p>
+
+ <button id="submitBtn" class="success" type="submit">
+  SUBMIT DRIVER APPLICATION
+ </button>
 
 </form>
-</div>
 
-<div id="applicationStatus" class="card hidden">
-<h2>Application Status</h2>
-<div id="statusDetails" class="status"></div>
-</div>
+<section class="card">
+ <h2>Application Status</h2>
+ <div id="applicationStatus" class="status">
+  Login to check your application status.
+ </div>
+</section>
 
-<div class="card">
- <p id="message"></p>
- <button onclick="logout()" style="background:#333;color:white">
- LOGOUT
- </button>
-</div>
+<p class="muted">
+ Already have an account?
+ <a href="driver.html">Go to Driver Login</a>
+</p>
 
 </div>
 
 <script>
+"use strict";
+
+/* SUPABASE CONFIG - SAME AS DRIVER APP */
 const SUPABASE_URL =
-"https://kzcczciqaxawbesgtgcf.supabase.co";
+ "https://kzcczciqaxawbesgtgcf.supabase.co";
 
 const SUPABASE_KEY =
-"sb_publishable_bKS7yIQ01_cOi972JQ7jQw_WjxhbKKb";
+ "sb_publishable_bKS7yIQ01_cOi972JQ7jQw_WjxhbKKb";
 
 const db = window.supabase.createClient(
  SUPABASE_URL,
  SUPABASE_KEY
 );
 
-let currentUser = null;
-let currentApplication = null;
+const $ = id => document.getElementById(id);
 
-const documentTypes = [
- ["aadhaar","Aadhaar"],
- ["driving_license","Driving Licence"],
- ["vehicle_rc","Vehicle RC"],
- ["insurance","Insurance"],
- ["permit","Vehicle Permit"],
- ["fitness_certificate","Fitness Certificate"]
+let currentUser = null;
+let submitting = false;
+
+const districts = [
+ "Ariyalur",
+ "Chengalpattu",
+ "Chennai",
+ "Coimbatore",
+ "Cuddalore",
+ "Dharmapuri",
+ "Dindigul",
+ "Erode",
+ "Kallakurichi",
+ "Kancheepuram",
+ "Kanniyakumari",
+ "Karur",
+ "Krishnagiri",
+ "Madurai",
+ "Mayiladuthurai",
+ "Nagapattinam",
+ "Namakkal",
+ "Nilgiris",
+ "Perambalur",
+ "Pudukkottai",
+ "Ramanathapuram",
+ "Ranipet",
+ "Salem",
+ "Sivaganga",
+ "Tenkasi",
+ "Thanjavur",
+ "Theni",
+ "Thoothukudi",
+ "Tiruchirappalli",
+ "Tirunelveli",
+ "Tirupathur",
+ "Tiruppur",
+ "Tiruvallur",
+ "Tiruvannamalai",
+ "Tiruvarur",
+ "Vellore",
+ "Viluppuram",
+ "Virudhunagar"
 ];
 
-const message = document.getElementById("message");
+/* DISTRICT OPTIONS */
+districts.forEach(name => {
+ const option = document.createElement("option");
+ option.value = name;
+ option.textContent = name;
+ $("district").appendChild(option);
+});
 
-function showMessage(text){
- message.textContent = text;
+/* MESSAGE */
+function message(text){
+ $("message").style.display = "block";
+ $("message").textContent = text;
 }
 
-function escapeHTML(value){
- return String(value ?? "").replace(/[&<>"']/g, c => ({
- "&":"&amp;",
- "<":"&lt;",
- ">":"&gt;",
- '"':"&quot;",
- "'":"&#39;"
- })[c]);
+function clearMessage(){
+ $("message").style.display = "none";
+ $("message").textContent = "";
 }
 
-// Create document upload inputs
-document.getElementById("documents").innerHTML =
-documentTypes.map(([key,name]) => `
- <label>${name}</label>
- <input type="file"
- id="doc_${key}"
- accept=".pdf,.jpg,.jpeg,.png">
-`).join("");
+/* ACCOUNT CREATION */
+$("registerAccountBtn").addEventListener("click",createAccount);
 
-async function init(){
+async function createAccount(){
+ clearMessage();
+
+ const email = $("email").value.trim().toLowerCase();
+ const password = $("password").value;
+
+ if(!email || !password){
+  message("Enter Gmail and password.");
+  return;
+ }
+
+ if(password.length < 6){
+  message("Password must contain at least 6 characters.");
+  return;
+ }
+
+ $("registerAccountBtn").disabled = true;
+ $("registerAccountBtn").textContent = "CREATING ACCOUNT...";
 
  try{
-  const {data,error} = await db.auth.getUser();
+  const {data,error} = await db.auth.signUp({
+   email,
+   password,
+   options:{
+    emailRedirectTo:
+     "https://vsakthivel2882005-collab.github.io/sakthi-cabs/driver-register.html"
+   }
+  });
 
-  if(error || !data.user){
-   document.getElementById("loginStatus").textContent =
-   "Please login using your existing Driver App first.";
-   return;
+  if(error) throw error;
+
+  if(data.session){
+   currentUser = data.user;
+   message("Account created successfully. Complete your driver application.");
+  }else{
+   message(
+    "Account created. Check your Gmail and confirm your email. " +
+    "After confirmation, return here and click ALREADY REGISTERED? LOGIN."
+   );
   }
+
+ }catch(error){
+  message("Account creation error: " + error.message);
+ }finally{
+  $("registerAccountBtn").disabled = false;
+  $("registerAccountBtn").textContent = "CREATE DRIVER ACCOUNT";
+ }
+}
+
+/* EXISTING ACCOUNT LOGIN */
+$("loginAccountBtn").addEventListener("click",loginAccount);
+
+async function loginAccount(){
+ clearMessage();
+
+ const email = $("email").value.trim().toLowerCase();
+ const password = $("password").value;
+
+ if(!email || !password){
+  message("Enter Gmail and password.");
+  return;
+ }
+
+ $("loginAccountBtn").disabled = true;
+ $("loginAccountBtn").textContent = "LOGGING IN...";
+
+ try{
+  const {data,error} = await db.auth.signInWithPassword({
+   email,
+   password
+  });
+
+  if(error) throw error;
 
   currentUser = data.user;
 
-  document.getElementById("loginStatus").textContent =
-  "Logged in: " + currentUser.email;
+  message("Login successful. You can submit your driver application.");
 
-  await loadDistricts();
-  await loadExistingApplication();
+  await checkApplication();
 
  }catch(error){
-  showMessage(error.message);
+  message("Login error: " + error.message);
+ }finally{
+  $("loginAccountBtn").disabled = false;
+  $("loginAccountBtn").textContent = "ALREADY REGISTERED? LOGIN";
  }
 }
 
-async function loadDistricts(){
+/* SESSION CHECK */
+async function checkSession(){
+ const {data,error} = await db.auth.getSession();
 
- const {data,error} = await db
- .from("districts")
- .select("id,district_name")
- .eq("is_active",true)
- .order("district_name");
+ if(error){
+  message(error.message);
+  return;
+ }
 
- if(error) throw error;
-
- const select = document.getElementById("district");
-
- select.innerHTML =
- '<option value="">Select district</option>';
-
- data.forEach(d=>{
-  const option = document.createElement("option");
-  option.value = d.id;
-  option.textContent = d.district_name;
-  select.appendChild(option);
- });
-}
-
-async function loadExistingApplication(){
-
- const {data,error} = await db
- .from("driver_applications")
- .select("*")
- .eq("user_id",currentUser.id)
- .maybeSingle();
-
- if(error) throw error;
-
- if(data){
-  currentApplication = data;
-  showApplicationStatus(data);
- }else{
-  document.getElementById("registration")
-  .classList.remove("hidden");
+ if(data.session){
+  currentUser = data.session.user;
+  await checkApplication();
  }
 }
 
-function showApplicationStatus(app){
+/* APPLICATION STATUS */
+async function checkApplication(){
+ if(!currentUser) return;
 
- document.getElementById("registration")
- .classList.add("hidden");
+ const {data,error} = await db.from("driver_applications")
+  .select("id,full_name,status,created_at")
+  .eq("user_id",currentUser.id)
+  .maybeSingle();
 
- document.getElementById("applicationStatus")
- .classList.remove("hidden");
+ if(error){
+  $("applicationStatus").textContent =
+   "Status check error: " + error.message;
+  return;
+ }
 
- document.getElementById("statusDetails").innerHTML =
- `
- <b>Name:</b> ${escapeHTML(app.full_name)}<br>
- <b>Vehicle:</b> ${escapeHTML(app.vehicle_model)}<br>
- <b>District ID:</b> ${escapeHTML(app.district_id)}<br>
- <b>Status:</b> ${escapeHTML(app.application_status)}
- <br><br>
- <b>Admin Remarks:</b>
- ${escapeHTML(app.admin_remarks || "Awaiting review")}
- `;
+ if(!data){
+  $("applicationStatus").textContent =
+   "No application submitted yet.";
+  return;
+ }
+
+ $("applicationStatus").textContent =
+  "Name: " + data.full_name +
+  " | Status: " + String(data.status).toUpperCase() +
+  " | Submitted: " +
+  new Date(data.created_at).toLocaleString();
+
+ if(data.status === "approved"){
+  $("applicationStatus").textContent +=
+   " | Your application is approved. Contact support if driver profile is not available.";
+ }
+
+ if(data.status === "rejected"){
+  $("applicationStatus").textContent +=
+   " | Please contact SAKTHI CABS admin.";
+ }
 }
 
-async function uploadDocument(
- applicationId,
- type,
- file
-){
+/* FILE VALIDATION */
+function validateFile(file){
+ if(!file) throw new Error("Please select all three documents.");
 
- if(!file) return;
+ if(file.size > 5 * 1024 * 1024){
+  throw new Error(file.name + " exceeds 5 MB.");
+ }
 
  const allowed = [
- "application/pdf",
- "image/jpeg",
- "image/png"
+  "application/pdf",
+  "image/jpeg",
+  "image/png"
  ];
 
  if(!allowed.includes(file.type)){
-  throw new Error("Invalid file type: " + type);
+  throw new Error("Only PDF, JPG and PNG files are allowed.");
  }
+}
 
- if(file.size > 5 * 1024 * 1024){
-  throw new Error("File exceeds 5 MB: " + type);
- }
+/* DOCUMENT UPLOAD */
+async function uploadDocument(file,userId,applicationId,type){
+ validateFile(file);
 
- const extension = file.name.split(".").pop()
- .toLowerCase();
+ const extension =
+  file.name.split(".").pop().toLowerCase();
 
  const path =
- currentUser.id + "/" +
- applicationId + "/" +
- type + "_" + Date.now() + "." + extension;
+  userId + "/" +
+  applicationId + "/" +
+  type + "." + extension;
 
  const {error:uploadError} = await db.storage
- .from("driver-documents")
- .upload(path,file,{
-  contentType:file.type,
-  upsert:false
- });
+  .from("driver-documents")
+  .upload(path,file,{
+   upsert:false,
+   contentType:file.type
+  });
 
  if(uploadError) throw uploadError;
 
  const {error:insertError} = await db
- .from("driver_application_documents")
- .insert({
-  application_id:applicationId,
-  user_id:currentUser.id,
-  document_type:type,
-  file_path:path,
-  verification_status:"pending"
- });
+  .from("driver_documents")
+  .insert({
+   application_id:applicationId,
+   user_id:userId,
+   document_type:type,
+   storage_path:path
+  });
 
  if(insertError) throw insertError;
+
+ return path;
 }
 
-document.getElementById("driverForm")
-.addEventListener("submit",async function(e){
-
+/* SUBMIT APPLICATION */
+$("applicationForm").addEventListener("submit",async function(e){
  e.preventDefault();
 
- const button = document.getElementById("submitBtn");
+ if(submitting) return;
+ clearMessage();
 
- button.disabled = true;
- button.textContent = "Submitting...";
-
- try{
-
-  const fullName =
-  document.getElementById("fullName").value.trim();
-
-  const phone =
-  document.getElementById("phone").value.trim();
-
-  if(!/^[0-9]{10}$/.test(phone)){
-   throw new Error("Enter a valid 10 digit mobile number.");
-  }
-
-  const application = {
-   user_id:currentUser.id,
-   full_name:fullName,
-   phone_number:phone,
-   district_id:Number(
-    document.getElementById("district").value
-   ),
-   city:document.getElementById("city").value.trim(),
-   address:document.getElementById("address").value.trim(),
-   vehicle_type:document.getElementById("vehicleType").value,
-   vehicle_model:document.getElementById("vehicleModel").value.trim(),
-   vehicle_number:document.getElementById("vehicleNumber").value.trim().toUpperCase(),
-   application_status:"pending"
-  };
-
-  if(!application.district_id){
-   throw new Error("Select your district.");
-  }
-
-  const {data,error} = await db
-   .from("driver_applications")
-   .insert(application)
-   .select()
-   .single();
-
-  if(error) throw error;
-
-  currentApplication = data;
-
-  let uploaded = 0;
-
-  for(const [type] of documentTypes){
-
-   const file =
-   document.getElementById("doc_"+type).files[0];
-
-   if(file){
-    await uploadDocument(data.id,type,file);
-    uploaded++;
-   }
-  }
-
-  showApplicationStatus(data);
-
-  showMessage(
-   "Application submitted successfully. " +
-   uploaded + " documents uploaded. " +
-   "Your application is pending admin verification."
-  );
-
- }catch(error){
-
-  showMessage("Error: " + error.message);
-
-  // A database application may already exist if
-  // a document upload failed. Do not blindly resubmit.
-
-  if(currentApplication){
-   showApplicationStatus(currentApplication);
-  }
-
- }finally{
-
-  button.disabled = false;
-  button.textContent = "SUBMIT DRIVER APPLICATION";
-
- }
-});
-
-async function logout(){
-
- const {error} = await db.auth.signOut();
-
- if(error){
-  showMessage(error.message);
+ if(!currentUser){
+  message("First create account or login with Gmail and password.");
   return;
  }
 
- location.href = "driver.html";
+ const fullName = $("fullName").value.trim();
+ const phone = $("phone").value.trim();
+ const licenseNumber = $("licenseNumber").value.trim();
+ const vehicleType = $("vehicleType").value;
+ const vehicleNumber = $("vehicleNumber").value.trim().toUpperCase();
+ const district = $("district").value;
+
+ const licenceFile = $("licenceFile").files[0];
+ const rcFile = $("rcFile").files[0];
+ const insuranceFile = $("insuranceFile").files[0];
+
+ if(!/^[6-9][0-9]{9}$/.test(phone)){
+  message("Enter a valid 10-digit Indian mobile number.");
+  return;
+ }
+
+ if(!fullName || !licenseNumber || !vehicleType ||
+    !vehicleNumber || !district){
+  message("Please complete all required fields.");
+  return;
+ }
+
+ try{
+  validateFile(licenceFile);
+  validateFile(rcFile);
+  validateFile(insuranceFile);
+ }catch(error){
+  message(error.message);
+  return;
+ }
+
+ submitting = true;
+ $("submitBtn").disabled = true;
+ $("submitBtn").textContent = "SUBMITTING...";
+
+ let applicationId = null;
+
+ try{
+
+  /* CHECK EXISTING APPLICATION */
+  const {data:existing,error:checkError} = await db
+   .from("driver_applications")
+   .select("id,status")
+   .eq("user_id",currentUser.id)
+   .maybeSingle();
+
+  if(checkError) throw checkError;
+
+  if(existing){
+   message(
+    "You already have an application. Current status: " +
+    existing.status +
+    ". Please contact admin for assistance."
+   );
+   return;
+  }
+
+  /* CREATE APPLICATION */
+  const {data:application,error:applicationError} =
+   await db.from("driver_applications")
+    .insert({
+     user_id:currentUser.id,
+     full_name:fullName,
+     phone:phone,
+     vehicle_type:vehicleType,
+     vehicle_number:vehicleNumber,
+     district:district,
+     state:"Tamil Nadu",
+     license_number:licenseNumber,
+     status:"pending"
+    })
+    .select("id")
+    .single();
+
+  if(applicationError) throw applicationError;
+
+  applicationId = application.id;
+
+  /* UPLOAD DOCUMENTS */
+  await uploadDocument(
+   licenceFile,currentUser.id,applicationId,"driving_license"
+  );
+
+  await uploadDocument(
+   rcFile,currentUser.id,applicationId,"vehicle_rc"
+  );
+
+  await uploadDocument(
+   insuranceFile,currentUser.id,applicationId,"insurance"
+  );
+
+  $("applicationStatus").textContent =
+   "Application submitted successfully. Status: PENDING ADMIN APPROVAL.";
+
+  message(
+   "SUCCESS! Your driver application and documents were submitted. " +
+   "Wait for admin verification."
+  );
+
+  $("applicationForm").reset();
+
+  await checkApplication();
+
+ }catch(error){
+
+  message(
+   "Submission error: " + error.message +
+   "\n\nIf an application was created before an upload failed, contact admin before submitting again."
+  );
+
+ }finally{
+  submitting = false;
+  $("submitBtn").disabled = false;
+  $("submitBtn").textContent = "SUBMIT DRIVER APPLICATION";
+ }
 }
 
-init();
-</script>
+/* START */
+checkSession();
 
+</script>
 </body>
 </html>
