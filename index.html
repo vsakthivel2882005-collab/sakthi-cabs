@@ -5,41 +5,40 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#063b91">
-<title>SAKTHI CABS | Customer</title>
+<title>SAKTHI CABS | Customer App</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
 *{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#f2f5fb;color:#14213d}
-header{background:#063b91;color:white;padding:18px 16px;position:sticky;top:0;z-index:500}
+body{margin:0;background:#f1f4fa;color:#17233d;font-family:Arial,sans-serif}
+header{background:#073b91;color:white;padding:17px;position:sticky;top:0;z-index:500}
 header h2{margin:0;color:#ffc400}
-header small{color:#dceaff}
-.container{max-width:650px;margin:auto;padding:15px}
-.card{background:white;padding:17px;border-radius:17px;margin-bottom:15px;box-shadow:0 3px 15px #102b5012}
-h3{margin:0 0 15px;color:#073d91}
-input,select{width:100%;padding:14px;margin:7px 0;border:1px solid #d5deed;border-radius:10px;font-size:15px;background:white}
-button{border:0;border-radius:11px;padding:14px;background:#0645b5;color:white;font-size:15px;font-weight:bold;cursor:pointer}
+header small{color:#dbe9ff}
+.container{max-width:650px;margin:auto;padding:14px}
+.card{background:white;padding:17px;border-radius:17px;margin-bottom:15px;box-shadow:0 3px 15px #0000000c}
+h3{color:#073b91;margin:0 0 15px}
+input,select{width:100%;padding:14px;margin:7px 0 13px;border:1px solid #d6deeb;border-radius:10px;font-size:15px}
+button{border:0;border-radius:11px;padding:14px;background:#0745b5;color:white;font-weight:bold;font-size:15px;cursor:pointer}
 button:disabled{opacity:.5}
-.yellow{background:#ffc400;color:#10213d}
-.outline{background:white;border:1px solid #0645b5;color:#0645b5}
-.danger{background:#d92e36}
+.full{width:100%;margin-top:9px}
+.yellow{background:#ffc400;color:#17233d}
+.outline{background:white;color:#0745b5;border:1px solid #0745b5}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.vehicle{border:2px solid #e3e9f3;padding:13px;border-radius:13px;text-align:center;cursor:pointer}
+.vehicle{border:2px solid #e0e7f1;padding:14px;border-radius:13px;text-align:center;cursor:pointer}
 .vehicle.active{border-color:#0750c7;background:#edf4ff}
-.vehicle strong{display:block;margin-top:5px}
-.full{width:100%;margin-top:10px}
-#map{height:300px;border-radius:14px;z-index:1}
-.status{padding:10px;background:#eaf3ff;color:#0645b5;border-radius:10px;font-weight:bold}
-.muted{color:#65748b;font-size:13px}
+.vehicle strong{display:block;margin:7px}
+.muted{color:#758197;font-size:13px}
+.status{padding:12px;background:#eaf3ff;color:#0645b5;border-radius:10px;font-weight:bold}
+#map{height:300px;border-radius:13px}
 .hidden{display:none!important}
 .row{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.nav{position:sticky;bottom:0;background:white;display:flex;justify-content:space-around;padding:12px;box-shadow:0 -3px 15px #0001}
-.nav button{background:white;color:#0645b5;padding:9px;font-size:13px}
-#message{font-size:14px;margin:10px 0;color:#0645b5;white-space:pre-wrap}
+.nav{position:sticky;bottom:0;background:white;display:flex;justify-content:space-around;padding:9px;box-shadow:0 -3px 15px #0001;z-index:400}
+.nav button{background:white;color:#0645b5;font-size:13px;padding:10px}
+#message{white-space:pre-wrap;font-size:14px;color:#0645b5;margin-top:12px}
+.history-item{border-bottom:1px solid #e7ebf1;padding:12px 0}
 </style>
 </head>
 
@@ -49,7 +48,7 @@ button:disabled{opacity:.5}
   <div class="row">
     <div>
       <h2>🚕 SAKTHI CABS</h2>
-      <small>Ride Safe... Travel Smart...</small>
+      <small>Ride Safe • Travel Smart</small>
     </div>
     <button id="logoutBtn" class="outline hidden">Logout</button>
   </div>
@@ -57,44 +56,64 @@ button:disabled{opacity:.5}
 
 <main class="container">
 
-<div id="authSection" class="card">
+<!-- LOGIN -->
+
+<section id="authSection" class="card">
   <h3>Welcome to SAKTHI CABS</h3>
-  <p class="muted">Login or create your customer account.</p>
-  <input id="email" type="email" placeholder="Email address">
-  <input id="password" type="password" placeholder="Password">
+  <p class="muted">Login or create your customer account</p>
+
+  <input id="email" type="email" placeholder="Email address" autocomplete="email">
+  <input id="password" type="password" placeholder="Password" autocomplete="current-password">
+
   <button class="full" onclick="login()">Login</button>
-  <button class="full yellow" onclick="signup()">Create Account</button>
-</div>
+  <button class="yellow full" onclick="signup()">Create Account</button>
 
-<div id="appSection" class="hidden">
+  <p id="authMessage" class="muted"></p>
+</section>
 
-  <div class="card">
+<!-- MAIN APP -->
+
+<section id="appSection" class="hidden">
+
+  <!-- BOOKING -->
+
+  <div id="bookingSection" class="card">
     <div class="row">
       <h3>Book Your Ride</h3>
-      <span class="muted" id="gpsStatus">GPS not started</span>
+      <span id="gpsStatus" class="muted">GPS Off</span>
     </div>
 
-    <button class="outline full" onclick="getGPS()">📍 Use Current Location</button>
+    <button class="outline full" onclick="getGPS()">
+      📍 Use Current Location
+    </button>
 
-    <label>Pickup Location</label>
+    <label>Pickup Address</label>
     <input id="pickup" placeholder="Enter pickup address">
 
-    <label>Drop Location</label>
+    <label>Drop Address</label>
     <input id="drop" placeholder="Enter destination">
 
-    <h3 style="margin-top:18px">Select Vehicle</h3>
+    <h3>Select Vehicle</h3>
+
     <div class="grid">
       <div class="vehicle active" data-type="car" onclick="chooseVehicle(this)">
-        🚗 <strong>Car</strong><small>4 Seater</small>
+        🚗 <strong>Car</strong>
+        <small class="muted">4 Seater</small>
       </div>
+
       <div class="vehicle" data-type="auto" onclick="chooseVehicle(this)">
-        🛺 <strong>Auto</strong><small>3 Seater</small>
+        🛺 <strong>Auto</strong>
+        <small class="muted">3 Seater</small>
       </div>
+
       <div class="vehicle" data-type="bike" onclick="chooseVehicle(this)">
-        🏍️ <strong>Bike Taxi</strong><small>2 Wheeler</small>
+        🏍️ <strong>Bike</strong>
+        <small class="muted">Bike Taxi</small>
       </div>
+
       <div class="vehicle" data-type="parcel" onclick="chooseVehicle(this)">
-        📦 <strong>Parcel</strong><small>Delivery</small>
+        📦 <strong>Parcel</strong>
+        <small class="muted">Delivery</small>
       </div>
     </div>
 
@@ -104,177 +123,250 @@ button:disabled{opacity:.5}
       <option value="upi">UPI</option>
     </select>
 
-    <button id="bookBtn" class="yellow full" onclick="bookRide()">🚕 BOOK RIDE</button>
+    <button id="bookBtn" class="yellow full" onclick="bookRide()">
+      🚕 BOOK RIDE
+    </button>
+
     <div id="message"></div>
   </div>
 
-  <div class="card">
+  <!-- TRACKING -->
+
+  <div id="trackingSection" class="card">
     <h3>Live Ride Tracking</h3>
+
     <div id="map"></div>
-    <p class="muted">Map uses OpenStreetMap. Driver location appears after assignment.</p>
-    <div id="rideStatus" class="status">No active ride</div>
-    <div id="driverInfo" class="muted" style="margin-top:10px"></div>
-    <button id="cancelBtn" class="danger full hidden" onclick="cancelRide()">Cancel Booking</button>
+
+    <p class="muted">
+      Your assigned driver location will appear here.
+    </p>
+
+    <div id="rideStatus" class="status">
+      No active booking
+    </div>
+
+    <p id="driverInfo" class="muted"></p>
+    <p id="customerInfo" class="muted"></p>
   </div>
 
-  <div class="card">
-    <h3>My Booking History</h3>
-    <button class="outline full" onclick="loadHistory()">Refresh History</button>
-    <div id="history" class="muted" style="margin-top:12px">No bookings loaded.</div>
+  <!-- HISTORY -->
+
+  <div id="historySection" class="card">
+    <div class="row">
+      <h3>My Bookings</h3>
+      <button class="outline" onclick="loadHistory()">Refresh</button>
+    </div>
+    <div id="history">No bookings loaded.</div>
   </div>
 
-</div>
+</section>
+
 </main>
 
-<div class="nav hidden" id="bottomNav">
-  <button onclick="showSection('booking')">🏠 Home</button>
-  <button onclick="showSection('tracking')">📍 Tracking</button>
-  <button onclick="loadHistory();showSection('history')">📋 Bookings</button>
+<div id="bottomNav" class="nav hidden">
+  <button onclick="showSection('bookingSection')">🏠 Home</button>
+  <button onclick="showSection('trackingSection')">📍 Tracking</button>
+  <button onclick="showSection('historySection')">📋 History</button>
 </div>
 
 <script>
-// ======================================
-// 1. SUPABASE CONFIGURATION
-// ======================================
 
-const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL";
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+// =======================================
+// 1. SUPABASE CONNECTION
+// =======================================
+
+const SUPABASE_URL =
+"https://kzcczciqaxawbesgtgcf.supabase.co";
+
+const SUPABASE_ANON_KEY =
+"sb_publishable_bKS7yIQ01_cOi972JQ7jQw_WjxhbKKb";
 
 const db = window.supabase.createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY
 );
 
-// ======================================
-// 2. APP VARIABLES
-// ======================================
+// =======================================
+// 2. VARIABLES
+// =======================================
 
 let user = null;
 let currentBooking = null;
 let selectedVehicle = "car";
+
 let pickupLat = null;
 let pickupLng = null;
+
 let gpsWatch = null;
+let map = null;
+
 let customerMarker = null;
 let driverMarker = null;
-let map = null;
+
 let bookingChannel = null;
 let driverChannel = null;
-let locationSentOnce = false;
 
-// ======================================
-// 3. MAP INITIALIZATION
-// ======================================
+let locationRowExists = false;
+let gpsUploadBusy = false;
+
+// =======================================
+// 3. MAP
+// =======================================
 
 function initMap(){
+
   if(map) return;
 
-  map = L.map("map").setView([11.0168,76.9558],12);
+  map = L.map("map").setView(
+    [11.0168,76.9558],11
+  );
 
   L.tileLayer(
     "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
     {
-      attribution:"© OpenStreetMap contributors"
+      attribution:"© OpenStreetMap"
     }
   ).addTo(map);
 }
 
 function updateCustomerMarker(lat,lng){
+
   if(!map) initMap();
 
-  const point=[lat,lng];
-
   if(!customerMarker){
-    customerMarker=L.marker(point).addTo(map)
-      .bindPopup("Customer Location");
-  }else{
-    customerMarker.setLatLng(point);
-  }
 
-  map.setView(point,15);
+    customerMarker = L.marker([lat,lng])
+      .addTo(map)
+      .bindPopup("Customer Location");
+
+  }else{
+
+    customerMarker.setLatLng([lat,lng]);
+
+  }
 }
 
 function updateDriverMarker(lat,lng){
+
   if(!map) initMap();
 
-  const point=[lat,lng];
-
   if(!driverMarker){
-    driverMarker=L.marker(point).addTo(map)
+
+    driverMarker = L.marker([lat,lng])
+      .addTo(map)
       .bindPopup("Driver Location");
+
   }else{
-    driverMarker.setLatLng(point);
+
+    driverMarker.setLatLng([lat,lng]);
+
   }
 }
 
-// ======================================
-// 4. AUTHENTICATION
-// ======================================
+// =======================================
+// 4. SIGNUP
+// =======================================
 
 async function signup(){
-  const email=document.getElementById("email").value.trim();
-  const password=document.getElementById("password").value;
 
-  if(!email || password.length<6){
-    return alert("Enter valid email and password (minimum 6 characters).");
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  if(!email || password.length < 6){
+
+    alert("Enter valid email and password. Minimum 6 characters.");
+    return;
   }
 
-  const {data,error}=await db.auth.signUp({
-    email,password
+  const {data,error} = await db.auth.signUp({
+    email,
+    password
   });
 
-  if(error) return alert(error.message);
+  if(error){
 
-  alert("Account created. If email confirmation is enabled, verify your email before login.");
+    alert(error.message);
+    return;
+
+  }
 
   if(data.session){
-    user=data.user;
+
+    user = data.user;
     await startApp();
+
+  }else{
+
+    document.getElementById("authMessage").textContent =
+      "Account created. Verify your email, then login.";
+
   }
 }
 
-async function login(){
-  const email=document.getElementById("email").value.trim();
-  const password=document.getElementById("password").value;
+// =======================================
+// 5. LOGIN
+// =======================================
 
-  const {data,error}=await db.auth.signInWithPassword({
-    email,password
+async function login(){
+
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  const {data,error} = await db.auth.signInWithPassword({
+    email,
+    password
   });
 
-  if(error) return alert(error.message);
+  if(error){
 
-  user=data.user;
+    alert(error.message);
+    return;
+
+  }
+
+  user = data.user;
+
   await startApp();
 }
 
+// =======================================
+// 6. LOGOUT
+// =======================================
+
 async function logout(){
+
   stopGPS();
-  cleanupSubscriptions();
+  cleanupChannels();
 
   await db.auth.signOut();
 
-  user=null;
-  currentBooking=null;
+  user = null;
+  currentBooking = null;
 
   document.getElementById("authSection").classList.remove("hidden");
   document.getElementById("appSection").classList.add("hidden");
-  document.getElementById("logoutBtn").classList.add("hidden");
   document.getElementById("bottomNav").classList.add("hidden");
+  document.getElementById("logoutBtn").classList.add("hidden");
 }
 
-document.getElementById("logoutBtn").onclick=logout;
+document.getElementById("logoutBtn").onclick = logout;
 
-// ======================================
-// 5. APP START
-// ======================================
+// =======================================
+// 7. START APP
+// =======================================
 
 async function startApp(){
+
   document.getElementById("authSection").classList.add("hidden");
   document.getElementById("appSection").classList.remove("hidden");
-  document.getElementById("logoutBtn").classList.remove("hidden");
   document.getElementById("bottomNav").classList.remove("hidden");
+  document.getElementById("logoutBtn").classList.remove("hidden");
 
   initMap();
+
+  setTimeout(()=>{
+    map.invalidateSize();
+  },300);
 
   await loadLatestBooking();
   await loadHistory();
@@ -282,222 +374,315 @@ async function startApp(){
   subscribeBookings();
 }
 
-// ======================================
-// 6. SESSION CHECK
-// ======================================
+// =======================================
+// 8. SESSION RESTORE
+// =======================================
 
-db.auth.getSession().then(async ({data})=>{
+async function checkSession(){
+
+  const {data} = await db.auth.getSession();
+
   if(data.session){
-    user=data.session.user;
+
+    user = data.session.user;
     await startApp();
+
   }
-});
+}
+
+checkSession();
 
 db.auth.onAuthStateChange((event,session)=>{
-  if(event==="SIGNED_OUT"){
-    user=null;
+
+  if(event === "SIGNED_OUT"){
+    user = null;
   }
+
 });
 
-// ======================================
-// 7. GPS LOCATION
-// ======================================
+// =======================================
+// 9. GPS
+// =======================================
 
 function getGPS(){
+
   if(!navigator.geolocation){
-    return alert("GPS is not supported by this browser.");
+
+    alert("GPS not supported.");
+    return;
+
   }
 
   navigator.geolocation.getCurrentPosition(
+
     position=>{
-      pickupLat=position.coords.latitude;
-      pickupLng=position.coords.longitude;
+
+      pickupLat = position.coords.latitude;
+      pickupLng = position.coords.longitude;
 
       updateCustomerMarker(pickupLat,pickupLng);
 
-      document.getElementById("gpsStatus").textContent="GPS Active";
+      map.setView([pickupLat,pickupLng],16);
 
-      document.getElementById("pickup").value=
+      document.getElementById("pickup").value =
         `Current Location (${pickupLat.toFixed(5)}, ${pickupLng.toFixed(5)})`;
+
+      document.getElementById("gpsStatus").textContent =
+        "GPS Ready";
+
     },
+
     error=>{
-      alert("Location error: "+error.message);
+
+      alert("GPS Error: " + error.message);
+
     },
-    {enableHighAccuracy:true,timeout:15000}
+
+    {
+      enableHighAccuracy:true,
+      timeout:20000,
+      maximumAge:3000
+    }
+
   );
 }
 
 function stopGPS(){
-  if(gpsWatch!==null){
+
+  if(gpsWatch !== null){
+
     navigator.geolocation.clearWatch(gpsWatch);
-    gpsWatch=null;
+    gpsWatch = null;
+
   }
+
 }
 
-// ======================================
-// 8. VEHICLE SELECTION
-// ======================================
+// =======================================
+// 10. VEHICLE
+// =======================================
 
 function chooseVehicle(element){
+
   document.querySelectorAll(".vehicle").forEach(v=>{
     v.classList.remove("active");
   });
 
   element.classList.add("active");
-  selectedVehicle=element.dataset.type;
+
+  selectedVehicle = element.dataset.type;
+
 }
 
-// ======================================
-// 9. BOOK RIDE
-// ======================================
+// =======================================
+// 11. CREATE BOOKING
+// =======================================
 
 async function bookRide(){
-  if(!user) return alert("Please login.");
+
+  if(!user){
+
+    alert("Please login first.");
+    return;
+
+  }
 
   if(currentBooking &&
-     !["completed","cancelled","rejected"].includes(currentBooking.status)){
-    return alert("You already have an active booking.");
+    !["completed","cancelled","rejected"].includes(currentBooking.status)){
+
+    alert("You already have an active booking.");
+    return;
+
   }
 
-  const pickup=document.getElementById("pickup").value.trim();
-  const drop=document.getElementById("drop").value.trim();
-  const payment=document.getElementById("payment").value;
+  const pickup = document.getElementById("pickup").value.trim();
+  const drop = document.getElementById("drop").value.trim();
+  const payment = document.getElementById("payment").value;
 
   if(!pickup || !drop){
-    return alert("Enter pickup and drop locations.");
+
+    alert("Enter pickup and drop address.");
+    return;
+
   }
 
-  const button=document.getElementById("bookBtn");
-  button.disabled=true;
+  const button = document.getElementById("bookBtn");
+
+  button.disabled = true;
 
   try{
-    const {data,error}=await db.from("bookings").insert({
-      customer_id:user.id,
-      pickup_address:pickup,
-      drop_address:drop,
-      pickup_lat:pickupLat,
-      pickup_lng:pickupLng,
-      status:"pending",
-      driver_id:null,
-      payment_method:payment,
-      trip_type:selectedVehicle
-    }).select().single();
+
+    const {data,error} = await db.from("bookings")
+      .insert({
+
+        customer_id:user.id,
+        pickup_address:pickup,
+        drop_address:drop,
+
+        pickup_lat:pickupLat,
+        pickup_lng:pickupLng,
+
+        status:"pending",
+        driver_id:null,
+
+        payment_method:payment,
+        trip_type:selectedVehicle
+
+      })
+      .select()
+      .single();
 
     if(error) throw error;
 
-    currentBooking=data;
+    currentBooking = data;
 
-    document.getElementById("message").textContent=
-      "Booking successful! Booking ID: "+data.id;
+    document.getElementById("message").textContent =
+      "Booking created successfully!\nBooking ID: " + data.id;
 
     showBookingStatus(data);
-    subscribeDriverLocation();
+
+    await loadHistory();
+
     subscribeBookings();
 
   }catch(error){
-    alert("Booking error: "+error.message);
+
+    alert("Booking Error: " + error.message);
+
   }finally{
-    button.disabled=false;
+
+    button.disabled = false;
+
   }
+
 }
 
-// ======================================
-// 10. LOAD LATEST BOOKING
-// ======================================
+// =======================================
+// 12. LOAD LATEST BOOKING
+// =======================================
 
 async function loadLatestBooking(){
-  const {data,error}=await db.from("bookings")
+
+  const {data,error} = await db.from("bookings")
     .select("*")
     .eq("customer_id",user.id)
     .order("created_at",{ascending:false})
     .limit(1);
 
   if(error){
-    console.error(error);
+
+    console.error(error.message);
     return;
+
   }
 
   if(data && data.length){
-    currentBooking=data[0];
+
+    currentBooking = data[0];
+
     showBookingStatus(currentBooking);
 
-    if(currentBooking.driver_id){
-      subscribeDriverLocation();
-    }
   }
+
 }
 
-// ======================================
-// 11. BOOKING STATUS
-// ======================================
+// =======================================
+// 13. BOOKING STATUS
+// =======================================
 
 function showBookingStatus(booking){
-  const status=document.getElementById("rideStatus");
-  const cancel=document.getElementById("cancelBtn");
 
-  status.textContent="Ride Status: "+booking.status.toUpperCase();
+  document.getElementById("rideStatus").textContent =
+    "Booking Status: " + String(booking.status).toUpperCase();
 
-  const active=["pending","accepted","arrived","started"];
+  if(["accepted","arrived","started"].includes(booking.status)){
 
-  cancel.classList.toggle(
-    "hidden",
-    !active.includes(booking.status)
-  );
-
-  if(booking.status==="accepted" ||
-     booking.status==="arrived" ||
-     booking.status==="started"){
     startGPSSharing();
+
   }else{
+
     stopGPS();
+
+  }
+
+  if(booking.driver_id){
+
+    subscribeDriverLocation();
+
+  }else{
+
+    if(driverChannel){
+
+      db.removeChannel(driverChannel);
+      driverChannel = null;
+
+    }
+
   }
 
   if(["completed","cancelled","rejected"].includes(booking.status)){
+
     stopGPS();
+
   }
 
-  subscribeDriverLocation();
 }
 
-// ======================================
-// 12. BOOKING REALTIME
-// ======================================
+// =======================================
+// 14. BOOKING REALTIME
+// =======================================
 
 function subscribeBookings(){
+
   if(!user) return;
 
   if(bookingChannel){
+
     db.removeChannel(bookingChannel);
+
   }
 
-  bookingChannel=db.channel("customer-bookings-"+user.id)
+  bookingChannel = db.channel("customer-bookings-" + user.id)
+
     .on(
       "postgres_changes",
       {
         event:"UPDATE",
         schema:"public",
         table:"bookings",
-        filter:"customer_id=eq."+user.id
+        filter:"customer_id=eq." + user.id
       },
+
       payload=>{
+
         if(currentBooking &&
-           payload.new.id===currentBooking.id){
-          currentBooking=payload.new;
+          payload.new.id === currentBooking.id){
+
+          currentBooking = payload.new;
+
           showBookingStatus(currentBooking);
-          document.getElementById("message").textContent=
-            "Booking updated: "+currentBooking.status;
+
+          document.getElementById("message").textContent =
+            "Ride updated: " + currentBooking.status;
+
+          loadHistory();
+
         }
+
       }
     )
+
     .subscribe();
+
 }
 
-// ======================================
-// 13. CUSTOMER GPS SHARING
-// ======================================
+// =======================================
+// 15. CUSTOMER LIVE GPS SHARING
+// =======================================
 
 function startGPSSharing(){
-  if(!currentBooking || !navigator.geolocation || gpsWatch!==null){
+
+  if(!currentBooking || !navigator.geolocation || gpsWatch !== null){
     return;
   }
 
@@ -505,33 +690,61 @@ function startGPSSharing(){
     return;
   }
 
-  locationSentOnce=false;
+  gpsWatch = navigator.geolocation.watchPosition(
 
-  gpsWatch=navigator.geolocation.watchPosition(
     async position=>{
-      const lat=position.coords.latitude;
-      const lng=position.coords.longitude;
 
-      pickupLat=lat;
-      pickupLng=lng;
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+
+      pickupLat = lat;
+      pickupLng = lng;
 
       updateCustomerMarker(lat,lng);
 
-      const row={
-        booking_id:currentBooking.id,
-        customer_id:user.id,
-        latitude:lat,
-        longitude:lng,
-        updated_at:new Date().toISOString()
-      };
+      if(gpsUploadBusy) return;
 
-      let result;
+      gpsUploadBusy = true;
 
-      if(!locationSentOnce){
-        result=await db.from("customer_live_locations").insert(row);
+      try{
 
-        if(result.error && result.error.code==="23505"){
-          result=await db.from("customer_live_locations")
+        const row = {
+          booking_id:currentBooking.id,
+          customer_id:user.id,
+          latitude:lat,
+          longitude:lng,
+          updated_at:new Date().toISOString()
+        };
+
+        let result;
+
+        if(!locationRowExists){
+
+          result = await db.from("customer_live_locations")
+            .insert(row);
+
+          if(result.error && result.error.code === "23505"){
+
+            result = await db.from("customer_live_locations")
+              .update({
+                latitude:lat,
+                longitude:lng,
+                updated_at:row.updated_at
+              })
+              .eq("booking_id",currentBooking.id)
+              .eq("customer_id",user.id);
+
+          }
+
+          if(!result.error){
+
+            locationRowExists = true;
+
+          }
+
+        }else{
+
+          result = await db.from("customer_live_locations")
             .update({
               latitude:lat,
               longitude:lng,
@@ -539,226 +752,245 @@ function startGPSSharing(){
             })
             .eq("booking_id",currentBooking.id)
             .eq("customer_id",user.id);
+
         }
 
-        locationSentOnce=true;
-      }else{
-        result=await db.from("customer_live_locations")
-          .update({
-            latitude:lat,
-            longitude:lng,
-            updated_at:row.updated_at
-          })
-          .eq("booking_id",currentBooking.id)
-          .eq("customer_id",user.id);
+        if(result.error){
+
+          console.error("GPS upload:",result.error.message);
+
+          document.getElementById("customerInfo").textContent =
+            "GPS upload failed: " + result.error.message;
+
+        }else{
+
+          document.getElementById("customerInfo").textContent =
+            "Customer GPS sharing active";
+
+        }
+
+      }finally{
+
+        gpsUploadBusy = false;
+
       }
 
-      if(result.error){
-        console.error("GPS upload error:",result.error.message);
-        document.getElementById("gpsStatus").textContent="GPS upload error";
-      }else{
-        document.getElementById("gpsStatus").textContent="Sharing live GPS";
-      }
     },
+
     error=>{
-      console.error("GPS error:",error.message);
-      document.getElementById("gpsStatus").textContent="GPS error";
+
+      document.getElementById("customerInfo").textContent =
+        "GPS error: " + error.message;
+
     },
+
     {
       enableHighAccuracy:true,
       maximumAge:3000,
       timeout:20000
     }
+
   );
+
 }
 
-// ======================================
-// 14. DRIVER LOCATION REALTIME
-// ======================================
+// =======================================
+// 16. DRIVER LIVE LOCATION
+// =======================================
 
 function subscribeDriverLocation(){
-  if(!currentBooking || !currentBooking.driver_id) return;
 
-  if(driverChannel){
-    db.removeChannel(driverChannel);
-    driverChannel=null;
+  if(!currentBooking || !currentBooking.driver_id){
+    return;
   }
 
-  driverChannel=db.channel(
-    "driver-location-"+currentBooking.id
-  )
-  .on(
-    "postgres_changes",
-    {
-      event:"*",
-      schema:"public",
-      table:"driver_locations",
-      filter:"driver_id=eq."+currentBooking.driver_id
-    },
-    payload=>{
-      const location=payload.new;
+  if(driverChannel){
 
-      if(location && location.latitude!=null){
-        updateDriverMarker(
-          location.latitude,
-          location.longitude
-        );
+    db.removeChannel(driverChannel);
+    driverChannel = null;
 
-        document.getElementById("driverInfo").textContent=
-          "Driver live location updated: "+
-          new Date(location.updated_at || Date.now()).toLocaleTimeString();
+  }
+
+  const driverId = currentBooking.driver_id;
+
+  driverChannel = db.channel("driver-location-" + driverId)
+
+    .on(
+      "postgres_changes",
+      {
+        event:"*",
+        schema:"public",
+        table:"driver_locations",
+        filter:"driver_id=eq." + driverId
+      },
+
+      payload=>{
+
+        const location = payload.new;
+
+        if(location && location.latitude != null){
+
+          updateDriverMarker(
+            location.latitude,
+            location.longitude
+          );
+
+          document.getElementById("driverInfo").textContent =
+            "Driver location updated: " +
+            new Date(location.updated_at || Date.now()).toLocaleTimeString();
+
+        }
+
       }
-    }
-  )
-  .subscribe();
+    )
+
+    .subscribe();
 
   loadDriverLocation();
+
 }
 
-async function loadDriverLocation(){
-  if(!currentBooking || !currentBooking.driver_id) return;
+// =======================================
+// 17. LOAD DRIVER LOCATION
+// =======================================
 
-  const {data,error}=await db.from("driver_locations")
+async function loadDriverLocation(){
+
+  if(!currentBooking || !currentBooking.driver_id){
+    return;
+  }
+
+  const {data,error} = await db.from("driver_locations")
     .select("latitude,longitude,updated_at")
     .eq("driver_id",currentBooking.driver_id)
     .maybeSingle();
 
   if(error){
-    console.error("Driver location:",error.message);
+
+    console.error("Driver location error:",error.message);
     return;
+
   }
 
   if(data){
+
     updateDriverMarker(data.latitude,data.longitude);
 
-    document.getElementById("driverInfo").textContent=
-      "Last driver location: "+
+    document.getElementById("driverInfo").textContent =
+      "Driver last update: " +
       new Date(data.updated_at || Date.now()).toLocaleTimeString();
-  }
-}
 
-// ======================================
-// 15. CANCEL BOOKING
-// ======================================
-
-async function cancelRide(){
-  if(!currentBooking) return;
-
-  if(!confirm("Cancel this booking?")) return;
-
-  const {data,error}=await db.from("bookings")
-    .update({status:"cancelled"})
-    .eq("id",currentBooking.id)
-    .eq("customer_id",user.id)
-    .select()
-    .single();
-
-  if(error){
-    alert("Cancel failed: "+error.message);
-    return;
   }
 
-  currentBooking=data;
-  stopGPS();
-  showBookingStatus(data);
-  alert("Booking cancelled.");
 }
 
-// ======================================
-// 16. BOOKING HISTORY
-// ======================================
+// =======================================
+// 18. BOOKING HISTORY
+// =======================================
 
 async function loadHistory(){
+
   if(!user) return;
 
-  const {data,error}=await db.from("bookings")
-    .select("id,pickup_address,drop_address,status,created_at,estimated_fare")
+  const history = document.getElementById("history");
+
+  const {data,error} = await db.from("bookings")
+
+    .select(
+      "id,pickup_address,drop_address,status,created_at,estimated_fare"
+    )
+
     .eq("customer_id",user.id)
+
     .order("created_at",{ascending:false})
+
     .limit(30);
 
-  const history=document.getElementById("history");
-
   if(error){
-    history.textContent="History error: "+error.message;
+
+    history.textContent = "History Error: " + error.message;
     return;
+
   }
 
-  history.innerHTML="";
+  history.innerHTML = "";
 
-  if(!data.length){
-    history.textContent="No bookings found.";
+  if(!data || !data.length){
+
+    history.textContent = "No bookings found.";
     return;
+
   }
 
   data.forEach(item=>{
-    const box=document.createElement("div");
-    box.className="card";
 
-    const title=document.createElement("strong");
-    title.textContent=item.status.toUpperCase();
+    const box = document.createElement("div");
+    box.className = "history-item";
 
-    const route=document.createElement("p");
-    route.textContent=item.pickup_address+" → "+item.drop_address;
+    const title = document.createElement("strong");
+    title.textContent = item.status.toUpperCase();
 
-    const fare=document.createElement("p");
-    fare.textContent="Fare: ₹"+(item.estimated_fare ?? "Pending");
+    const route = document.createElement("p");
+    route.textContent = item.pickup_address + " → " + item.drop_address;
 
-    const date=document.createElement("small");
-    date.textContent=new Date(item.created_at).toLocaleString();
+    const fare = document.createElement("p");
+    fare.textContent = "Fare: ₹" + (item.estimated_fare ?? "Not calculated");
+
+    const date = document.createElement("small");
+    date.textContent = new Date(item.created_at).toLocaleString();
 
     box.append(title,route,fare,date);
+
     history.appendChild(box);
+
   });
+
 }
 
-// ======================================
-// 17. NAVIGATION
-// ======================================
+// =======================================
+// 19. NAVIGATION
+// =======================================
 
 function showSection(section){
-  if(!map) return;
 
-  setTimeout(()=>map.invalidateSize(),200);
+  document.getElementById(section).scrollIntoView({
+    behavior:"smooth"
+  });
 
-  if(section==="tracking"){
-    document.getElementById("map").scrollIntoView({
-      behavior:"smooth"
-    });
-  }
+  setTimeout(()=>{
 
-  if(section==="booking"){
-    document.getElementById("pickup").scrollIntoView({
-      behavior:"smooth"
-    });
-  }
+    if(map) map.invalidateSize();
 
-  if(section==="history"){
-    document.getElementById("history").scrollIntoView({
-      behavior:"smooth"
-    });
-  }
+  },300);
+
 }
 
-// ======================================
-// 18. CLEANUP
-// ======================================
+// =======================================
+// 20. CLEANUP
+// =======================================
 
-function cleanupSubscriptions(){
+function cleanupChannels(){
+
   if(bookingChannel){
+
     db.removeChannel(bookingChannel);
-    bookingChannel=null;
+    bookingChannel = null;
+
   }
 
   if(driverChannel){
     db.removeChannel(driverChannel);
-    driverChannel=null;
+    driverChannel = null;
+
   }
+
 }
 
 window.addEventListener("beforeunload",()=>{
+
   stopGPS();
-  cleanupSubscriptions();
+  cleanupChannels();
+
 });
 
 </script>
