@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,1146 +7,921 @@
 <title>SAKTHI CABS - Customer</title>
 
 <link rel="stylesheet"
-href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+ href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
 <style>
-*{box-sizing:border-box}
-
+*{box-sizing:border-box;margin:0;padding:0}
 body{
- margin:0;
  font-family:Arial,sans-serif;
  background:#071426;
- color:white;
+ color:#fff;
 }
-
 header{
- padding:18px;
+ background:#0d2038;
+ padding:17px;
  display:flex;
  justify-content:space-between;
  align-items:center;
- background:#0d1e33;
- position:sticky;
- top:0;
- z-index:1000;
+ border-bottom:1px solid #263c55;
 }
-
-.logo{
- font-size:23px;
- font-weight:bold;
- color:#f4bd4f;
-}
-
-.container{
- max-width:650px;
- margin:auto;
- padding:15px;
-}
-
+.logo{font-size:22px;font-weight:bold;color:#f5bd45}
+header small{color:#aebed0}
+.container{max-width:650px;margin:auto;padding:16px}
 .card{
- background:#13243a;
- border-radius:16px;
- padding:18px;
- margin:15px 0;
+ background:#10243d;
+ border:1px solid #263d58;
+ border-radius:15px;
+ padding:17px;
+ margin-bottom:15px;
 }
-
-h2{margin-top:0}
-
-label{
- display:block;
- color:#a9bad0;
- margin-top:12px;
- font-size:13px;
-}
-
-input,select,textarea{
+h2{font-size:20px;margin-bottom:13px}
+h3{font-size:16px;margin-bottom:10px}
+input,select{
  width:100%;
- padding:14px;
- margin-top:7px;
- background:#09192d;
- color:white;
- border:1px solid #344963;
- border-radius:10px;
-}
-
-button{
  padding:13px;
- background:#f4bd4f;
- color:#111;
+ margin:7px 0 12px;
+ border:1px solid #38516d;
+ border-radius:9px;
+ background:#071a30;
+ color:white;
+ font-size:15px;
+}
+button{
  border:0;
- border-radius:10px;
+ border-radius:9px;
+ padding:13px;
+ background:#f5bd45;
+ color:#111;
+ font-size:15px;
  font-weight:bold;
  cursor:pointer;
 }
-
-button:disabled{
- opacity:.5;
- cursor:not-allowed;
-}
-
-.full{width:100%;margin-top:15px}
-
+button:disabled{opacity:.5}
+.primary{width:100%}
 .secondary{
- background:#203852;
- color:white;
+ background:#263e59;
+ color:#fff;
 }
-
-.danger{
- background:#c93442;
- color:white;
-}
-
-#map,#trackMap{
- height:260px;
+.danger{background:#a93232;color:white}
+.row{display:flex;gap:9px}
+.row button{flex:1}
+.hidden{display:none!important}
+.muted{color:#aebed0;font-size:13px}
+#map{
+ width:100%;
+ height:280px;
  border-radius:12px;
+ margin-top:10px;
  z-index:1;
 }
-
 .vehicle{
- padding:14px;
- margin-top:10px;
- background:#203852;
+ border:1px solid #38516d;
+ padding:12px;
  border-radius:10px;
+ margin:8px 0;
  cursor:pointer;
- display:flex;
- justify-content:space-between;
 }
-
-.vehicle.active{
- border:2px solid #f4bd4f;
+.vehicle.selected{
+ border:2px solid #f5bd45;
+ background:#1b3552;
 }
-
-.hidden{display:none!important}
-
-small,.muted{
- color:#9eafc5;
+.vehicle input{width:auto;margin-right:8px}
+.price{
+ color:#f5bd45;
+ font-size:22px;
+ font-weight:bold;
 }
-
-.status{
- padding:10px;
- background:#203852;
- border-radius:8px;
- margin-top:10px;
+.item{
+ padding:12px 0;
+ border-bottom:1px solid #344b64;
 }
-
-nav{
- position:fixed;
- bottom:0;
- left:0;
- right:0;
- background:#0d1e33;
- display:flex;
- justify-content:space-around;
- padding:9px 3px;
- z-index:1000;
-}
-
-nav button{
- padding:10px 8px;
- background:#203852;
- color:white;
- font-size:12px;
-}
-
-main{padding-bottom:90px}
-
-.message{
- margin-top:12px;
- color:#f4bd4f;
- font-size:14px;
-}
-
+.status{color:#f5bd45;font-weight:bold}
+#message{margin:10px 0;color:#f5bd45;font-size:14px}
+footer{text-align:center;padding:20px;color:#8295aa;font-size:12px}
 </style>
 </head>
 
 <body>
 
 <header>
- <div class="logo">SAKTHI CABS</div>
- <button class="secondary" onclick="show('settings')">☰</button>
+ <div>
+  <div class="logo">SAKTHI CABS</div>
+  <small>YOUR RIDE, YOUR WAY</small>
+ </div>
+ <button class="secondary" onclick="logout()" id="logoutBtn"
+ style="display:none">Logout</button>
 </header>
 
-<main class="container">
+<div class="container">
 
-<!-- SPLASH -->
-<section id="splash" class="card">
- <h1 class="logo">SAKTHI CABS</h1>
- <h2>Your Journey Starts Here</h2>
- <p class="muted">Welcome to SAKTHI CABS</p>
- <p class="muted">Book your cab anywhere in Tamil Nadu.</p>
- <button class="full" onclick="showAuth()">Get Started</button>
-</section>
-
-<!-- REGISTRATION / LOGIN -->
-<section id="auth" class="card hidden">
- <h2>Customer Registration / Login</h2>
-
- <label>Mobile Number</label>
- <input id="mobile" maxlength="10"
- inputmode="numeric" placeholder="10 digit mobile number">
-
- <label>Full Name</label>
- <input id="name" placeholder="Enter your full name">
-
- <button id="sendOtpBtn" class="full" onclick="sendOTP()">
- Send OTP
- </button>
-
- <div id="otpBox" class="hidden">
-  <label>Enter OTP</label>
-  <input id="otp" maxlength="6"
-  inputmode="numeric" placeholder="Enter SMS OTP">
-
-  <button id="verifyOtpBtn" class="full"
-  onclick="verifyOTP()">Verify OTP</button>
- </div>
-
- <p id="authMsg" class="message">
- Enter your mobile number to continue.
- </p>
-</section>
-
-<!-- HOME -->
-<section id="home" class="hidden">
-
+<!-- LOGIN -->
+<section id="loginSection">
  <div class="card">
-  <h2 id="welcome">Where are you going?</h2>
-  <p class="muted">Book your cab anywhere in Tamil Nadu.</p>
+  <h2>Welcome to SAKTHI CABS</h2>
+  <p class="muted">Login using your mobile number</p>
 
-  <div id="map"></div>
+  <label>Mobile Number</label>
+  <input id="phone" type="tel" placeholder="+919876543210"
+   maxlength="13">
 
-  <button class="secondary full" onclick="getLocation()">
-  ◎ Use Current Location
+  <button class="primary" onclick="sendOTP()" id="sendBtn">
+   Send OTP
   </button>
 
+  <div id="otpArea" class="hidden">
+   <label>Enter OTP</label>
+   <input id="otp" type="text" inputmode="numeric"
+    maxlength="6" placeholder="Enter 6 digit OTP">
+   <button class="primary" onclick="verifyOTP()" id="verifyBtn">
+    Verify OTP
+   </button>
+  </div>
+  <div id="message"></div>
+ </div>
+</section>
+
+<!-- APP -->
+<section id="appSection" class="hidden">
+
+ <div class="card">
+  <h2 id="welcome">Welcome</h2>
+  <p class="muted">Book your ride easily</p>
+ </div>
+
+ <!-- BOOKING -->
+ <div class="card">
+  <h2>Book Your Ride</h2>
+
   <label>Pickup Location</label>
-  <input id="pickup" placeholder="Enter pickup address">
+  <input id="pickup" placeholder="Enter pickup location">
 
   <label>Drop Location</label>
   <input id="drop" placeholder="Enter destination">
 
-  <button class="full" onclick="calculateFare()">
-  Find Rides
-  </button>
+  <div class="row">
+   <button class="secondary" onclick="useCurrentLocation()">
+    Current Location
+   </button>
+   <button class="secondary" onclick="findDropLocation()">
+    Find Drop
+   </button>
+  </div>
+
+  <div id="map"></div>
+
+  <p class="muted" style="margin-top:10px">
+   Map: OpenStreetMap
+  </p>
  </div>
 
- <!-- VEHICLES -->
- <div id="vehicles" class="card hidden">
-  <h2>Select Your Vehicle</h2>
+ <!-- VEHICLE -->
+ <div class="card">
+  <h2>Select Vehicle</h2>
 
-  <div class="vehicle active"
-  onclick="selectVehicle('Mini',this)">
-   <span>🚗 Mini</span>
-   <b id="miniPrice">₹110</b>
+  <div class="vehicle selected" onclick="selectVehicle('Mini',12,this)">
+   <input type="radio" name="vehicle" checked>
+   <b>🚗 Mini</b>
+   <span class="muted"> - Affordable ride</span>
   </div>
 
-  <div class="vehicle"
-  onclick="selectVehicle('Sedan',this)">
-   <span>🚘 Sedan</span>
-   <b id="sedanPrice">₹145</b>
+  <div class="vehicle" onclick="selectVehicle('Sedan',16,this)">
+   <input type="radio" name="vehicle">
+   <b>🚘 Sedan</b>
+   <span class="muted"> - Comfortable ride</span>
   </div>
 
-  <div class="vehicle"
-  onclick="selectVehicle('SUV',this)">
-   <span>🚙 SUV</span>
-   <b id="suvPrice">₹195</b>
+  <div class="vehicle" onclick="selectVehicle('SUV',22,this)">
+   <input type="radio" name="vehicle">
+   <b>🚙 SUV</b>
+   <span class="muted"> - Family ride</span>
   </div>
 
-  <p id="fareText" class="muted">Estimated fare</p>
+  <p class="muted">Estimated distance</p>
+  <h3 id="distance">0 KM</h3>
+
+  <p class="muted">Estimated fare</p>
+  <div class="price" id="fare">₹0</div>
 
   <label>Payment Method</label>
-  <select id="paymentMethod">
+  <select id="payment">
    <option value="cash">Cash</option>
    <option value="upi">UPI</option>
   </select>
 
-  <button id="bookBtn" class="full"
-  onclick="confirmBooking()">Confirm Ride</button>
+  <button class="primary" onclick="bookRide()" id="bookBtn">
+   Confirm Booking
+  </button>
+  <div id="bookingMessage"></div>
  </div>
 
- <!-- BOOKING STATUS -->
- <div id="bookingStatus" class="card hidden">
-  <h2>Booking Status</h2>
-  <div id="bookingInfo"></div>
-  <p id="bookingStatusText" class="status">
-  Waiting for booking...
-  </p>
-  <button class="secondary full"
-  onclick="refreshBooking()">Refresh Status</button>
+ <!-- CURRENT BOOKING -->
+ <div class="card">
+  <h2>Current Booking</h2>
+  <div id="currentBooking" class="muted">
+   No active booking
+  </div>
+  <button class="secondary primary" onclick="loadCurrentBooking()">
+   Refresh Status
+  </button>
+ </div>
+
+ <!-- HISTORY -->
+ <div class="card">
+  <h2>Ride History</h2>
+  <button class="secondary primary" onclick="loadHistory()">
+   Refresh History
+  </button>
+  <div id="history"></div>
+ </div>
+
+ <!-- PROFILE -->
+ <div class="card">
+  <h2>My Profile</h2>
+  <label>Full Name</label>
+  <input id="profileName" placeholder="Enter your name">
+  <button class="primary" onclick="saveProfile()">
+   Save Profile
+  </button>
  </div>
 
 </section>
+</div>
 
-<!-- TRACKING -->
-<section id="tracking" class="card hidden">
- <h2>Driver Tracking</h2>
- <div id="trackMap"></div>
- <p id="trackStatus" class="muted">
- Driver location is not connected yet.
- </p>
- <p class="muted">
- Live GPS tracking will be available after driver integration.
- </p>
-</section>
-
-<!-- HISTORY -->
-<section id="history" class="card hidden">
- <h2>My Ride History</h2>
- <div id="historyList">Loading...</div>
- <button class="secondary full"
- onclick="loadHistory()">Refresh History</button>
-</section>
-
-<!-- OFFERS -->
-<section id="offers" class="card hidden">
- <h2>Offers & Coupons</h2>
- <div class="vehicle">
-  <span>WELCOME</span>
-  <b>Sample Offer</b>
- </div>
- <p class="muted">Official discount offers will be added later.</p>
-</section>
-
-<!-- SUPPORT -->
-<section id="support" class="card hidden">
- <h2>Help & Complaints</h2>
-
- <label>Issue Type</label>
- <select id="issue">
-  <option>Booking Issue</option>
-  <option>Driver Issue</option>
-  <option>Payment Issue</option>
-  <option>Other</option>
- </select>
-
- <label>Complaint</label>
- <textarea id="complaint"
- placeholder="Describe your issue"></textarea>
-
- <button class="full" onclick="sendComplaint()">
- Submit Complaint
- </button>
-
- <p id="supportMsg" class="message"></p>
-</section>
-
-<!-- SOS -->
-<section id="safety" class="card hidden">
- <h2>Emergency / SOS</h2>
- <p class="muted">
- For immediate emergencies in India call 112.
- </p>
- <button class="danger full" onclick="sos()">
- SOS – Emergency Information
- </button>
- <p id="sosMsg" class="message"></p>
-</section>
-
-<!-- PROFILE -->
-<section id="profile" class="card hidden">
- <h2>My Profile</h2>
-
- <label>Full Name</label>
- <input id="profileName" placeholder="Your name">
-
- <label>Mobile Number</label>
- <input id="profileMobile" disabled>
-
- <button class="full" onclick="saveProfile()">
- Save Profile
- </button>
-</section>
-
-<!-- SETTINGS -->
-<section id="settings" class="card hidden">
- <h2>Settings</h2>
-
- <button class="secondary full"
- onclick="show('profile')">My Profile</button>
-
- <button class="secondary full"
- onclick="show('offers')">Offers</button>
-
- <button class="secondary full"
- onclick="show('support')">Support</button>
-
- <button class="secondary full"
- onclick="show('safety')">Safety / SOS</button>
-
- <button class="danger full"
- onclick="logout()">Logout</button>
-</section>
-
-</main>
-
-<nav>
- <button onclick="show('home')">Home</button>
- <button onclick="show('history')">History</button>
- <button onclick="show('offers')">Offers</button>
- <button onclick="show('profile')">Profile</button>
-</nav>
+<footer>
+ © 2026 SAKTHI CABS. All Rights Reserved.
+</footer>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-
-// ==================================
-// 1. SUPABASE CONFIGURATION
-// ==================================
+// ===================================
+// SUPABASE CONFIGURATION
+// ===================================
 
 const SUPABASE_URL =
 "https://kzcczciqaxawbesgtgcf.supabase.co";
 
-// Replace with your Supabase Publishable Key
 const SUPABASE_KEY =
-"PASTE_YOUR_PUBLISHABLE_KEY_HERE";
+"sb_publishable_bKS7yIQ01_cOi972JQ7JQw_WjxhbKKb";
 
 const supabaseClient = window.supabase.createClient(
  SUPABASE_URL,
  SUPABASE_KEY
 );
 
-// ==================================
-// 2. GLOBAL VARIABLES
-// ==================================
+// ===================================
+// GLOBAL VARIABLES
+// ===================================
 
 let authUser = null;
-let currentUser = null;
-
-let selected = "Mini";
-let fare = 110;
-
-let booking = null;
-
+let currentProfile = null;
 let map = null;
-let trackingMap = null;
+let pickupMarker = null;
+let dropMarker = null;
 
-let pickupLat = null;
-let pickupLng = null;
-let dropLat = null;
-let dropLng = null;
+let pickupCoords = null;
+let dropCoords = null;
 
-// ==================================
-// 3. PAGE NAVIGATION
-// ==================================
+let selectedVehicle = "Mini";
+let ratePerKm = 12;
+let calculatedDistance = 0;
+let estimatedFare = 0;
 
-function show(id) {
+// ===================================
+// MESSAGE
+// ===================================
 
- document.querySelectorAll("main section").forEach(section => {
-  section.classList.add("hidden");
- });
-
- const page = document.getElementById(id);
-
- if (!page) return;
-
- page.classList.remove("hidden");
-
- if (id === "home") {
-  setTimeout(initMap, 150);
- }
-
- if (id === "tracking") {
-  setTimeout(initTracking, 150);
- }
-
- if (id === "history") {
-  loadHistory();
- }
-
+function showMessage(id,text){
+ document.getElementById(id).textContent = text;
 }
 
-function showAuth() {
- show("auth");
+// ===================================
+// LOGIN - SEND OTP
+// ===================================
+
+async function sendOTP(){
+
+ const phone = document.getElementById("phone").value.trim();
+ const btn = document.getElementById("sendBtn");
+
+ if(!/^\+[1-9]\d{7,14}$/.test(phone)){
+  showMessage("message","Enter number with country code. Example: +919876543210");
+  return;
+ }
+
+ btn.disabled = true;
+ showMessage("message","Sending OTP...");
+
+ try{
+  const {error} = await supabaseClient.auth.signInWithOtp({
+   phone:phone
+  });
+
+  if(error) throw error;
+
+  document.getElementById("otpArea").classList.remove("hidden");
+  showMessage("message","OTP sent. Check your mobile.");
+ }catch(error){
+  showMessage("message","OTP Error: "+error.message);
+ }finally{
+  btn.disabled = false;
+ }
 }
 
-// ==================================
-// 4. CUSTOMER OTP LOGIN
-// ==================================
+// ===================================
+// VERIFY OTP
+// ===================================
 
-async function sendOTP() {
+async function verifyOTP(){
 
- const mobile =
- document.getElementById("mobile").value.trim();
+ const phone = document.getElementById("phone").value.trim();
+ const token = document.getElementById("otp").value.trim();
+ const btn = document.getElementById("verifyBtn");
 
- const name =
- document.getElementById("name").value.trim();
-
- if (!/^[6-9][0-9]{9}$/.test(mobile)) {
-  alert("Enter valid 10 digit mobile number");
+ if(!token){
+  showMessage("message","Enter OTP");
   return;
  }
 
- if (!name) {
-  alert("Enter your full name");
-  return;
+ btn.disabled = true;
+ showMessage("message","Verifying OTP...");
+
+ try{
+  const {data,error} = await supabaseClient.auth.verifyOtp({
+   phone:phone,
+   token:token,
+   type:"sms"
+  });
+
+  if(error) throw error;
+
+  authUser = data.user;
+
+  if(!authUser) throw new Error("Login failed");
+
+  await loadProfile();
+
+ }catch(error){
+  showMessage("message","Login Error: "+error.message);
+ }finally{
+  btn.disabled = false;
  }
-
- const button = document.getElementById("sendOtpBtn");
- button.disabled = true;
-
- const phone = "+91" + mobile;
-
- const { error } = await supabaseClient.auth.signInWithOtp({
-  phone: phone
- });
-
- button.disabled = false;
-
- if (error) {
-  document.getElementById("authMsg").innerText =
-  error.message;
-  return;
- }
-
- document.getElementById("otpBox").classList.remove("hidden");
-
- document.getElementById("authMsg").innerText =
- "OTP sent. Check your mobile.";
-
 }
 
-// ==================================
-// 5. VERIFY OTP AND SAVE PROFILE
-// ==================================
+// ===================================
+// PROFILE
+// ===================================
 
-async function verifyOTP() {
+async function loadProfile(){
 
- const mobile =
- document.getElementById("mobile").value.trim();
+ const {data,error} = await supabaseClient
+  .from("profiles")
+  .select("*")
+  .eq("id",authUser.id)
+  .maybeSingle();
 
- const otp =
- document.getElementById("otp").value.trim();
+ if(error) throw error;
 
- const name =
- document.getElementById("name").value.trim();
-
- if (!/^[0-9]{6}$/.test(otp)) {
-  alert("Enter valid OTP");
-  return;
- }
-
- const button = document.getElementById("verifyOtpBtn");
- button.disabled = true;
-
- const { data, error } =
- await supabaseClient.auth.verifyOtp({
-  phone: "+91" + mobile,
-  token: otp,
-  type: "sms"
- });
-
- button.disabled = false;
-
- if (error) {
-  alert("OTP Error: " + error.message);
-  return;
- }
-
- authUser = data.user;
-
- const { error: profileError } =
- await supabaseClient
- .from("profiles")
- .upsert({
-  id: authUser.id,
-  full_name: name,
-  phone: "+91" + mobile,
-  role: "customer"
- }, {
-  onConflict: "id"
- });
-
- if (profileError) {
-  alert("Profile Error: " + profileError.message);
-  return;
- }
-
- currentUser = {
-  id: authUser.id,
-  name: name,
-  mobile: mobile
- };
-
- updateProfileScreen();
-
- alert("Login Successful!");
-
- show("home");
-
-}
-
-// ==================================
-// 6. RESTORE EXISTING LOGIN
-// ==================================
-
-async function restoreSession() {
-
- const { data, error } =
- await supabaseClient.auth.getSession();
-
- if (error) {
-  console.error(error.message);
-  return;
- }
-
- if (!data.session) return;
-
- authUser = data.session.user;
-
- const { data: profile, error: profileError } =
- await supabaseClient
- .from("profiles")
- .select("full_name,phone,role")
- .eq("id", authUser.id)
- .maybeSingle();
-
- if (profileError) {
-  console.error("Profile:", profileError.message);
-  return;
- }
-
- if (profile && profile.role !== "customer") {
+ if(data && data.role !== "customer"){
   await supabaseClient.auth.signOut();
   authUser = null;
-  return;
+  throw new Error("This account is not registered as a customer.");
  }
 
- currentUser = {
-  id: authUser.id,
-  name: profile?.full_name || "Customer",
-  mobile: profile?.phone || ""
+ if(!data){
+  const {error:insertError} = await supabaseClient
+   .from("profiles")
+   .insert({
+    id:authUser.id,
+    phone:authUser.phone,
+    role:"customer"
+   });
+
+  if(insertError) throw insertError;
+ }
+
+ currentProfile = data || {
+  id:authUser.id,
+  phone:authUser.phone,
+  role:"customer"
  };
 
- updateProfileScreen();
-
- show("home");
-
+ showApp();
 }
 
-function updateProfileScreen() {
+async function saveProfile(){
 
- if (!currentUser) return;
-
- document.getElementById("welcome").innerText =
- "Welcome " + currentUser.name;
-
- document.getElementById("profileName").value =
- currentUser.name;
-
- document.getElementById("profileMobile").value =
- currentUser.mobile;
-
-}
-
-// ==================================
-// 7. MAP INITIALIZATION
-// ==================================
-
-function initMap() {
-
- if (map) {
-  map.invalidateSize();
-  return;
- }
-
- map = L.map("map").setView([11.1271,78.6569],7);
-
- L.tileLayer(
-  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-  {
-   attribution:"© OpenStreetMap"
-  }
- ).addTo(map);
-
-}
-
-// ==================================
-// 8. CURRENT LOCATION
-// ==================================
-
-function getLocation() {
-
- if (!navigator.geolocation) {
-  alert("Location not supported");
-  return;
- }
-
- navigator.geolocation.getCurrentPosition(
-  position => {
-
-   pickupLat = position.coords.latitude;
-   pickupLng = position.coords.longitude;
-
-   document.getElementById("pickup").value =
-   pickupLat.toFixed(5) + ", " + pickupLng.toFixed(5);
-
-   initMap();
-
-   map.setView([pickupLat,pickupLng],15);
-
-   L.marker([pickupLat,pickupLng])
-   .addTo(map)
-   .bindPopup("Your Pickup Location")
-   .openPopup();
-
-  },
-  error => {
-   alert("Location permission denied or unavailable");
-  },
-  {
-   enableHighAccuracy:true,
-   timeout:10000
-  }
- );
-
-}
-
-// Clear stored coordinates if the user edits the address
-document.getElementById("pickup").addEventListener("input", () => {
- pickupLat = null;
- pickupLng = null;
-});
-
-document.getElementById("drop").addEventListener("input", () => {
- dropLat = null;
- dropLng = null;
-});
-
-// ==================================
-// 9. FARE CALCULATION
-// ==================================
-
-function calculateFare() {
-
- const pickup =
- document.getElementById("pickup").value.trim();
-
- const drop =
- document.getElementById("drop").value.trim();
-
- if (!pickup || !drop) {
-  alert("Enter pickup and drop location");
-  return;
- }
-
- // Demo estimate only: fixed 5 KM
- const distance = 5;
-
- const prices = {
-  Mini:50 + distance * 12,
-  Sedan:70 + distance * 15,
-  SUV:100 + distance * 19
- };
-
- document.getElementById("miniPrice").innerText =
- "₹" + prices.Mini;
-
- document.getElementById("sedanPrice").innerText =
- "₹" + prices.Sedan;
-
- document.getElementById("suvPrice").innerText =
- "₹" + prices.SUV;
-
- document.getElementById("vehicles").classList.remove("hidden");
-
- fare = prices[selected];
-
- document.getElementById("fareText").innerText =
- "Demo estimate: " + distance +
- " KM | Actual fare may change.";
-
-}
-
-// ==================================
-// 10. SELECT VEHICLE
-// ==================================
-
-function selectVehicle(type, element) {
-
- selected = type;
-
- document.querySelectorAll("#vehicles .vehicle")
- .forEach(item => item.classList.remove("active"));
-
- element.classList.add("active");
-
- const prices = {
-  Mini:110,
-  Sedan:145,
-  SUV:195
- };
-
- const priceText = element.querySelector("b");
-
- fare = Number(
-  priceText.innerText.replace(/[₹,]/g,"")
- ) || prices[type];
-
-}
-
-// ==================================
-// 11. CREATE DATABASE BOOKING
-// ==================================
-
-async function confirmBooking() {
-
- if (!authUser) {
-  alert("Please login first");
-  show("auth");
-  return;
- }
-
- const pickup =
- document.getElementById("pickup").value.trim();
-
- const drop =
- document.getElementById("drop").value.trim();
-
- if (!pickup || !drop) {
-  alert("Enter pickup and drop");
-  return;
- }
-
- const method =
- document.getElementById("paymentMethod").value;
-
- const button = document.getElementById("bookBtn");
-
- button.disabled = true;
- button.innerText = "Creating Booking...";
-
- const bookingData = {
-  customer_id: authUser.id,
-  pickup_address: pickup,
-  drop_address: drop,
-  estimated_fare: fare,
-  payment_method: method,
-  payment_status: "pending",
-  status: "pending"
- };
-
- if (pickupLat !== null && pickupLng !== null) {
-  bookingData.pickup_lat = pickupLat;
-  bookingData.pickup_lng = pickupLng;
- }
-
- if (dropLat !== null && dropLng !== null) {
-  bookingData.drop_lat = dropLat;
-  bookingData.drop_lng = dropLng;
- }
-
- const { data, error } =
- await supabaseClient
- .from("bookings")
- .insert(bookingData)
- .select()
- .single();
-
- button.disabled = false;
- button.innerText = "Confirm Ride";
-
- if (error) {
-  alert("Booking Failed: " + error.message);
-  console.error(error);
-  return;
- }
-
- booking = data;
-
- document.getElementById("bookingInfo").innerText =
- "Booking ID: " + booking.id;
-
- document.getElementById("bookingStatusText").innerText =
- "Booking created. Waiting for driver assignment.";
-
- document.getElementById("bookingStatus").classList.remove("hidden");
-
- alert("Booking Created Successfully!");
-
- show("home");
-
- document.getElementById("bookingStatus").classList.remove("hidden");
-
-}
-
-// ==================================
-// 12. REFRESH BOOKING STATUS
-// ==================================
-
-async function refreshBooking() {
-
- if (!booking || !booking.id || !authUser) {
-  alert("No active booking");
-  return;
- }
-
- const { data, error } =
- await supabaseClient
- .from("bookings")
- .select("id,status,driver_id,estimated_fare,final_fare")
- .eq("id",booking.id)
- .eq("customer_id",authUser.id)
- .single();
-
- if (error) {
-  alert("Status Error: " + error.message);
-  return;
- }
-
- document.getElementById("bookingStatusText").innerText =
- "Current Status: " + data.status;
-
- if (data.status === "accepted" && data.driver_id) {
-  document.getElementById("trackStatus").innerText =
-  "Driver assigned. Driver GPS connection pending.";
- }
-
-}
-
-// ==================================
-// 13. TRACKING MAP
-// ==================================
-
-function initTracking() {
-
- if (trackingMap) {
-  trackingMap.invalidateSize();
-  return;
- }
-
- trackingMap = L.map("trackMap").setView(
-  [11.1271,78.6569],7
- );
-
- L.tileLayer(
-  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-  {
-   attribution:"© OpenStreetMap"
-  }
- ).addTo(trackingMap);
-
-}
-
-// ==================================
-// 14. RIDE HISTORY FROM DATABASE
-// ==================================
-
-async function loadHistory() {
-
- const list = document.getElementById("historyList");
-
- if (!authUser) {
-  list.innerText = "Please login first";
-  return;
- }
-
- list.innerText = "Loading rides...";
-
- const { data, error } =
- await supabaseClient
- .from("bookings")
- .select("*")
- .eq("customer_id",authUser.id)
- .order("created_at",{ascending:false});
-
- if (error) {
-  list.innerText = "History Error: " + error.message;
-  return;
- }
-
- list.innerHTML = "";
-
- if (!data || data.length === 0) {
-  list.innerText = "No rides yet";
-  return;
- }
-
- data.forEach(item => {
-
-  const card = document.createElement("div");
-  card.className = "vehicle";
-
-  const details = document.createElement("div");
-
-  const title = document.createElement("b");
-  title.textContent = item.status || "Booking";
-
-  const route = document.createElement("p");
-  route.textContent =
-  (item.pickup_address || "") + " → " +
-  (item.drop_address || "");
-
-  const amount = document.createElement("p");
-  amount.textContent =
-  "Estimated Fare: ₹" + (item.estimated_fare || 0);
-
-  const date = document.createElement("small");
-  date.textContent = item.created_at
-   ? new Date(item.created_at).toLocaleString()
-   : "";
-
-  details.append(title,route,amount,date);
-  card.appendChild(details);
-  list.appendChild(card);
-
- });
-
-}
-
-// ==================================
-// 15. PAYMENT METHOD UPDATE
-// ==================================
-
-async function updatePaymentMethod() {
-
- if (!booking || !authUser) {
-  alert("Booking not found");
-  return;
- }
-
- const method =
- document.getElementById("paymentMethod").value;
-
- const { error } =
- await supabaseClient
- .from("bookings")
- .update({
-  payment_method:method
- })
- .eq("id",booking.id)
- .eq("customer_id",authUser.id);
-
- if (error) {
-  alert("Payment Update Error: " + error.message);
-  return;
- }
-
- alert("Payment method saved. Actual payment is not processed.");
-
-}
-
-// ==================================
-// 16. PROFILE UPDATE
-// ==================================
-
-async function saveProfile() {
-
- if (!authUser) {
+ if(!authUser){
   alert("Please login");
   return;
  }
 
- const name =
- document.getElementById("profileName").value.trim();
+ const name = document.getElementById("profileName").value.trim();
 
- if (!name) {
+ if(!name){
   alert("Enter your name");
   return;
  }
 
- const { error } =
- await supabaseClient
- .from("profiles")
- .update({
-  full_name:name
- })
- .eq("id",authUser.id);
+ const {error} = await supabaseClient
+  .from("profiles")
+  .update({full_name:name})
+  .eq("id",authUser.id);
 
- if (error) {
-  alert("Profile Update Error: " + error.message);
+ if(error){
+  alert("Profile Update Error: "+error.message);
   return;
  }
 
- currentUser.name = name;
-
- document.getElementById("welcome").innerText =
- "Welcome " + name;
+ currentProfile.full_name = name;
+ document.getElementById("welcome").textContent = "Welcome "+name;
 
  alert("Profile Updated Successfully!");
-
- }
- // ==================================
-// 17. SUPPORT
-// ==================================
-
-function sendComplaint() {
-
- const issue =
- document.getElementById("issue").value;
-
- const complaint =
- document.getElementById("complaint").value.trim();
-
- if (!complaint) {
-  alert("Enter your complaint");
-  return;
- }
-
- document.getElementById("supportMsg").innerText =
- "Your complaint details are captured in this session. Support backend is not connected.";
-
- console.log("Complaint:",issue,complaint);
-
-}
- // ==================================
-// 18. SOS
-// ==================================
-
-function sos() {
-
- document.getElementById("sosMsg").innerText =
- "No SOS alert has been sent. For emergency in India call 112.";
-
 }
 
-// ==================================
-// 19. LOGOUT
-// ==================================
- async function logout() {
+// ===================================
+// SHOW APP
+// ===================================
 
- const { error } =
- await supabaseClient.auth.signOut();
+function showApp(){
 
- if (error) {
-  alert("Logout Error: " + error.message);
-  return;
- }
+ document.getElementById("loginSection").classList.add("hidden");
+ document.getElementById("appSection").classList.remove("hidden");
+ document.getElementById("logoutBtn").style.display = "block";
 
- authUser = null;
- currentUser = null;
- booking = null;
+ const name = currentProfile?.full_name || "Customer";
 
- alert("Logged Out Successfully");
+ document.getElementById("welcome").textContent = "Welcome "+name;
+ document.getElementById("profileName").value =
+  currentProfile?.full_name || "";
 
- show("splash");
+ setTimeout(()=>{
+  initializeMap();
+  if(pickupCoords) map.setView(pickupCoords,14);
+ },300);
 
+ loadCurrentBooking();
+ loadHistory();
 }
 
-// ==================================
-// 20. AUTH STATE LISTENER
-// ==================================
- supabaseClient.auth.onAuthStateChange((event,session) => {
+// ===================================
+// RESTORE SESSION
+// ===================================
 
- if (event === "SIGNED_OUT") {
+async function restoreSession(){
+
+ try{
+  const {data,error} = await supabaseClient.auth.getSession();
+
+  if(error) throw error;
+
+  if(data.session?.user){
+   authUser = data.session.user;
+   await loadProfile();
+  }
+ }catch(error){
+  showMessage("message","Session Error: "+error.message);
+ }
+}
+
+supabaseClient.auth.onAuthStateChange((event,session)=>{
+ if(event === "SIGNED_OUT"){
   authUser = null;
-  currentUser = null;
+  currentProfile = null;
+  document.getElementById("appSection").classList.add("hidden");
+  document.getElementById("loginSection").classList.remove("hidden");
+  document.getElementById("logoutBtn").style.display = "none";
+ }
+});
+
+// ===================================
+// LOGOUT
+// ===================================
+
+async function logout(){
+
+ const {error} = await supabaseClient.auth.signOut();
+
+ if(error){
+  alert(error.message);
+  return;
  }
 
-});
+ location.reload();
+}
 
-// ==================================
-// 21. START APPLICATION
-// ==================================
+// ===================================
+// MAP
+// ===================================
 
-window.addEventListener("load", async () => {
+function initializeMap(){
 
- await restoreSession();
+ if(map){
+  map.invalidateSize();
+  return;
+ }
 
-});
+ map = L.map("map").setView([11.0168,76.9558],7);
+
+ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+  attribution:"© OpenStreetMap contributors"
+ }).addTo(map);
+
+ map.on("click",async function(e){
+
+  if(!pickupCoords){
+   pickupCoords = [e.latlng.lat,e.latlng.lng];
+   setMarker("pickup");
+   document.getElementById("pickup").value =
+    await getAddress(pickupCoords);
+  }else{
+   dropCoords = [e.latlng.lat,e.latlng.lng];
+   setMarker("drop");
+   document.getElementById("drop").value =
+    await getAddress(dropCoords);
+  }
+
+  calculateFare();
+ });
+}
+
+function setMarker(type){
+
+ if(type === "pickup" && pickupCoords){
+  if(pickupMarker) map.removeLayer(pickupMarker);
+
+  pickupMarker = L.marker(pickupCoords)
+   .addTo(map).bindPopup("Pickup Location").openPopup();
+ }
+
+ if(type === "drop" && dropCoords){
+  if(dropMarker) map.removeLayer(dropMarker);
+
+  dropMarker = L.marker(dropCoords)
+   .addTo(map).bindPopup("Drop Location").openPopup();
+ }
+
+ if(pickupCoords && dropCoords){
+  const bounds = L.latLngBounds(pickupCoords,dropCoords);
+  map.fitBounds(bounds,{padding:[30,30]});
+ }
+}
+
+// ===================================
+// CURRENT LOCATION
+// ===================================
+
+function useCurrentLocation(){
+
+ if(!navigator.geolocation){
+  alert("Location not supported");
+  return;
+ }
+
+ navigator.geolocation.getCurrentPosition(async(position)=>{
+
+  pickupCoords = [
+   position.coords.latitude,
+   position.coords.longitude
+  ];
+
+  initializeMap();
+  map.setView(pickupCoords,15);
+  setMarker("pickup");
+
+  document.getElementById("pickup").value =
+   await getAddress(pickupCoords);
+
+  calculateFare();
+
+ },()=>{
+  alert("Please allow location permission");
+ });
+}
+
+// ===================================
+// ADDRESS SEARCH
+// ===================================
+
+async function getAddress(coords){
+
+ try{
+  const url =
+   "https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat="
+   +coords[0]+"&lon="+coords[1];
+
+  const response = await fetch(url);
+  const data = await response.json();
+
+  return data.display_name || "Selected Location";
+ }catch(error){
+  return "Selected Location";
+ }
+}
+
+async function findDropLocation(){
+
+ const address = document.getElementById("drop").value.trim();
+
+ if(!address){
+  alert("Enter drop location");
+  return;
+ }
+
+ showMessage("bookingMessage","Finding location...");
+
+ try{
+  const url =
+   "https://nominatim.openstreetmap.org/search?format=json&limit=1&q="
+   +encodeURIComponent(address);
+
+  const response = await fetch(url);
+  const data = await response.json();
+
+  if(!data.length){
+   throw new Error("Location not found");
+  }
+
+  dropCoords = [
+   Number(data[0].lat),
+   Number(data[0].lon)
+  ];
+
+  initializeMap();
+  setMarker("drop");
+  calculateFare();
+
+  showMessage("bookingMessage","Drop location selected");
+
+ }catch(error){
+  showMessage("bookingMessage",error.message);
+ }
+}
+
+// ===================================
+// VEHICLE SELECTION
+// ===================================
+
+function selectVehicle(vehicle,rate,element){
+
+ selectedVehicle = vehicle;
+ ratePerKm = rate;
+
+ document.querySelectorAll(".vehicle").forEach(item=>{
+  item.classList.remove("selected");
+  item.querySelector("input").checked = false;
+ });
+
+ element.classList.add("selected");
+ element.querySelector("input").checked = true;
+
+ calculateFare();
+}
+
+// ===================================
+// DISTANCE CALCULATION
+// ===================================
+
+function getDistance(a,b){
+
+ const R = 6371;
+
+ const lat1 = a[0] * Math.PI / 180;
+ const lat2 = b[0] * Math.PI / 180;
+
+ const dLat = (b[0]-a[0]) * Math.PI / 180;
+ const dLon = (b[1]-a[1]) * Math.PI / 180;
+
+ const x =
+  Math.sin(dLat/2)**2 +
+  Math.cos(lat1)*Math.cos(lat2)*
+  Math.sin(dLon/2)**2;
+
+ return 2*R*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+}
+
+function calculateFare(){
+
+ if(!pickupCoords || !dropCoords){
+  calculatedDistance = 0;
+  estimatedFare = 0;
+  document.getElementById("distance").textContent = "0 KM";
+  document.getElementById("fare").textContent = "₹0";
+  return;
+ }
+
+ calculatedDistance = getDistance(pickupCoords,dropCoords);
+
+ // DEMO ESTIMATE ONLY
+ estimatedFare = Math.max(
+  50,
+  Math.ceil(calculatedDistance * ratePerKm)
+ );
+
+ document.getElementById("distance").textContent =
+  calculatedDistance.toFixed(2)+" KM";
+
+ document.getElementById("fare").textContent =
+  "₹"+estimatedFare;
+}
+
+// ===================================
+// BOOK RIDE
+// ===================================
+
+async function bookRide(){
+
+ if(!authUser){
+  alert("Please login");
+  return;
+ }
+
+ const pickup = document.getElementById("pickup").value.trim();
+ const drop = document.getElementById("drop").value.trim();
+ const payment = document.getElementById("payment").value;
+
+ if(!pickup || !drop){
+  alert("Enter pickup and drop locations");
+  return;
+ }
+
+ if(!pickupCoords || !dropCoords){
+  alert("Select both locations on the map");
+  return;
+ }
+
+ if(pickupCoords[0] === dropCoords[0] &&
+    pickupCoords[1] === dropCoords[1]){
+  alert("Pickup and drop cannot be the same");
+  return;
+ }
+
+ calculateFare();
+
+ const btn = document.getElementById("bookBtn");
+ btn.disabled = true;
+
+ showMessage("bookingMessage","Creating your booking...");
+
+ try{
+
+  const {data,error} = await supabaseClient
+   .from("bookings")
+   .insert({
+    customer_id:authUser.id,
+    pickup_address:pickup,
+    drop_address:drop,
+    pickup_lat:pickupCoords[0],
+    pickup_lng:pickupCoords[1],
+    drop_lat:dropCoords[0],
+    drop_lng:dropCoords[1],
+    estimated_fare:estimatedFare,
+    payment_method:payment,
+    payment_status:"pending",
+    status:"pending"
+   })
+   .select()
+   .single();
+
+  if(error) throw error;
+
+  showMessage(
+   "bookingMessage",
+   "Booking successful! Booking ID: "+data.id
+  );
+
+  document.getElementById("currentBooking").textContent =
+   "Booking ID: "+data.id+" | Status: "+data.status;
+
+  loadHistory();
+
+ }catch(error){
+
+  showMessage(
+   "bookingMessage",
+   "Booking Error: "+error.message
+  );
+
+ }finally{
+  btn.disabled = false;
+ }
+}
+
+// ===================================
+// CURRENT BOOKING STATUS
+// ===================================
+
+async function loadCurrentBooking(){
+
+ if(!authUser) return;
+
+ const box = document.getElementById("currentBooking");
+ box.textContent = "Loading...";
+
+ const {data,error} = await supabaseClient
+  .from("bookings")
+  .select("*")
+  .eq("customer_id",authUser.id)
+  .not("status","in",'("completed","cancelled")')
+  .order("created_at",{ascending:false})
+  .limit(1);
+
+ if(error){
+  box.textContent = "Error: "+error.message;
+  return;
+ }
+
+ if(!data || data.length === 0){
+  box.textContent = "No active booking";
+  return;
+ }
+
+ const booking = data[0];
+
+ box.innerHTML = "";
+
+ const details = document.createElement("div");
+ details.className = "item";
+
+ const id = document.createElement("p");
+ id.textContent = "Booking ID: "+booking.id;
+
+ const status = document.createElement("p");
+ status.className = "status";
+ status.textContent = "Status: "+booking.status;
+
+ const fare = document.createElement("p");
+ fare.textContent = "Estimated Fare: ₹"+booking.estimated_fare;
+
+ details.append(id,status,fare);
+ box.appendChild(details);
+}
+
+// ===================================
+// RIDE HISTORY
+// ===================================
+
+async function loadHistory(){
+
+ if(!authUser) return;
+
+ const box = document.getElementById("history");
+ box.textContent = "Loading history...";
+
+ const {data,error} = await supabaseClient
+  .from("bookings")
+  .select("*")
+  .eq("customer_id",authUser.id)
+  .order("created_at",{ascending:false})
+  .limit(20);
+
+ if(error){
+  box.textContent = "History Error: "+error.message;
+  return;
+ }
+
+ box.innerHTML = "";
+
+ if(!data || data.length === 0){
+  box.textContent = "No rides found";
+  return;
+ }
+
+ data.forEach(booking=>{
+
+  const item = document.createElement("div");
+  item.className = "item";
+
+  const from = document.createElement("p");
+  from.textContent = "From: "+booking.pickup_address;
+
+  const to = document.createElement("p");
+  to.textContent = "To: "+booking.drop_address;
+
+  const status = document.createElement("p");
+  status.className = "status";
+  status.textContent = "Status: "+booking.status;
+
+  const fare = document.createElement("p");
+  fare.textContent = "Fare: ₹"+booking.estimated_fare;
+
+  const date = document.createElement("p");
+  date.className = "muted";
+  date.textContent = new Date(booking.created_at).toLocaleString();
+
+  item.append(from,to,status,fare,date);
+  box.appendChild(item);
+ });
+}
+
+// ===================================
+// START APPLICATION
+// ===================================
+
+restoreSession();
 
 </script>
-
 </body>
-</html>
+ </html>
+ 
